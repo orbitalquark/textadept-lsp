@@ -9,16 +9,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          path: lsp
       - name: Package
         shell: bash
-        run: |
-          make -C lsp deps
-          zip -r lsp.zip lsp -x "lsp/.git*"
+        run: make release
       - name: Tag
         run: |
-          cd lsp
           git tag latest
           git push -f origin latest
       - name: Create release
