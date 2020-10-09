@@ -8,17 +8,46 @@ local json = require('lsp.dkjson')
 ---
 -- A client for Textadept that communicates over the [Language Server
 -- Protocol][] (LSP) with language servers in order to provide autocompletion,
--- calltips, go to definition, and more.
+-- calltips, go to definition, and more. It implements version 3.12.0 of the
+-- protocol, but does not support all protocol features. The [`Server.new()`]()
+-- function contains the client's current set of capabilities.
 --
 -- Install this module by copying it into your *~/.textadept/modules/* directory
 -- or Textadept's *modules/* directory, and then putting the following in your
 -- *~/.textadept/init.lua*:
 --
---     require('lsp')
+--     local lsp = require('lsp')
 --
--- This module implements version 3.12.0 of the protocol, but does not support
--- all protocol features. The [`Server.new()`]() function contains the client's
--- current set of capabilities.
+-- You can then set up some language server commands. For example:
+--
+--     lsp.server_commands.lua = 'lua-lsp'
+--     lsp.server_commands.cpp = function()
+--       return 'cquery', {
+--         cacheDirectory = '/tmp/cquery-cache',
+--         compilationDatabaseDirectory = io.get_project_root(),
+--         progressReportFrequencyMs = -1
+--       }
+--     end
+--
+-- When either Lua or cpp files are opened, their associated language servers
+-- are automatically started (one per language, though).
+--
+-- Language Server features are available from the Tools > Language Server menu.
+-- Note that not all language servers may support the menu options. You can
+-- assign key bindings for these features, such as:
+--
+--     keys['ctrl+alt+ '] = function() textadept.editing.autocomplete('lsp') end
+--     keys['ctrl+H'] = lsp.signature_help
+--     keys.f12 = lsp.goto_definition
+--
+-- **Note:** If you want to inspect the LSP messages sent back and forth, you
+-- can use the Lua command entry to set `require('lsp').log_rpc = true`. It
+-- doesn't matter if any LSPs are already active -- from this point forward all
+-- messages will be logged to the "[LSP]" buffer.
+--
+-- **Warning:** Buggy language servers that do not respect the protocol may
+-- cause this module and Textadept to hang, waiting for a response. There is no
+-- recourse other than to force-quit Textadept and restart.
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- @field _G.textadept.editing.autocompleters.lsp (function)
