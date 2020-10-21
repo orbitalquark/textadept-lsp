@@ -118,8 +118,8 @@ if not rawget(_L, 'Language Server') then
   _L['Find References'] = 'Find _References'
 end
 
-events.LSP_INITIALIZED = 'lsp_initialized'
-events.LSP_NOTIFICATION = 'lsp_notification'
+local lsp_events = {'lsp_initialized', 'lsp_notification'}
+for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
 M.log_rpc = false
 M.INDIC_WARN = _SCINTILLA.next_indic_number()
