@@ -317,12 +317,15 @@ function Server:request(method, params)
   return message.result ~= json.null and message.result or nil
 end
 
+local empty_object = json.decode('{}')
 ---
 -- Sends a notification to this language server.
 -- @param method String method name of the notification.
 -- @param params Table of parameters for the notification.
 function Server:notify(method, params)
-  local message = {jsonrpc = '2.0', method = method, params = params or {}}
+  local message = {
+    jsonrpc = '2.0', method = method, params = params or empty_object
+  }
   local data = json.encode(message)
   if M.log_rpc then self:log('RPC send: ' .. data) end
   self.proc:write(string.format(
