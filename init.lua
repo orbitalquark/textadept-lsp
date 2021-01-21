@@ -517,18 +517,20 @@ function M.stop()
   servers[buffer:get_lexer()] = nil
 end
 
--- Returns a LSP TextDocumentPositionParams structure based on the current
--- position in the current buffer.
+-- Returns a LSP TextDocumentPositionParams structure based on the given or
+-- current position in the current buffer.
+-- @param position Optional buffer position to use. If `nil`, uses the current
+--   buffer position.
 -- @return table LSP TextDocumentPositionParams
-local function get_buffer_position_params()
+local function get_buffer_position_params(position)
   return {
     textDocument = {
       uri = not WIN32 and 'file://' .. buffer.filename or
         'file:///' .. buffer.filename:gsub('\\', '/')
     },
     position = {
-      line = buffer:line_from_position(buffer.current_pos) - 1,
-      character = buffer.column[buffer.current_pos] - 1
+      line = buffer:line_from_position(position or buffer.current_pos) - 1,
+      character = buffer.column[position or buffer.current_pos] - 1
     }
   }
 end
@@ -639,7 +641,7 @@ function M.hover(position)
   if server and buffer.filename and server.capabilities.hoverProvider then
     server:sync_buffer()
     local hover = server:request(
-      'textDocument/hover', get_buffer_position_params())
+      'textDocument/hover', get_buffer_position_params(position))
     if not hover then return end
     local contents = hover.contents
     if type(contents) == 'table' then
