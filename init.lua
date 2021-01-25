@@ -794,9 +794,13 @@ events.connect(events.LEXER_LOADED, function(name)
 end)
 
 -- Notify language servers when files are opened.
-events.connect(events.FILE_OPENED, function(filename)
-  local server = servers[buffer:get_lexer()]
-  if server then server:notify_opened(buffer) end
+events.connect(events.INITIALIZED, function()
+  -- Connect to `events.FILE_OPENED` after initialization in order to not
+  -- overwhelm the server when loading a session on startup.
+  events.connect(events.FILE_OPENED, function(filename)
+    local server = servers[buffer:get_lexer()]
+    if server then server:notify_opened(buffer) end
+  end)
 end)
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   local server = servers[buffer:get_lexer()]
