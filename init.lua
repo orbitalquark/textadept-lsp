@@ -199,7 +199,7 @@ function Server.new(lang, cmd, init_options)
   ui._print('[LSP]', 'Starting language server: ' .. cmd)
   ui.goto_view(current_view)
   local server = setmetatable(
-    {lang = lang, request_id = 0}, {__index = Server})
+    {lang = lang, request_id = 0, incoming_messages = {}}, {__index = Server})
   server.proc = assert(os.spawn(
     cmd, root, function(output) server:handle_stdout(output) end,
     function(output) server:log(output) end,
@@ -272,6 +272,11 @@ end
 -- Reads and returns an incoming JSON message from this language server.
 -- @return table of data from JSON
 function Server:read()
+  if #self.incoming_messages > 0 then
+    local message = table.remove(self.incoming_messages, 1)
+    self:log('Processing cached message: ' .. message.id)
+    return message
+  end
   local line = self.proc:read()
   while not line:find('^Content%-Length: %d+$') do line = self.proc:read() end
   local len = tonumber(line:match('%d+$'))
@@ -345,6 +350,23 @@ function Server:respond(id, result)
 end
 
 ---
+-- Helper function for processing a single message from the Language Server's
+-- notification stream.
+-- Cache any incoming messages (particularly responses) that happen to be picked
+-- up.
+-- @param data String message from the Language Server.
+function Server:handle_data(data)
+  if M.log_rpc then self:log('RPC recv: ' .. data) end
+  local message = json.decode(data)
+  if not message.id then
+    self:handle_notification(message.method, message.params)
+  else
+    self:log('Caching incoming server message: ' .. message.id)
+    table.insert(self.incoming_messages, message)
+  end
+end
+
+---
 -- Processes unsolicited, incoming stdout from the Language Server, primarily to
 -- look for notifications and act on them.
 -- @param output String stdout from the Language Server.
@@ -352,16 +374,23 @@ function Server:handle_stdout(output)
   if output:find('^Content%-Length:') then
     local len = tonumber(output:match('^Content%-Length: (%d+)'))
     local _, _, e = output:find('\r\n\r\n()')
-    local message = json.decode(output:sub(e, e + len - 1))
-    if not message.id then
-      self:handle_notification(message.method, message.params)
+    if e + len - 1 <= #output then
+      self:handle_data(output:sub(e, e + len - 1))
+      self:handle_stdout(output:sub(e + len)) -- process any other messages
     else
-      self:log('Ignoring incoming server request: ' .. message.method)
+      self._buf, self._len = output:sub(e), len
     end
-    self:handle_stdout(output:sub(e + len)) -- process any other messages
-  elseif output:find('^%S+$') then
-    -- TODO: handle split messages properly (e.g. cache parts)
-    self:log(output)
+  elseif self._buf then
+    if #self._buf + #output >= self._len then
+      local e = self._len - #self._buf
+      self:handle_data(self._buf .. output:sub(1, e))
+      self._buf, self._len = nil, nil
+      self:handle_stdout(output:sub(e + 1))
+    else
+      self._buf = self._buf .. output
+    end
+  elseif not output:find('^%s*$') then
+    self:log('Unhandled server output: ' .. output)
   end
 end
 
@@ -796,7 +825,7 @@ end)
 -- Notify language servers when files are opened.
 events.connect(events.INITIALIZED, function()
   -- Connect to `events.FILE_OPENED` after initialization in order to not
-  -- overwhelm the server when loading a session on startup.
+  -- overwhelm LSP connection when loading a session on startup.
   events.connect(events.FILE_OPENED, function(filename)
     local server = servers[buffer:get_lexer()]
     if server then server:notify_opened(buffer) end
