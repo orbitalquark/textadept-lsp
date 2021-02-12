@@ -272,6 +272,10 @@ end
 -- Reads and returns an incoming JSON message from this language server.
 -- @return table of data from JSON
 function Server:read()
+  if self.wait then
+    while #self.incoming_messages == 0 do ui.update() end
+    self.wait = false
+  end
   if #self.incoming_messages > 0 then
     local message = table.remove(self.incoming_messages, 1)
     self:log('Processing cached message: ' .. message.id)
@@ -499,6 +503,7 @@ function Server:sync_buffer()
     },
     contentChanges = {{text = buffer:get_text()}}
   })
+  if WIN32 then self.wait = true end -- prefer async response reading
 end
 
 ---
