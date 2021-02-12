@@ -507,14 +507,17 @@ function Server:sync_buffer()
 end
 
 ---
--- Notifies this language server that the given buffer was opened.
--- @param buffer Buffer opened.
-function Server:notify_opened(buffer)
+-- Notifies this language server that the current buffer was opened, provided
+-- the language server has not previously been notified.
+function Server:notify_opened()
+  if not self._opened then self._opened = {} end
+  if not buffer.filename or self._opened[buffer.filename] then return end
   self:notify('textDocument/didOpen', {textDocument = {
     uri = not WIN32 and 'file://' .. buffer.filename or
       'file:///' .. buffer.filename:gsub('\\', '/'),
     languageId = buffer:get_lexer(), version = 0, text = buffer:get_text()
   }})
+  self._opened[buffer.filename] = true
 end
 
 ---
@@ -532,12 +535,6 @@ function M.start()
   local ok, server = pcall(Server.new, lang, cmd, init_options)
   servers[lang] = ok and server or nil -- replace sentinel
   assert(ok, server)
-  -- Send file opened notifications for open files.
-  for _, buffer in ipairs(_BUFFERS) do
-    if buffer.filename and buffer:get_lexer() == lang then
-      server:notify_opened(buffer)
-    end
-  end
 end
 
 ---
@@ -831,16 +828,21 @@ end)
 events.connect(events.INITIALIZED, function()
   -- Connect to `events.FILE_OPENED` after initialization in order to not
   -- overwhelm LSP connection when loading a session on startup.
-  events.connect(events.FILE_OPENED, function(filename)
+  -- Connect to `events.BUFFER_AFTER_SWITCH` and `events.VIEW_AFTER_SWITCH` in
+  -- order to gradually notify the LSP of files opened from a session.
+  local function notify_opened()
     local server = servers[buffer:get_lexer()]
-    if server then server:notify_opened(buffer) end
-  end)
+    if server then server:notify_opened() end
+  end
+  events.connect(events.FILE_OPENED, notify_opened)
+  events.connect(events.BUFFER_AFTER_SWITCH, notify_opened)
+  events.connect(events.VIEW_AFTER_SWITCH, notify_opened)
 end)
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   local server = servers[buffer:get_lexer()]
   if not server then return end
   if saved_as then
-    server:notify_opened(buffer)
+    server:notify_opened()
   else
     server:notify('textDocument/didSave', {textDocument = {
       uri = not WIN32 and 'file://' .. buffer.filename or
