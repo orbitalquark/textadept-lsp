@@ -8,7 +8,7 @@ local json = require('lsp.dkjson')
 ---
 -- A client for Textadept that communicates over the [Language Server
 -- Protocol][] (LSP) with language servers in order to provide autocompletion,
--- calltips, go to definition, and more. It implements version 3.12.0 of the
+-- calltips, go to definition, and more. It implements version 3.14.0 of the
 -- protocol, but does not support all protocol features. The [`Server.new()`]()
 -- function contains the client's current set of capabilities.
 --
@@ -94,7 +94,6 @@ if not rawget(_L, 'Language Server') then
   -- Error messages.
   _L['No project root found'] = 'No project root found'
   -- Dialogs.
-  _L['Goto definition'] = 'Goto definition'
   _L['language server is already running'] = 'language server is already running'
   _L['language server shell command:'] = 'language server shell command:'
   _L['Stop Server?'] = 'Stop Server?'
@@ -108,10 +107,11 @@ if not rawget(_L, 'Language Server') then
   _L['Start Server...'] = '_Start Server...'
   _L['Stop Server'] = 'Sto_p Server'
   _L['Goto Workspace Symbol...'] = 'Goto _Workspace Symbol...'
-  _L['Goto Document Symbol...'] = 'Goto _Document Symbol...'
+  _L['Goto Document Symbol...'] = 'Goto Document S_ymbol...'
   _L['Autocomplete'] = '_Autocomplete'
   _L['Show Hover Information'] = 'Show _Hover Information'
   _L['Show Signature Help'] = 'Show Si_gnature Help'
+  _L['Goto Declaration'] = 'Goto Dec_laration'
   _L['Goto Definition'] = 'Goto _Definition'
   _L['Goto Type Definition'] = 'Goto _Type Definition'
   _L['Goto Implementation'] = 'Goto _Implementation'
@@ -210,51 +210,78 @@ function Server.new(lang, cmd, init_options)
       'file:///' .. root:gsub('\\', '/'),
     initializationOptions = init_options,
     capabilities = {
-      --workspace = nil,
+      --workspace = nil, -- workspaces are not supported at all
       textDocument = {
         synchronization = {
-        --  willSave = true,
-        --  willSaveWaitUntil = true,
+          --willSave = true,
+          --willSaveWaitUntil = true,
           didSave = true,
         },
         completion = {
+          --dynamicRegistration = false, -- not supported
           completionItem = {
             --snippetSupport = false, -- ${1:foo} format not supported
-            --commitCharacterSupport = true,
+            --commitCharactersSupport = true,
             documentationFormat = {'plaintext'},
             --deprecatedSupport = false, -- simple autocompletion list
             preselectSupport = true,
           },
           completionItemKind = {valueSet = completion_item_kind_set},
-          --contextSupport = false,
+          --contextSupport = true,
         },
-        hover = {contentFormat = {'plaintext'}},
+        hover = {
+          --dynamicRegistration = false, -- not supported
+          contentFormat = {'plaintext'}
+        },
         signatureHelp = {
-          signatureInformation = {documentationFormat = {'plaintext'}},
+          --dynamicRegistration = false, -- not supported
+          signatureInformation = {
+            documentationFormat = {'plaintext'},
+            --parameterInformation = {labelOffsetSupport = true}
+          },
         },
-        --references = {},
-        --documentHighlight = {},
+        --references = {dynamicRegistration = false}, -- not supported
+        --documentHighlight = {dynamicRegistration = false}, -- not supported
         documentSymbol = {
+          --dynamicRegistration = false, -- not supported
           symbolKind = {valueSet = symbol_kind_set},
-          --hierarchicalDocumentSymbolSupport = false,
+          --hierarchicalDocumentSymbolSupport = true,
         },
-        --formatting = {},
-        --rangeFormatting = {},
-        --onTypeFormatting = {},
-        --definition = {},
-        --typeDefinition = {},
-        --implementation = {},
+        --formatting = {dynamicRegistration = false}, -- not supported
+        --rangeFormatting = {dynamicRegistration = false}, -- not supported
+        --onTypeFormatting = {dynamicRegistration = false}, -- not supported
+        --declaration = {
+        --  dynamicRegistration = false, -- not supported
+        --  linkSupport = true
+        --}
+        --definition = {
+        --  dynamicRegistration = false, -- not supported
+        --  linkSupport = true
+        --},
+        --typeDefinition = {
+        --  dynamicRegistration = false, -- not supported
+        --  linkSupport = true
+        --},
+        --implementation = {
+        --  dynamicRegistration = false, -- not supported
+        --  linkSupport = true
+        --},
         --codeAction = {
+        --  dynamicRegistration = false, -- not supported
         --  codeActionLiteralSupport = {
         --    valueSet = {},
         --  },
         --},
-        --codeLens = {},
-        --documentLink = {},
-        --colorProvider = {},
-        --rename = {prepareSupport = false},
-        --publishDiagnostics = {},
+        --codeLens = {dynamicRegistration = false}, -- not supported
+        --documentLink = {dynamicRegistration = false}, -- not supported
+        --colorProvider = {dynamicRegistration = false}, -- not supported
+        --rename = {
+        --  dynamicRegistration = false, -- not supported
+        --  prepareSupport = false
+        --},
+        --publishDiagnostics = {relatedInformation = true},
         --foldingRange = {
+        --  dynamicRegistration = false, -- not supported
         --  rangeLimit = ?,
         --  lineFoldingOnly = true,
         --},
@@ -744,11 +771,11 @@ events.connect(events.CALL_TIP_CLICK, function(position)
   end
 end)
 
--- Jumps to the definition of the current kind (e.g. symbol, type, interface),
--- returning whether or not a definition was found.
+-- Jumps to the declaration or definition of the current kind (e.g. symbol,
+-- type, interface), returning whether or not a definition was found.
 -- @param kind String LSP method name part after 'textDocument/' (e.g.
---   'definition', 'typeDefinition', 'implementation').
--- @return `true` if a definition was found; `false` otherwise
+--   'declaration', 'definition', 'typeDefinition', 'implementation').
+-- @return `true` if a declaration/definition was found; `false` otherwise
 local function goto_definition(kind)
   local server = servers[buffer:get_lexer()]
   if server and buffer.filename and server.capabilities[kind .. 'Provider'] then
@@ -767,7 +794,9 @@ local function goto_definition(kind)
           items[#items + 1] = tofilename(location[i].uri)
         end
         local i = ui.dialogs.filteredlist{
-          title = _L['Goto Definition'], columns = _L['Filename'], items = items
+          title = (kind == 'declaration' and _L['Goto Declaration'] or
+            _L['Goto Definition']):gsub('_', ''),
+          columns = _L['Filename'], items = items
         }
         if i == -1 then return true end -- definition found; user canceled
         location = location[i]
@@ -780,6 +809,12 @@ local function goto_definition(kind)
   end
 end
 
+---
+-- Jumps to the declaration of the current symbol, returning whether or not a
+-- declaration was found.
+-- @return `true` if a declaration was found; `false` otherwise.
+-- @name goto_definition
+function M.goto_declaration() return goto_definition('declaration') end
 ---
 -- Jumps to the definition of the current symbol, returning whether or not a
 -- definition was found.
@@ -832,7 +867,7 @@ events.connect(events.INITIALIZED, function()
   -- order to gradually notify the LSP of files opened from a session.
   local function notify_opened()
     local server = servers[buffer:get_lexer()]
-    if server then server:notify_opened() end
+    if type(server) == 'table' then server:notify_opened() end
   end
   events.connect(events.FILE_OPENED, notify_opened)
   events.connect(events.BUFFER_AFTER_SWITCH, notify_opened)
@@ -944,6 +979,7 @@ for i = 1, #m_tools - 1 do
         end},
         {_L['Show Hover Information'], M.hover},
         {_L['Show Signature Help'], M.signature_help},
+        {_L['Goto Declaration'], M.goto_declaration},
         {_L['Goto Definition'], M.goto_definition},
         {_L['Goto Type Definition'], M.goto_type_definition},
         {_L['Goto Implementation'], M.goto_implementation},

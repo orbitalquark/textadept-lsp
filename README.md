@@ -2,7 +2,7 @@
 
 A client for Textadept that communicates over the [Language Server
 Protocol][] (LSP) with language servers in order to provide autocompletion,
-calltips, go to definition, and more. It implements version 3.12.0 of the
+calltips, go to definition, and more. It implements version 3.14.0 of the
 protocol, but does not support all protocol features. The [`Server.new()`](#Server.new)
 function contains the client's current set of capabilities.
 
@@ -118,6 +118,18 @@ Parameters:
 * *`init_options`*: Optional table of options to be passed to the language
   server for initialization.
 
+<a id="Server:handle_data"></a>
+### `Server:handle_data`(*data*)
+
+Helper function for processing a single message from the Language Server's
+notification stream.
+Cache any incoming messages (particularly responses) that happen to be picked
+up.
+
+Parameters:
+
+* *`data`*: String message from the Language Server.
+
 <a id="Server:handle_notification"></a>
 ### `Server:handle_notification`(*method, params*)
 
@@ -158,13 +170,10 @@ Parameters:
 * *`params`*: Table of parameters for the notification.
 
 <a id="Server:notify_opened"></a>
-### `Server:notify_opened`(*buffer*)
+### `Server:notify_opened`()
 
-Notifies this language server that the given buffer was opened.
-
-Parameters:
-
-* *`buffer`*: Buffer opened.
+Notifies this language server that the current buffer was opened, provided
+the language server has not previously been notified.
 
 <a id="Server:read"></a>
 ### `Server:read`()
@@ -215,6 +224,16 @@ be sent.
 ### `lsp.find_references`()
 
 Searches for project references to the current symbol and prints them.
+
+<a id="lsp.goto_definition"></a>
+### `lsp.goto_definition`()
+
+Jumps to the definition of the current symbol, returning whether or not a
+definition was found.
+
+Return:
+
+* `true` if a definition was found; `false` otherwise.
 
 <a id="lsp.goto_definition"></a>
 ### `lsp.goto_definition`()
