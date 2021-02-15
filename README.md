@@ -2,7 +2,7 @@
 
 A client for Textadept that communicates over the [Language Server
 Protocol][] (LSP) with language servers in order to provide autocompletion,
-calltips, go to definition, and more. It implements version 3.14.0 of the
+calltips, go to definition, and more. It implements version 3.15.0 of the
 protocol, but does not support all protocol features. The [`Server.new()`](#Server.new)
 function contains the client's current set of capabilities.
 

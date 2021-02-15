@@ -8,7 +8,7 @@ local json = require('lsp.dkjson')
 ---
 -- A client for Textadept that communicates over the [Language Server
 -- Protocol][] (LSP) with language servers in order to provide autocompletion,
--- calltips, go to definition, and more. It implements version 3.14.0 of the
+-- calltips, go to definition, and more. It implements version 3.15.0 of the
 -- protocol, but does not support all protocol features. The [`Server.new()`]()
 -- function contains the client's current set of capabilities.
 --
@@ -206,6 +206,7 @@ function Server.new(lang, cmd, init_options)
     function(status) server:log('Server exited with status ' .. status) end))
   local result = server:request('initialize', {
     processId = json.null,
+    clientInfo = {name = 'textadept', version = _RELEASE},
     rootUri = not WIN32 and 'file://' .. root or
       'file:///' .. root:gsub('\\', '/'),
     initializationOptions = init_options,
@@ -215,7 +216,7 @@ function Server.new(lang, cmd, init_options)
         synchronization = {
           --willSave = true,
           --willSaveWaitUntil = true,
-          didSave = true,
+          didSave = true
         },
         completion = {
           --dynamicRegistration = false, -- not supported
@@ -225,9 +226,10 @@ function Server.new(lang, cmd, init_options)
             documentationFormat = {'plaintext'},
             --deprecatedSupport = false, -- simple autocompletion list
             preselectSupport = true,
+            --tagSupport = {valueSet = {}}
           },
           completionItemKind = {valueSet = completion_item_kind_set},
-          --contextSupport = true,
+          --contextSupport = true
         },
         hover = {
           --dynamicRegistration = false, -- not supported
@@ -239,13 +241,14 @@ function Server.new(lang, cmd, init_options)
             documentationFormat = {'plaintext'},
             --parameterInformation = {labelOffsetSupport = true}
           },
+          --contextSupport = true
         },
         --references = {dynamicRegistration = false}, -- not supported
         --documentHighlight = {dynamicRegistration = false}, -- not supported
         documentSymbol = {
           --dynamicRegistration = false, -- not supported
           symbolKind = {valueSet = symbol_kind_set},
-          --hierarchicalDocumentSymbolSupport = true,
+          --hierarchicalDocumentSymbolSupport = true
         },
         --formatting = {dynamicRegistration = false}, -- not supported
         --rangeFormatting = {dynamicRegistration = false}, -- not supported
@@ -268,28 +271,42 @@ function Server.new(lang, cmd, init_options)
         --},
         --codeAction = {
         --  dynamicRegistration = false, -- not supported
-        --  codeActionLiteralSupport = {
-        --    valueSet = {},
-        --  },
+        --  codeActionLiteralSupport = {valueSet = {}},
+        --  isPreferredSupport = true
         --},
         --codeLens = {dynamicRegistration = false}, -- not supported
-        --documentLink = {dynamicRegistration = false}, -- not supported
+        --documentLink = {
+        --  dynamicRegistration = false, -- not supported
+        --  tooltipSupport = true
+        --},
         --colorProvider = {dynamicRegistration = false}, -- not supported
         --rename = {
         --  dynamicRegistration = false, -- not supported
         --  prepareSupport = false
         --},
-        --publishDiagnostics = {relatedInformation = true},
+        --publishDiagnostics = {
+          --relatedInformation = true,
+          --tagSupport = {valueSet = {}},
+          --versionSupport = true
+        --},
         --foldingRange = {
         --  dynamicRegistration = false, -- not supported
         --  rangeLimit = ?,
-        --  lineFoldingOnly = true,
+        --  lineFoldingOnly = true
         --},
+        --selectionRange = {dynamicRegistration = false} -- not supported
       },
+      --window = {workDoneProgress = true},
       --experimental = nil
     }
   })
   server.capabilities = result.capabilities
+  server.info = result.serverInfo
+  if server.info then
+    self:log(string.format(
+      'Connected to %s %s', server.info.name,
+      server.info.version or '(unknown version)'))
+  end
   server:notify('initialized') -- required by protocol
   events.emit(events.LSP_INITIALIZED, server.lang, server)
   return server
@@ -496,7 +513,7 @@ function Server:handle_notification(method, params)
     for _, diagnostic in ipairs(params.diagnostics) do
       buffer.indicator_current =
         (not diagnostic.severity or diagnostic.severity == 1) and
-        M.INDIC_ERROR or M.INDIC_WARN
+        M.INDIC_ERROR or M.INDIC_WARN -- TODO: diagnostic.tags
       local s, e = tobufferrange(diagnostic.range)
       local line = buffer:line_from_position(e)
       local current_line = buffer:line_from_position(buffer.current_pos)
@@ -510,10 +527,12 @@ function Server:handle_notification(method, params)
         -- TODO: diagnostics should be persistent in projects.
       end
     end
+  elseif method:find('^%$/') then
+    self:log('Ignoring notification: ' .. method)
   elseif not events.emit(
            events.LSP_NOTIFICATION, self.lang, self, method, params) then
     -- Unknown notification.
-    self:log('unexpected notification: ' .. method)
+    self:log('Unexpected notification: ' .. method)
   end
 end
 
@@ -853,6 +872,18 @@ function M.find_references()
     end
   end
 end
+
+-- TODO: function M.select()
+--  local server = servers[buffer:get_lexer()]
+--  if server and buffer.filename and
+--     server.capabilities.selectionRangeProvider then
+--    server:sync_buffer()
+--    local params = get_buffer_position_params()
+--    params.positions, params.position = {params.position}, nil
+--    local ranges = server:request('textDocument/selectionRange', params)
+--    if ranges then buffer:set_sel(tobufferrange(ranges[1].range)) end
+--  end
+--end
 
 -- Automatically start language servers if possible.
 events.connect(events.LEXER_LOADED, function(name)
