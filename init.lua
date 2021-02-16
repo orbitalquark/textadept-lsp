@@ -337,7 +337,7 @@ function Server.new(lang, cmd, init_options)
   server.capabilities = result.capabilities
   server.info = result.serverInfo
   if server.info then
-    self:log(string.format(
+    server:log(string.format(
       'Connected to %s %s', server.info.name,
       server.info.version or '(unknown version)'))
   end
@@ -937,25 +937,30 @@ function M.select_all_symbol()
   end
 end
 
--- Automatically start language servers if possible.
-events.connect(events.LEXER_LOADED, function(name)
-  if M.server_commands[name] then M.start() end
-end)
-
--- Notify language servers when files are opened.
+-- Setup events to automatically start language servers and notify them as files
+-- are opened.
+-- Connect to `events.FILE_OPENED` after initialization in order to not
+-- overwhelm LSP connection when loading a session on startup. Connect to
+-- `events.BUFFER_AFTER_SWITCH` and `events.VIEW_AFTER_SWITCH` in order to
+-- gradually notify the LSP of files opened from a session.
 events.connect(events.INITIALIZED, function()
-  -- Connect to `events.FILE_OPENED` after initialization in order to not
-  -- overwhelm LSP connection when loading a session on startup.
-  -- Connect to `events.BUFFER_AFTER_SWITCH` and `events.VIEW_AFTER_SWITCH` in
-  -- order to gradually notify the LSP of files opened from a session.
+  local function start()
+    if M.server_commands[buffer:get_lexer()] then M.start() end
+  end
   local function notify_opened()
     local server = servers[buffer:get_lexer()]
     if type(server) == 'table' then server:notify_opened() end
   end
+  events.connect(events.LEXER_LOADED, start)
   events.connect(events.FILE_OPENED, notify_opened)
   events.connect(events.BUFFER_AFTER_SWITCH, notify_opened)
   events.connect(events.VIEW_AFTER_SWITCH, notify_opened)
+  -- Automatically start language server for the current file, if possible.
+  start()
+  notify_opened()
 end)
+
+-- Notify the language server when a buffer is saved.
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   local server = servers[buffer:get_lexer()]
   if not server then return end
