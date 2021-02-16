@@ -2,7 +2,7 @@
 
 A client for Textadept that communicates over the [Language Server
 Protocol][] (LSP) with language servers in order to provide autocompletion,
-calltips, go to definition, and more. It implements version 3.15.0 of the
+calltips, go to definition, and more. It implements version 3.16.0 of the
 protocol, but does not support all protocol features. The [`Server.new()`](#Server.new)
 function contains the client's current set of capabilities.
 
@@ -286,6 +286,12 @@ Parameters:
 
 * *`position`*: Optional buffer position of the identifier to show
   information for. If `nil`, uses the current buffer position.
+
+<a id="lsp.select_all_symbol"></a>
+### `lsp.select_all_symbol`()
+
+Selects all instances of the symbol at the current position as multiple
+selections.
 
 <a id="lsp.signature_help"></a>
 ### `lsp.signature_help`()

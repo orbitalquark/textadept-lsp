@@ -8,7 +8,7 @@ local json = require('lsp.dkjson')
 ---
 -- A client for Textadept that communicates over the [Language Server
 -- Protocol][] (LSP) with language servers in order to provide autocompletion,
--- calltips, go to definition, and more. It implements version 3.15.0 of the
+-- calltips, go to definition, and more. It implements version 3.16.0 of the
 -- protocol, but does not support all protocol features. The [`Server.new()`]()
 -- function contains the client's current set of capabilities.
 --
@@ -111,11 +111,12 @@ if not rawget(_L, 'Language Server') then
   _L['Autocomplete'] = '_Autocomplete'
   _L['Show Hover Information'] = 'Show _Hover Information'
   _L['Show Signature Help'] = 'Show Si_gnature Help'
-  _L['Goto Declaration'] = 'Goto Dec_laration'
+  _L['Goto Declaration'] = 'Goto De_claration'
   _L['Goto Definition'] = 'Goto _Definition'
   _L['Goto Type Definition'] = 'Goto _Type Definition'
   _L['Goto Implementation'] = 'Goto _Implementation'
   _L['Find References'] = 'Find _References'
+  _L['Select All Symbol'] = 'Select Al_l Symbol'
 end
 
 local lsp_events = {'lsp_initialized', 'lsp_notification'}
@@ -207,6 +208,7 @@ function Server.new(lang, cmd, init_options)
   local result = server:request('initialize', {
     processId = json.null,
     clientInfo = {name = 'textadept', version = _RELEASE},
+    -- TODO: locale
     rootUri = not WIN32 and 'file://' .. root or
       'file:///' .. root:gsub('\\', '/'),
     initializationOptions = init_options,
@@ -226,7 +228,10 @@ function Server.new(lang, cmd, init_options)
             documentationFormat = {'plaintext'},
             --deprecatedSupport = false, -- simple autocompletion list
             preselectSupport = true,
-            --tagSupport = {valueSet = {}}
+            --tagSupport = {valueSet = {}},
+            --insertReplaceSupport = true,
+            --resolveSupport = {properties = {}},
+            --insertTextModeSupport = {valueSet = {}}
           },
           completionItemKind = {valueSet = completion_item_kind_set},
           --contextSupport = true
@@ -239,7 +244,8 @@ function Server.new(lang, cmd, init_options)
           --dynamicRegistration = false, -- not supported
           signatureInformation = {
             documentationFormat = {'plaintext'},
-            --parameterInformation = {labelOffsetSupport = true}
+            --parameterInformation = {labelOffsetSupport = true},
+            --activeParameterSupport = true
           },
           --contextSupport = true
         },
@@ -248,7 +254,9 @@ function Server.new(lang, cmd, init_options)
         documentSymbol = {
           --dynamicRegistration = false, -- not supported
           symbolKind = {valueSet = symbol_kind_set},
-          --hierarchicalDocumentSymbolSupport = true
+          --hierarchicalDocumentSymbolSupport = true,
+          --tagSupport = {valueSet = {}},
+          --labelSupport = true
         },
         --formatting = {dynamicRegistration = false}, -- not supported
         --rangeFormatting = {dynamicRegistration = false}, -- not supported
@@ -272,7 +280,11 @@ function Server.new(lang, cmd, init_options)
         --codeAction = {
         --  dynamicRegistration = false, -- not supported
         --  codeActionLiteralSupport = {valueSet = {}},
-        --  isPreferredSupport = true
+        --  isPreferredSupport = true,
+        --  disabledSupport = true,
+        --  dataSupport = true,
+        --  resolveSupport = {properties = {}},
+        --  honorsChangeAnnotations = true
         --},
         --codeLens = {dynamicRegistration = false}, -- not supported
         --documentLink = {
@@ -287,16 +299,38 @@ function Server.new(lang, cmd, init_options)
         --publishDiagnostics = {
           --relatedInformation = true,
           --tagSupport = {valueSet = {}},
-          --versionSupport = true
+          --versionSupport = true,
+          --codeDescriptionSupport = true,
+          --dataSupport = true
         --},
         --foldingRange = {
         --  dynamicRegistration = false, -- not supported
         --  rangeLimit = ?,
         --  lineFoldingOnly = true
         --},
-        --selectionRange = {dynamicRegistration = false} -- not supported
+        --selectionRange = {dynamicRegistration = false}, -- not supported
+        --linkedEditingRange = {dynamicRegistration = false}, -- not supported
+        --callHierarchy = {dynamicRegistration = false}, -- not supported
+        --semanticTokens = {
+        --  dynamicRegistration = false, -- not supported
+        --  requests = {},
+        --  tokenTypes = {},
+        --  tokenModifiers = {},
+        --  formats = {},
+        --  overlappingTokenSupport = true,
+        --  multilineTokenSupport = true
+        --},
+        --moniker = {dynamicRegistration = false} -- not supported
       },
-      --window = {workDoneProgress = true},
+      --window = {
+      --  workDoneProgress = true,
+      --  showMessage = {},
+      --  showDocument = {}
+      --},
+      --general = {
+      --  regularExpressions = {},
+      --  markdown = {}
+      --},
       --experimental = nil
     }
   })
@@ -885,6 +919,24 @@ end
 --  end
 --end
 
+---
+-- Selects all instances of the symbol at the current position as multiple
+-- selections.
+-- @name select_all_symbol
+function M.select_all_symbol()
+  local server = servers[buffer:get_lexer()]
+  if server and buffer.filename and
+     server.capabilities.linkedEditingRangeProvider then
+    server:sync_buffer()
+    local ranges = server:request(
+      'textDocument/linkedEditingRange', get_buffer_position_params())
+    if not ranges then return end
+    ranges = ranges.ranges
+    buffer:set_selection(tobufferrange(ranges[1]))
+    for i = 2, #ranges do buffer:add_selection(tobufferrange(ranges[i])) end
+  end
+end
+
 -- Automatically start language servers if possible.
 events.connect(events.LEXER_LOADED, function(name)
   if M.server_commands[name] then M.start() end
@@ -1015,6 +1067,7 @@ for i = 1, #m_tools - 1 do
         {_L['Goto Type Definition'], M.goto_type_definition},
         {_L['Goto Implementation'], M.goto_implementation},
         {_L['Find References'], M.find_references},
+        {_L['Select All Symbol'], M.select_all_symbol}
       })
       break
     end
