@@ -539,18 +539,23 @@ function Server:handle_notification(method, params)
   elseif method == 'textDocument/publishDiagnostics' then
     -- Annotate the buffer based on diagnostics.
     if buffer.filename ~= tofilename(params.uri) then return end
+    -- Record current line scroll state.
+    local current_line = buffer:line_from_position(buffer.current_pos)
+    local orig_lines_from_top =
+      view:visible_from_doc_line(current_line) - view.first_visible_line
+    -- Clear any existing diagnostics.
     for _, indic in ipairs{M.INDIC_WARN, M.INDIC_ERROR} do
       buffer.indicator_current = indic
       buffer:indicator_clear_range(1, buffer.length)
     end
     buffer:annotation_clear_all()
+    -- Add diagnostics.
     for _, diagnostic in ipairs(params.diagnostics) do
       buffer.indicator_current =
         (not diagnostic.severity or diagnostic.severity == 1) and
         M.INDIC_ERROR or M.INDIC_WARN -- TODO: diagnostic.tags
       local s, e = tobufferrange(diagnostic.range)
       local line = buffer:line_from_position(e)
-      local current_line = buffer:line_from_position(buffer.current_pos)
       if M.show_all_diagnostics or
          (current_line ~= line and current_line + 1 ~= line) then
         buffer:indicator_fill_range(s, e - s)
@@ -561,6 +566,10 @@ function Server:handle_notification(method, params)
         -- TODO: diagnostics should be persistent in projects.
       end
     end
+    -- Restore line scroll state.
+    local lines_from_top =
+      view:visible_from_doc_line(current_line) - view.first_visible_line
+    view:line_scroll(0, lines_from_top - orig_lines_from_top)
   elseif method:find('^%$/') then
     self:log('Ignoring notification: ' .. method)
   elseif not events.emit(
