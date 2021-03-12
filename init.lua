@@ -80,8 +80,11 @@ local json = require('lsp.dkjson')
 --   The warning diagnostic indicator number.
 -- @field INDIC_ERROR (number)
 --   The error diagnostic indicator number.
+-- @field show_diagnostics (bool)
+--   Whether or not to show diagnostics.
+--   The default value is `true`, and shows them as annotations.
 -- @field show_all_diagnostics (bool)
---   Whether or not to show all diagnostics.
+--   Whether or not to show all diagnostics if `show_diagnostics` is `true`.
 --   The default value is `false`, and assumes any diagnostics on the current
 --   line or next line are due to an incomplete statement during something like
 --   an autocompletion, signature help, etc. request.
@@ -102,6 +105,8 @@ if not rawget(_L, 'Language Server') then
   _L['Symbol name or name part:'] = 'Symbol name or name part:'
   -- Status.
   _L['Note: completion list incomplete'] = 'Note: completion list incomplete'
+  _L['Showing diagnostics'] = 'Showing diagnostics'
+  _L['Hiding diagnostics'] = 'Hiding diagnostics'
   -- Menu.
   _L['Language Server'] = 'Lan_guage Server'
   _L['Start Server...'] = '_Start Server...'
@@ -117,6 +122,7 @@ if not rawget(_L, 'Language Server') then
   _L['Goto Implementation'] = 'Goto _Implementation'
   _L['Find References'] = 'Find _References'
   _L['Select All Symbol'] = 'Select Al_l Symbol'
+  _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
 end
 
 local lsp_events = {'lsp_initialized', 'lsp_notification'}
@@ -126,6 +132,7 @@ M.log_rpc = false
 M.INDIC_WARN = _SCINTILLA.next_indic_number()
 M.INDIC_ERROR = _SCINTILLA.next_indic_number()
 
+M.show_diagnostics = true
 M.show_all_diagnostics = false
 
 ---
@@ -536,7 +543,7 @@ function Server:handle_notification(method, params)
   elseif method == 'telemetry/event' then
     -- Silently log an event.
     self:log(string.format('TELEMETRY: %s', json.encode(params)))
-  elseif method == 'textDocument/publishDiagnostics' then
+  elseif method == 'textDocument/publishDiagnostics' and M.show_diagnostics then
     -- Annotate the buffer based on diagnostics.
     if buffer.filename ~= tofilename(params.uri) then return end
     -- Record current line scroll state.
@@ -1085,7 +1092,15 @@ for i = 1, #m_tools - 1 do
         {_L['Goto Type Definition'], M.goto_type_definition},
         {_L['Goto Implementation'], M.goto_implementation},
         {_L['Find References'], M.find_references},
-        {_L['Select All Symbol'], M.select_all_symbol}
+        {_L['Select All Symbol'], M.select_all_symbol},
+        {''},
+        {_L['Toggle Show Diagnostics'], function()
+          M.show_diagnostics = not M.show_diagnostics
+          if not M.show_diagnostics then view:annotation_clear_all() end
+          ui.statusbar_text =
+            M.show_diagnostics and _L['Showing diagnostics'] or
+            _L['Hiding diagnostics']
+        end}
       })
       break
     end
