@@ -98,10 +98,16 @@ Log RPC correspondence to the LSP message buffer.
 <a id="lsp.show_all_diagnostics"></a>
 ### `lsp.show_all_diagnostics` (bool)
 
-Whether or not to show all diagnostics.
+Whether or not to show all diagnostics if `show_diagnostics` is `true`.
   The default value is `false`, and assumes any diagnostics on the current
   line or next line are due to an incomplete statement during something like
   an autocompletion, signature help, etc. request.
+
+<a id="lsp.show_diagnostics"></a>
+### `lsp.show_diagnostics` (bool)
+
+Whether or not to show diagnostics.
+  The default value is `true`, and shows them as annotations.
 
 
 ## Functions defined by `lsp`
