@@ -621,9 +621,13 @@ function M.start()
   if type(cmd) == 'table' then
     cmd, init_options = cmd.command, cmd.init_options
   end
-  local ok, server = pcall(Server.new, lang, cmd, init_options)
-  servers[lang] = ok and server or nil -- replace sentinel
-  assert(ok, server)
+  if cmd then
+    local ok, server = pcall(Server.new, lang, cmd, init_options)
+    servers[lang] = ok and server or nil -- replace sentinel
+    assert(ok, server)
+  else
+    servers[lang] = nil -- replace sentinel
+  end
 end
 
 ---
