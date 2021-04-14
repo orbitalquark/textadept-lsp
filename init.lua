@@ -652,7 +652,7 @@ local function goto_selected_symbol(symbols)
     if not symbol.location then
       -- LSP DocumentSymbol has `range` instead of `location`.
       symbol.location = {
-        uri = not WIN32 and buffer.filename or buffer.filename:gsub('\\', '/'), range = range
+        uri = not WIN32 and buffer.filename or buffer.filename:gsub('\\', '/'), range = symbol.range
       }
     end
     items[#items + 1] = tofilename(symbol.location.uri)
@@ -932,8 +932,7 @@ events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   else
     server:notify('textDocument/didSave', {
       textDocument = {
-        uri = not WIN32 and 'file://' .. buffer.filename or
-          ('file:///' .. buffer.filename:gsub('\\', '/')), -- LuaFormatter
+        uri = not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/'),
         languageId = buffer:get_lexer(), version = 0
       }
     })
