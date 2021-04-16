@@ -1033,7 +1033,7 @@ for i = 1, #m_tools - 1 do
         {''},
         {_L['Toggle Show Diagnostics'], function()
           M.show_diagnostics = not M.show_diagnostics
-          if not M.show_diagnostics then view:annotation_clear_all() end
+          if not M.show_diagnostics then buffer:annotation_clear_all() end
           ui.statusbar_text = M.show_diagnostics and _L['Showing diagnostics'] or
             _L['Hiding diagnostics']
         end}
