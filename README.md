@@ -22,7 +22,9 @@ You can then set up some language server commands. For example:
     end
 
 When either Lua or cpp files are opened, their associated language servers are automatically
-started (one per language, though).
+started (one per language, though). Note that language servers typically require a root URI,
+so this module uses `io.get_project_root()` for this. If the file being opened is not part
+of a project recognized by Textadept, the language server will not be started.
 
 Language Server features are available from the Tools > Language Server menu. Note that not
 all language servers may support the menu options. You can assign key bindings for these
