@@ -234,15 +234,6 @@ Return:
 
 * `true` if a definition was found; `false` otherwise.
 
-<a id="lsp.goto_definition"></a>
-### `lsp.goto_definition`()
-
-Jumps to the definition of the current symbol, returning whether or not a definition was found.
-
-Return:
-
-* `true` if a definition was found; `false` otherwise.
-
 <a id="lsp.goto_implementation"></a>
 ### `lsp.goto_implementation`()
 
