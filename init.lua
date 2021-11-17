@@ -639,7 +639,9 @@ end
 -- Jumps to the given LSP Location structure.
 -- @param location LSP Location to jump to.
 local function goto_location(location)
+  textadept.history.record() -- store current position in jump history
   ui.goto_file(tofilename(location.uri))
+  textadept.history.record() -- store new position in jump history
   buffer:set_sel(tobufferrange(location.range))
 end
 
