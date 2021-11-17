@@ -843,7 +843,7 @@ end
 ---
 -- Jumps to the declaration of the current symbol, returning whether or not a declaration was found.
 -- @return `true` if a declaration was found; `false` otherwise.
--- @name goto_definition
+-- @name goto_declaration
 function M.goto_declaration() return goto_definition('declaration') end
 ---
 -- Jumps to the definition of the current symbol, returning whether or not a definition was found.

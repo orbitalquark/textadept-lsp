@@ -225,14 +225,14 @@ Changes are not synchronized in real-time, but whenever a request is about to be
 
 Searches for project references to the current symbol and prints them.
 
-<a id="lsp.goto_definition"></a>
-### `lsp.goto_definition`()
+<a id="lsp.goto_declaration"></a>
+### `lsp.goto_declaration`()
 
-Jumps to the definition of the current symbol, returning whether or not a definition was found.
+Jumps to the declaration of the current symbol, returning whether or not a declaration was found.
 
 Return:
 
-* `true` if a definition was found; `false` otherwise.
+* `true` if a declaration was found; `false` otherwise.
 
 <a id="lsp.goto_definition"></a>
 ### `lsp.goto_definition`()
