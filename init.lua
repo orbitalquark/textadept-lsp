@@ -863,22 +863,26 @@ function M.goto_type_definition() return goto_definition('typeDefinition') end
 function M.goto_implementation() return goto_definition('implementation') end
 
 ---
--- Searches for project references to the current symbol and prints them.
+-- Searches for project references to the current symbol and both prints and returns them.
 -- @name find_references
-function M.find_references()
+-- @param no_print Optional, if `true` then no `ui._print` occurs.
+function M.find_references(no_print)
   local server = servers[buffer:get_lexer()]
   if server and buffer.filename and server.capabilities.referencesProvider then
     server:sync_buffer()
     local params = get_buffer_position_params()
     params.context = {includeDeclaration = true}
     local locations = server:request('textDocument/references', params)
-    if not locations or #locations == 0 then return end
-    for _, location in ipairs(locations) do
-      -- Print trailing ': ' to enable 'find in files' features like double-click, menu items,
-      -- Return keypress, etc.
-      ui._print(_L['[Files Found Buffer]'],
-        string.format('%s:%d: ', tofilename(location.uri), location.range.start.line))
+    if not locations or #locations == 0 then return nil end
+    if not no_print then
+      for _, location in ipairs(locations) do
+        -- Print trailing ': ' to enable 'find in files' features like double-click, menu items,
+        -- Return keypress, etc.
+        ui._print(_L['[Files Found Buffer]'],
+          string.format('%s:%d: ', tofilename(location.uri), location.range.start.line))
+      end
     end
+    return locations
   end
 end
 
