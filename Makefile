@@ -1,5 +1,7 @@
 # Copyright 2018-2022 Mitchell. See LICENSE.
 
+WGET = wget -O $@
+
 # Documentation.
 
 ta = ../..
@@ -18,7 +20,7 @@ luadoc: init.lua
 deps: dkjson.lua
 
 dkjson_tgz = dkjson-2.5.tar.gz
-$(dkjson_tgz): ; wget http://dkolf.de/src/dkjson-lua.fsl/tarball/$@
+$(dkjson_tgz): ; $(WGET) http://dkolf.de/src/dkjson-lua.fsl/tarball/$@
 dkjson.lua: | $(dkjson_tgz) ; tar xzf $| && mv dkjson-*/$@ $@ && rm -r dkjson-*
 
 # Releases.
