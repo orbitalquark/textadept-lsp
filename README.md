@@ -10,18 +10,13 @@ Install this module by copying it into your *~/.textadept/modules/* directory or
 
     local lsp = require('lsp')
 
-You can then set up some language server commands. For example:
+Next, configure the languages you want to have LSP support for. For example, to set up Lua support:
 
     lsp.server_commands.lua = 'lua-lsp'
-    lsp.server_commands.cpp = function()
-      return 'cquery', {
-        cacheDirectory = '/tmp/cquery-cache',
-        compilationDatabaseDirectory = io.get_project_root(),
-        progressReportFrequencyMs = -1
-      }
-    end
 
-When either Lua or cpp files are opened, their associated language servers are automatically
+See #xxx for information on how to set up other languages.
+
+When recognized source code files are opened, their associated language servers are automatically
 started (one per language, though). Note that language servers typically require a root URI,
 so this module uses `io.get_project_root()` for this. If the file being opened is not part
 of a project recognized by Textadept, the language server will not be started.
@@ -317,5 +312,29 @@ Commands are simple string shell commands. Configurations are tables with the fo
   * `command`: String shell command used to run the LSP language server.
   * `init_options`: Table of initialization options to pass to the language server in the
     "initialize" request.
+
+## Language-specific configuration
+
+### C++
+
+    lsp.server_commands.cpp = function()
+      return 'cquery', {
+        cacheDirectory = '/tmp/cquery-cache',
+        compilationDatabaseDirectory = io.get_project_root(),
+        progressReportFrequencyMs = -1
+      }
+    end
+
+### Haskell
+
+    lsp.server_commands.haskell = 'haskell-language-server --lsp'
+
+### Lua
+
+    lsp.server_commands.lua = 'lua-lsp'
+
+### Python
+
+    lsp.server_commands.python = 'python-language-server'
 
 ---
