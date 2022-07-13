@@ -14,7 +14,7 @@ Next, configure the languages you want to have LSP support for. For example, to 
 
     lsp.server_commands.lua = 'lua-lsp'
 
-See #xxx for information on how to set up other languages.
+See [below](#language-specific-configuration) for information on how to set up other languages.
 
 When recognized source code files are opened, their associated language servers are automatically
 started (one per language, though). Note that language servers typically require a root URI,
