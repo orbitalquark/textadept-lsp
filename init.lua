@@ -27,6 +27,8 @@ local json = require('lsp.dkjson')
 --       }
 --     end
 --
+-- (For more example configurations, see the [wiki][].)
+--
 -- When either Lua or cpp files are opened, their associated language servers are automatically
 -- started (one per language, though). Note that language servers typically require a root URI,
 -- so this module uses `io.get_project_root()` for this. If the file being opened is not part
@@ -49,6 +51,7 @@ local json = require('lsp.dkjson')
 -- Textadept and restart.
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
+-- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
 -- @field _G.textadept.editing.autocompleters.lsp (function)
 --   Autocompleter function for a language server.
 -- @field _G.events.LSP_INITIALIZED (string)

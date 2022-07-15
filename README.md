@@ -21,6 +21,8 @@ You can then set up some language server commands. For example:
       }
     end
 
+(For more example configurations, see the [wiki][].)
+
 When either Lua or cpp files are opened, their associated language servers are automatically
 started (one per language, though). Note that language servers typically require a root URI,
 so this module uses `io.get_project_root()` for this. If the file being opened is not part
@@ -43,6 +45,7 @@ and Textadept to hang, waiting for a response. There is no recourse other than t
 Textadept and restart.
 
 [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
+[wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
 
 ## Fields defined by `lsp`
 
