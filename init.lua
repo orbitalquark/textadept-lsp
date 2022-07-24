@@ -492,8 +492,8 @@ end
 -- Returns the start and end buffer positions for the given LSP Range.
 -- @param range LSP Range.
 local function tobufferrange(range)
-  local s = buffer:position_from_line(range.start.line + 1) + range.start.character + 1
-  local e = buffer:position_from_line(range['end'].line + 1) + range['end'].character + 1
+  local s = buffer:position_from_line(range.start.line + 1) + range.start.character
+  local e = buffer:position_from_line(range['end'].line + 1) + range['end'].character
   return s, e
 end
 
@@ -594,6 +594,7 @@ end
 
 ---
 -- Starts a language server based on the current language.
+-- @param cmd Optional language server command to run. The default is read from `server_commands`.
 -- @name start
 function M.start()
   local lang = buffer:get_lexer()
@@ -880,7 +881,7 @@ function M.find_references()
       -- Print trailing ': ' to enable 'find in files' features like double-click, menu items,
       -- Return keypress, etc.
       ui._print(_L['[Files Found Buffer]'],
-        string.format('%s:%d: ', tofilename(location.uri), location.range.start.line))
+        string.format('%s:%d: ', tofilename(location.uri), location.range.start.line + 1))
     end
   end
 end
