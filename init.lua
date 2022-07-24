@@ -596,17 +596,21 @@ end
 -- Starts a language server based on the current language.
 -- @param cmd Optional language server command to run. The default is read from `server_commands`.
 -- @name start
-function M.start()
+function M.start(cmd)
   local lang = buffer:get_lexer()
   if servers[lang] then return end -- already running
   servers[lang] = true -- sentinel until initialization is complete
-  local cmd, init_options = M.server_commands[lang], nil
+  if not cmd then cmd = M.server_commands[lang] end
+  local init_options = nil
   if type(cmd) == 'function' then cmd, init_options = cmd() end
   if type(cmd) == 'table' then cmd, init_options = cmd.command, cmd.init_options end
   if cmd then
+    local orig_buffer = buffer
     local ok, server = pcall(Server.new, lang, cmd, init_options)
     servers[lang] = ok and server or nil -- replace sentinel
     assert(ok, server)
+    if buffer ~= orig_buffer then view:goto_buffer(orig_buffer) end
+    server:notify_opened()
   else
     servers[lang] = nil -- replace sentinel
   end
@@ -928,7 +932,6 @@ events.connect(events.INITIALIZED, function()
   events.connect(events.VIEW_AFTER_SWITCH, notify_opened)
   -- Automatically start language server for the current file, if possible.
   start()
-  notify_opened()
 end)
 
 -- Notify the language server when a buffer is saved.
@@ -1003,6 +1006,7 @@ for i = 1, #m_tools - 1 do
           end
           local button, cmd = ui.dialogs.inputbox{
             title = _L['Start Server...']:gsub('_', ''),
+            text = M.server_commands[buffer:get_lexer()] or '',
             informative_text = string.format('%s %s', buffer:get_lexer(),
               _L['language server shell command:']),
             button1 = _L['OK'], button2 = _L['Cancel']
