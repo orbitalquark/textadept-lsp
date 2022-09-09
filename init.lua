@@ -473,12 +473,7 @@ end
 ---
 -- Silently logs the given message.
 -- @param message String message to log.
-function Server:log(message)
-  local silent_print = ui.silent_print
-  ui.silent_print = true
-  ui._print('[LSP]', message)
-  ui.silent_print = silent_print -- restore
-end
+function Server:log(message) ui._print_silent('[LSP]', message) end
 
 -- Converts the given LSP DocumentUri into a valid filename and returns it.
 -- @param uri LSP DocumentUri to convert into a filename.
@@ -504,7 +499,7 @@ end
 function Server:handle_notification(method, params)
   if method:find('^window/showMessage') then
     -- Show a message to the user.
-    local icons = {'gtk-dialog-error', 'gtk-dialog-warning', 'gtk-dialog-info'}
+    local icons = {'dialog-error', 'dialog-warning', 'dialog-information'}
     local dialog_options = {icon = icons[params.type], text = params.message, string_output = true}
     if not method:find('Request') then
       ui.dialogs.ok_msgbox(dialog_options)
@@ -586,7 +581,7 @@ function Server:notify_opened()
     textDocument = {
       uri = not WIN32 and 'file://' .. buffer.filename or
         ('file:///' .. buffer.filename:gsub('\\', '/')), -- LuaFormatter
-      languageId = buffer:get_lexer(), version = 0, text = buffer:get_text()
+      languageId = buffer.lexer_language, version = 0, text = buffer:get_text()
     }
   })
   self._opened[buffer.filename] = true
@@ -597,7 +592,7 @@ end
 -- @param cmd Optional language server command to run. The default is read from `server_commands`.
 -- @name start
 function M.start(cmd)
-  local lang = buffer:get_lexer()
+  local lang = buffer.lexer_language
   if servers[lang] then return end -- already running
   servers[lang] = true -- sentinel until initialization is complete
   if not cmd then cmd = M.server_commands[lang] end
@@ -620,11 +615,11 @@ end
 -- Stops a running language server based on the current language.
 -- @name stop
 function M.stop()
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if not server then return end
   server:request('shutdown')
   server:notify('exit')
-  servers[buffer:get_lexer()] = nil
+  servers[buffer.lexer_language] = nil
 end
 
 -- Returns a LSP TextDocumentPositionParams structure based on the given or current position
@@ -685,7 +680,7 @@ end
 --   are presented from the current buffer.
 -- @name goto_symbol
 function M.goto_symbol(symbol)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if not server or not buffer.filename then return end
   server:sync_buffer()
   local symbols
@@ -706,7 +701,7 @@ end
 
 -- Autocompleter function using a language server.
 textadept.editing.autocompleters.lsp = function()
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.completionProvider then
     server:sync_buffer()
     -- Fetch a completion list.
@@ -742,7 +737,7 @@ end
 --   uses the current buffer position.
 -- @name hover
 function M.hover(position)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.hoverProvider then
     server:sync_buffer()
     local hover = server:request('textDocument/hover', get_buffer_position_params(position))
@@ -770,7 +765,7 @@ function M.signature_help()
     events.emit(events.CALL_TIP_CLICK)
     return
   end
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.signatureHelpProvider then
     server:sync_buffer()
     signatures = server:request('textDocument/signatureHelp', get_buffer_position_params())
@@ -802,7 +797,7 @@ end
 -- Cycle through signatures.
 -- TODO: this conflicts with textadept.editing's CALL_TIP_CLICK handler.
 events.connect(events.CALL_TIP_CLICK, function(position)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.signatureHelpProvider and signatures and
     signatures.active then
     signatures.active = signatures.active + (position == 1 and -1 or 1)
@@ -821,7 +816,7 @@ end)
 --   'typeDefinition', 'implementation').
 -- @return `true` if a declaration/definition was found; `false` otherwise
 local function goto_definition(kind)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities[kind .. 'Provider'] then
     server:sync_buffer()
     local location = server:request('textDocument/' .. kind, get_buffer_position_params())
@@ -874,7 +869,7 @@ function M.goto_implementation() return goto_definition('implementation') end
 -- Searches for project references to the current symbol and prints them.
 -- @name find_references
 function M.find_references()
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.referencesProvider then
     server:sync_buffer()
     local params = get_buffer_position_params()
@@ -891,7 +886,7 @@ function M.find_references()
 end
 
 -- TODO: function M.select()
---  local server = servers[buffer:get_lexer()]
+--  local server = servers[buffer.lexer_language]
 --  if server and buffer.filename and server.capabilities.selectionRangeProvider then
 --    server:sync_buffer()
 --    local params = get_buffer_position_params()
@@ -905,7 +900,7 @@ end
 -- Selects all instances of the symbol at the current position as multiple selections.
 -- @name select_all_symbol
 function M.select_all_symbol()
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server and buffer.filename and server.capabilities.linkedEditingRangeProvider then
     server:sync_buffer()
     local ranges = server:request('textDocument/linkedEditingRange', get_buffer_position_params())
@@ -921,9 +916,9 @@ end
 -- connection when loading a session on startup. Connect to `events.BUFFER_AFTER_SWITCH` and
 -- `events.VIEW_AFTER_SWITCH` in order to gradually notify the LSP of files opened from a session.
 events.connect(events.INITIALIZED, function()
-  local function start() if M.server_commands[buffer:get_lexer()] then M.start() end end
+  local function start() if M.server_commands[buffer.lexer_language] then M.start() end end
   local function notify_opened()
-    local server = servers[buffer:get_lexer()]
+    local server = servers[buffer.lexer_language]
     if type(server) == 'table' then server:notify_opened() end
   end
   events.connect(events.LEXER_LOADED, start)
@@ -936,7 +931,7 @@ end)
 
 -- Notify the language server when a buffer is saved.
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if not server then return end
   if saved_as then
     server:notify_opened()
@@ -944,7 +939,7 @@ events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
     server:notify('textDocument/didSave', {
       textDocument = {
         uri = not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/'),
-        languageId = buffer:get_lexer(), version = 0
+        languageId = buffer.lexer_language, version = 0
       }
     })
   end
@@ -954,21 +949,21 @@ end)
 
 -- Query the language server for hover information when mousing over identifiers.
 events.connect(events.DWELL_START, function(position)
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server then M.hover(position) end
 end)
 events.connect(events.DWELL_END, function()
   if not buffer.get_lexer then return end
-  local server = servers[buffer:get_lexer()]
+  local server = servers[buffer.lexer_language]
   if server then view:call_tip_cancel() end
 end)
 
 -- Set diagnostic indicator styles.
 events.connect(events.VIEW_NEW, function()
   view.indic_style[M.INDIC_WARN] = view.INDIC_SQUIGGLE
-  view.indic_fore[M.INDIC_WARN] = view.property_int['color.yellow']
+  view.indic_fore[M.INDIC_WARN] = view.colors.yellow
   view.indic_style[M.INDIC_ERROR] = view.INDIC_SQUIGGLE
-  view.indic_fore[M.INDIC_ERROR] = view.property_int['color.red']
+  view.indic_fore[M.INDIC_ERROR] = view.colors.red
 end)
 
 -- Gracefully shutdown language servers on reset. They will be restarted as buffers are reloaded.
@@ -976,7 +971,7 @@ events.connect(events.RESET_BEFORE, function()
   for _, server in ipairs(servers) do
     server:request('shutdown')
     server:notify('exit')
-    servers[buffer:get_lexer()] = nil
+    servers[buffer.lexer_language] = nil
   end
 end)
 
@@ -994,11 +989,11 @@ for i = 1, #m_tools - 1 do
       table.insert(m_tools, i, {
         title = _L['Language Server'],
         {_L['Start Server...'], function()
-          local server = servers[buffer:get_lexer()]
+          local server = servers[buffer.lexer_language]
           if server then
             ui.dialogs.ok_msgbox{
               title = _L['Start Server...']:gsub('_', ''),
-              text = string.format('%s %s', buffer:get_lexer(),
+              text = string.format('%s %s', buffer.lexer_language,
                 _L['language server is already running']),
               no_cancel = true
             }
@@ -1006,25 +1001,25 @@ for i = 1, #m_tools - 1 do
           end
           local button, cmd = ui.dialogs.inputbox{
             title = _L['Start Server...']:gsub('_', ''),
-            text = M.server_commands[buffer:get_lexer()] or '',
-            informative_text = string.format('%s %s', buffer:get_lexer(),
+            text = M.server_commands[buffer.lexer_language] or '',
+            informative_text = string.format('%s %s', buffer.lexer_language,
               _L['language server shell command:']),
             button1 = _L['OK'], button2 = _L['Cancel']
           }
           if button == 1 and cmd ~= '' then M.start(cmd) end
         end},
         {_L['Stop Server'], function()
-          local server = servers[buffer:get_lexer()]
+          local server = servers[buffer.lexer_language]
           if not server then return end
           local button = ui.dialogs.ok_msgbox{
             title = _L['Stop Server?'],
-            text = string.format('%s %s?', _L['Stop the language server for'], buffer:get_lexer())
+            text = string.format('%s %s?', _L['Stop the language server for'], buffer.lexer_language)
           }
           if button == 1 then M.stop() end
         end},
         {''},
         {_L['Goto Workspace Symbol...'], function()
-          local server = servers[buffer:get_lexer()]
+          local server = servers[buffer.lexer_language]
           if not server then return end
           local button, query = ui.dialogs.inputbox{
             title = _L['Query Symbol...'], informative_text = _L['Symbol name or name part:'],
