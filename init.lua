@@ -102,7 +102,6 @@ if not rawget(_L, 'Language Server') then
   _L['language server shell command:'] = 'language server shell command:'
   _L['Stop Server?'] = 'Stop Server?'
   _L['Stop the language server for'] = 'Stop the language server for'
-  _L['Query Symbol...'] = 'Query Symbol...'
   _L['Symbol name or name part:'] = 'Symbol name or name part:'
   -- Status.
   _L['Note: completion list incomplete'] = 'Note: completion list incomplete'
@@ -203,7 +202,7 @@ local Server = {}
 function Server.new(lang, cmd, init_options)
   local root = assert(io.get_project_root(), _L['No project root found'])
   local current_view = view
-  ui._print('[LSP]', 'Starting language server: ' .. cmd)
+  ui.print_to('[LSP]', 'Starting language server: ' .. cmd)
   ui.goto_view(current_view)
   local server = setmetatable({lang = lang, request_id = 0, incoming_messages = {}},
     {__index = Server})
@@ -473,7 +472,7 @@ end
 ---
 -- Silently logs the given message.
 -- @param message String message to log.
-function Server:log(message) ui._print_silent('[LSP]', message) end
+function Server:log(message) ui.print_silent_to('[LSP]', message) end
 
 -- Converts the given LSP DocumentUri into a valid filename and returns it.
 -- @param uri LSP DocumentUri to convert into a filename.
@@ -500,15 +499,14 @@ function Server:handle_notification(method, params)
   if method:find('^window/showMessage') then
     -- Show a message to the user.
     local icons = {'dialog-error', 'dialog-warning', 'dialog-information'}
-    local dialog_options = {icon = icons[params.type], text = params.message, string_output = true}
+    local dialog_options = {icon = icons[params.type], title = 'Message', text = params.message}
     if not method:find('Request') then
-      ui.dialogs.ok_msgbox(dialog_options)
+      ui.dialogs.message(dialog_options)
     else
       -- Present options in the message and respond with the selected option.
       for i = 1, #params.actions do dialog_options['button' .. i] = params.actions[i].title end
-      local result = {title = ui.dialogs.msgbox(dialog_options)}
-      -- TODO: option cannot be "delete"
-      if result.title == 'delete' then result = json.null end
+      local result = {title = params.actions[ui.dialogs.message(dialog_options)]}
+      if not result.title then result = json.null end
       self:respond(params.id, result)
     end
   elseif method == 'window/logMessage' then
@@ -664,13 +662,11 @@ local function goto_selected_symbol(symbols)
     end
     items[#items + 1] = tofilename(symbol.location.uri)
   end
-  -- Show the dialog.
-  local button, i = ui.dialogs.filteredlist{
+  -- Show the dialog and jump to the selected symbol.
+  local i = ui.dialogs.list{
     title = 'Goto Symbol', columns = {'Name', 'Kind', 'Location'}, items = items
   }
-  if button == -1 then return end
-  -- Jump to the selected symbol.
-  goto_location(symbols[i].location)
+  if i then goto_location(symbols[i].location) end
 end
 
 ---
@@ -831,8 +827,8 @@ local function goto_definition(kind)
         for i = 1, #location do items[#items + 1] = tofilename(location[i].uri) end
         local title =
           (kind == 'declaration' and _L['Goto Declaration'] or _L['Goto Definition']):gsub('_', '')
-        local i = ui.dialogs.filteredlist{title = title, columns = _L['Filename'], items = items}
-        if i == -1 then return true end -- definition found; user canceled
+        local i = ui.dialogs.list{title = title, items = items}
+        if not i then return true end -- definition found; user canceled
         location = location[i]
       end
     end
@@ -879,7 +875,7 @@ function M.find_references()
     for _, location in ipairs(locations) do
       -- Print trailing ': ' to enable 'find in files' features like double-click, menu items,
       -- Return keypress, etc.
-      ui._print(_L['[Files Found Buffer]'],
+      ui.print_to(_L['[Files Found Buffer]'],
         string.format('%s:%d: ', tofilename(location.uri), location.range.start.line + 1))
     end
   end
@@ -991,27 +987,24 @@ for i = 1, #m_tools - 1 do
         {_L['Start Server...'], function()
           local server = servers[buffer.lexer_language]
           if server then
-            ui.dialogs.ok_msgbox{
+            ui.dialogs.message{
               title = _L['Start Server...']:gsub('_', ''),
               text = string.format('%s %s', buffer.lexer_language,
-                _L['language server is already running']),
-              no_cancel = true
+                _L['language server is already running'])
             }
             return
           end
-          local button, cmd = ui.dialogs.inputbox{
-            title = _L['Start Server...']:gsub('_', ''),
-            text = M.server_commands[buffer.lexer_language] or '',
-            informative_text = string.format('%s %s', buffer.lexer_language,
+          local cmd = ui.dialogs.input{
+            title = string.format('%s %s', buffer.lexer_language,
               _L['language server shell command:']),
-            button1 = _L['OK'], button2 = _L['Cancel']
+            text = M.server_commands[buffer.lexer_language]
           }
-          if button == 1 and cmd ~= '' then M.start(cmd) end
+          if cmd and cmd ~= '' then M.start(cmd) end
         end},
         {_L['Stop Server'], function()
           local server = servers[buffer.lexer_language]
           if not server then return end
-          local button = ui.dialogs.ok_msgbox{
+          local button = ui.dialogs.message{
             title = _L['Stop Server?'],
             text = string.format('%s %s?', _L['Stop the language server for'], buffer.lexer_language)
           }
@@ -1021,11 +1014,10 @@ for i = 1, #m_tools - 1 do
         {_L['Goto Workspace Symbol...'], function()
           local server = servers[buffer.lexer_language]
           if not server then return end
-          local button, query = ui.dialogs.inputbox{
-            title = _L['Query Symbol...'], informative_text = _L['Symbol name or name part:'],
-            button1 = _L['OK'], button2 = _L['Cancel']
+          local query = ui.dialogs.input{
+            title = _L['Symbol name or name part:']
           }
-          if button == 1 and query ~= '' then M.goto_symbol(query) end
+          if query and query ~= '' then M.goto_symbol(query) end
         end},
         {_L['Goto Document Symbol...'], M.goto_symbol},
         {_L['Autocomplete'], function() textadept.editing.autocomplete('lsp') end},
