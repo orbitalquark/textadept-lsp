@@ -111,15 +111,15 @@ if not rawget(_L, 'Language Server') then
   _L['Language Server'] = 'Lan_guage Server'
   _L['Start Server...'] = '_Start Server...'
   _L['Stop Server'] = 'Sto_p Server'
-  _L['Goto Workspace Symbol...'] = 'Goto _Workspace Symbol...'
-  _L['Goto Document Symbol...'] = 'Goto Document S_ymbol...'
+  _L['Go To Workspace Symbol...'] = 'Go To _Workspace Symbol...'
+  _L['Go To Document Symbol...'] = 'Go To Document S_ymbol...'
   _L['Autocomplete'] = '_Autocomplete'
   _L['Show Hover Information'] = 'Show _Hover Information'
   _L['Show Signature Help'] = 'Show Si_gnature Help'
-  _L['Goto Declaration'] = 'Goto De_claration'
-  _L['Goto Definition'] = 'Goto _Definition'
-  _L['Goto Type Definition'] = 'Goto _Type Definition'
-  _L['Goto Implementation'] = 'Goto _Implementation'
+  _L['Go To Declaration'] = 'Go To De_claration'
+  _L['Go To Definition'] = 'Go To _Definition'
+  _L['Go To Type Definition'] = 'Go To _Type Definition'
+  _L['Go To Implementation'] = 'Go To _Implementation'
   _L['Find References'] = 'Find _References'
   _L['Select All Symbol'] = 'Select Al_l Symbol'
   _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
@@ -181,7 +181,7 @@ local xpm_map = {
 local completion_item_kind_set = {} -- for LSP capabilities
 for i = 1, #xpm_map do completion_item_kind_set[i] = i end
 
--- Map of LSP SymbolKinds to names shown in symbol filteredlists.
+-- Map of LSP SymbolKinds to names shown in symbol lists.
 local symbol_kinds = {
   'File', 'Module', 'Namespace', 'Package', 'Class', 'Method', 'Property', 'Field', 'Constructor',
   'Enum', 'Interface', 'Function', 'Variable', 'Constant', 'String', 'Number', 'Boolean', 'Array',
@@ -649,7 +649,7 @@ end
 -- Jumps to the symbol selected from a list of LSP SymbolInformation or structures.
 -- @param symbols List of LSP SymbolInformation or DocumentSymbol structures.
 local function goto_selected_symbol(symbols)
-  -- Prepare items for display in a filteredlist dialog.
+  -- Prepare items for display in a list dialog.
   local items = {}
   for _, symbol in ipairs(symbols) do
     items[#items + 1] = symbol.name
@@ -664,7 +664,7 @@ local function goto_selected_symbol(symbols)
   end
   -- Show the dialog and jump to the selected symbol.
   local i = ui.dialogs.list{
-    title = 'Goto Symbol', columns = {'Name', 'Kind', 'Location'}, items = items
+    title = 'Go To Symbol', columns = {'Name', 'Kind', 'Location'}, items = items
   }
   if i then goto_location(symbols[i].location) end
 end
@@ -711,7 +711,11 @@ textadept.editing.autocompleters.lsp = function()
     for _, symbol in ipairs(completions) do
       local label = symbol.textEdit and symbol.textEdit.newText or symbol.insertText or symbol.label
       -- TODO: some labels can have spaces and need proper handling.
-      symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
+      if xpm_map[symbol.kind] > 0 then
+        symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
+      else
+        symbols[#symbols + 1] = label
+      end
       -- TODO: if symbol.preselect then symbols.selected = label end?
     end
     -- Return the autocompletion list.
@@ -822,11 +826,12 @@ local function goto_definition(kind)
       if #location == 1 then
         location = location[1]
       else
-        -- Select one from a filteredlist.
+        -- Select one from a list.
         local items = {}
         for i = 1, #location do items[#items + 1] = tofilename(location[i].uri) end
         local title =
-          (kind == 'declaration' and _L['Goto Declaration'] or _L['Goto Definition']):gsub('_', '')
+          (kind == 'declaration' and _L['Go To Declaration'] or _L['Go To Definition']):gsub('[_&]',
+            '')
         local i = ui.dialogs.list{title = title, items = items}
         if not i then return true end -- definition found; user canceled
         location = location[i]
@@ -988,7 +993,7 @@ for i = 1, #m_tools - 1 do
           local server = servers[buffer.lexer_language]
           if server then
             ui.dialogs.message{
-              title = _L['Start Server...']:gsub('_', ''),
+              title = _L['Start Server...']:gsub('[_&]', ''),
               text = string.format('%s %s', buffer.lexer_language,
                 _L['language server is already running'])
             }
@@ -1011,7 +1016,7 @@ for i = 1, #m_tools - 1 do
           if button == 1 then M.stop() end
         end},
         {''},
-        {_L['Goto Workspace Symbol...'], function()
+        {_L['Go To Workspace Symbol...'], function()
           local server = servers[buffer.lexer_language]
           if not server then return end
           local query = ui.dialogs.input{
@@ -1019,14 +1024,14 @@ for i = 1, #m_tools - 1 do
           }
           if query and query ~= '' then M.goto_symbol(query) end
         end},
-        {_L['Goto Document Symbol...'], M.goto_symbol},
+        {_L['Go To Document Symbol...'], M.goto_symbol},
         {_L['Autocomplete'], function() textadept.editing.autocomplete('lsp') end},
         {_L['Show Hover Information'], M.hover},
         {_L['Show Signature Help'], M.signature_help},
-        {_L['Goto Declaration'], M.goto_declaration},
-        {_L['Goto Definition'], M.goto_definition},
-        {_L['Goto Type Definition'], M.goto_type_definition},
-        {_L['Goto Implementation'], M.goto_implementation},
+        {_L['Go To Declaration'], M.goto_declaration},
+        {_L['Go To Definition'], M.goto_definition},
+        {_L['Go To Type Definition'], M.goto_type_definition},
+        {_L['Go To Implementation'], M.goto_implementation},
         {_L['Find References'], M.find_references},
         {_L['Select All Symbol'], M.select_all_symbol},
         {''},
