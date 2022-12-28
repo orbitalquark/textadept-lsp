@@ -77,10 +77,6 @@ local json = require('lsp.dkjson')
 -- @field log_rpc (bool)
 --   Log RPC correspondence to the LSP message buffer.
 --   The default value is `false`.
--- @field INDIC_WARN (number)
---   The warning diagnostic indicator number.
--- @field INDIC_ERROR (number)
---   The error diagnostic indicator number.
 -- @field show_diagnostics (bool)
 --   Whether or not to show diagnostics.
 --   The default value is `true`, and shows them as annotations.
@@ -129,9 +125,6 @@ local lsp_events = {'lsp_initialized', 'lsp_notification'}
 for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
 M.log_rpc = false
-M.INDIC_WARN = _SCINTILLA.next_indic_number()
-M.INDIC_ERROR = _SCINTILLA.next_indic_number()
-
 M.show_diagnostics = true
 M.show_all_diagnostics = false
 
@@ -523,7 +516,7 @@ function Server:handle_notification(method, params)
     local current_line = buffer:line_from_position(buffer.current_pos)
     local orig_lines_from_top = view:visible_from_doc_line(current_line) - view.first_visible_line
     -- Clear any existing diagnostics.
-    for _, indic in ipairs{M.INDIC_WARN, M.INDIC_ERROR} do
+    for _, indic in ipairs{textadept.run.INDIC_WARNING, textadept.run.INDIC_ERROR} do
       buffer.indicator_current = indic
       buffer:indicator_clear_range(1, buffer.length)
     end
@@ -531,7 +524,7 @@ function Server:handle_notification(method, params)
     -- Add diagnostics.
     for _, diagnostic in ipairs(params.diagnostics) do
       buffer.indicator_current = (not diagnostic.severity or diagnostic.severity == 1) and
-        M.INDIC_ERROR or M.INDIC_WARN -- TODO: diagnostic.tags
+        textadept.run.INDIC_ERROR or textadept.run.INDIC_WARNING -- TODO: diagnostic.tags
       local s, e = tobufferrange(diagnostic.range)
       local line = buffer:line_from_position(e)
       if M.show_all_diagnostics or (current_line ~= line and current_line + 1 ~= line) then
@@ -957,14 +950,6 @@ events.connect(events.DWELL_END, function()
   if not buffer.get_lexer then return end
   local server = servers[buffer.lexer_language]
   if server then view:call_tip_cancel() end
-end)
-
--- Set diagnostic indicator styles.
-events.connect(events.VIEW_NEW, function()
-  view.indic_style[M.INDIC_WARN] = view.INDIC_SQUIGGLE
-  view.indic_fore[M.INDIC_WARN] = view.colors.yellow
-  view.indic_style[M.INDIC_ERROR] = view.INDIC_SQUIGGLE
-  view.indic_fore[M.INDIC_ERROR] = view.colors.red
 end)
 
 -- Gracefully shutdown language servers on reset. They will be restarted as buffers are reloaded.
