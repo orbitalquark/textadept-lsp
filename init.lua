@@ -65,8 +65,7 @@ local json = require('lsp.dkjson')
 --   * _`server`_: The LSP server.
 -- @field _G.events.LSP_NOTIFICATION (string)
 --   Emitted when an LSP server emits an unhandled notification.
---   This is useful for handling server-specific notifications. Responses can be sent via
---   [`Server:respond()`]().
+--   This is useful for handling server-specific notifications.
 --   An event handler should return `true`.
 --   Arguments:
 --
@@ -74,6 +73,18 @@ local json = require('lsp.dkjson')
 --   * _`server`_: The LSP server.
 --   * _`method`_: The string LSP notification method name.
 --   * _`params`_: The table of LSP notification params. Contents may be server-specific.
+-- @field _G.events.LSP_REQUEST (string)
+--   Emitted when an LSP server emits an unhandled request.
+--   This is useful for handling server-specific requests. Responses are sent using
+--   [`Server:respond()`]().
+--   An event handler should return `true`.
+--   Arguments:
+--
+--   * _`lang`_: The lexer name of the LSP language.
+--   * _`server`_: The LSP server.
+--   * _`id`_: The integer LSP request ID.
+--   * _`method`_: The string LSP request method name.
+--   * _`params`_: The table of LSP request params.
 -- @field log_rpc (bool)
 --   Log RPC correspondence to the LSP message buffer.
 --   The default value is `false`.
@@ -121,7 +132,7 @@ if not rawget(_L, 'Language Server') then
   _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
 end
 
-local lsp_events = {'lsp_initialized', 'lsp_notification'}
+local lsp_events = {'lsp_initialized', 'lsp_notification', 'lsp_request'}
 for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
 M.log_rpc = false
@@ -386,9 +397,8 @@ function Server:request(method, params)
     -- TODO: error handling for message
     if not message.id then
       self:handle_notification(message.method, message.params)
-    elseif tonumber(message.id) > self.request_id then
-      self:log('Ignoring incoming server request: ' .. message.method)
-      self.request_id = tonumber(message.id) + 1 -- update
+    elseif message.method and not message.result then -- params may be nil
+      self:handle_request(message.id, message.method, message.params)
       message.id = nil
     end
   until message.id
@@ -428,6 +438,8 @@ function Server:handle_data(data)
   local message = json.decode(data)
   if not message.id then
     self:handle_notification(message.method, message.params)
+  elseif message.method and not message.result then -- params may be nil
+    self:handle_request(message.id, message.method, message.params)
   else
     self:log('Caching incoming server message: ' .. message.id)
     table.insert(self.incoming_messages, message)
@@ -489,19 +501,9 @@ end
 -- @param method String method name of the notification.
 -- @param params Table of parameters for the notification.
 function Server:handle_notification(method, params)
-  if method:find('^window/showMessage') then
+  if method == 'window/showMessage' then
     -- Show a message to the user.
-    local icons = {'dialog-error', 'dialog-warning', 'dialog-information'}
-    local dialog_options = {icon = icons[params.type], title = 'Message', text = params.message}
-    if not method:find('Request') then
-      ui.dialogs.message(dialog_options)
-    else
-      -- Present options in the message and respond with the selected option.
-      for i = 1, #params.actions do dialog_options['button' .. i] = params.actions[i].title end
-      local result = {title = params.actions[ui.dialogs.message(dialog_options)]}
-      if not result.title then result = json.null end
-      self:respond(params.id, result)
-    end
+    ui.statusbar_text = params.message
   elseif method == 'window/logMessage' then
     -- Silently log a message.
     local level = {'ERROR', 'WARN', 'INFO', 'LOG'}
@@ -542,6 +544,28 @@ function Server:handle_notification(method, params)
   elseif not events.emit(events.LSP_NOTIFICATION, self.lang, self, method, params) then
     -- Unknown notification.
     self:log('Unexpected notification: ' .. method)
+  end
+end
+
+---
+-- Responds to a request from this language server.
+-- @param id ID number of the server's request.
+-- @param method String method name of the request.
+-- @param params Table of parameters for the request.
+function Server:handle_request(id, method, params)
+  if method == 'window/showMessageRequest' then
+    -- Show a message to the user and wait for a response.
+    local icons = {'dialog-error', 'dialog-warning', 'dialog-information'}
+    local dialog_options = {icon = icons[params.type], title = 'Message', text = params.message}
+    -- Present options in the message and respond with the selected option.
+    for i = 1, #params.actions do dialog_options['button' .. i] = params.actions[i].title end
+    local result = {title = params.actions[ui.dialogs.message(dialog_options)]}
+    if not result.title then result = json.null end
+    self:respond(id, result)
+  elseif not events.emit(events.LSP_REQUEST, self.lang, self, id, method, params) then
+    -- Unknown notification.
+    self:log('Responding with null to server request: ' .. method)
+    self:respond(id, nil)
   end
 end
 
