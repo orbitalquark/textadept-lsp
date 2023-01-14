@@ -1162,4 +1162,19 @@ for i = 1, #m_tools - 1 do
   end
 end
 
+-- Override "Tools > Complete Symbol" and "Tools > Show Documentation" menus and key bindings.
+local complete_symbol = textadept.menu.menubar[_L['Tools']][_L['Complete Symbol']][2]
+local function autocomplete() if not M.autocomplete() then complete_symbol() end end
+textadept.menu.menubar[_L['Tools']][_L['Complete Symbol']][2] = autocomplete
+keys['ctrl+ '] = autocomplete
+if OSX then keys['cmd+ '] = autocomplete end
+local function show_documentation()
+  M.signature_help()
+  if not view:call_tip_active() then M.hover() end
+  if not view:call_tip_active() then textadept.editing.show_documentation() end
+end
+textadept.menu.menubar[_L['Tools']][_L['Show Documentation']][2] = show_documentation
+keys['ctrl+?'] = show_documentation
+if OSX or CURSES then keys[OSX and 'cmd+?' or 'meta+?'] = show_documentation end
+
 return M
