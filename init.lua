@@ -817,13 +817,13 @@ function M.hover(position)
   view:call_tip_show(position or buffer.current_pos, contents)
 end
 
-local signatures
+local signatures, last_pos
 ---
 -- Shows a calltip for the current function.
 -- If a call tip is already shown, cycles to the next one if it exists.
 -- @name signature_help
 function M.signature_help()
-  if view:call_tip_active() and #signatures > 0 then
+  if view:call_tip_active() and #signatures > 1 then
     events.emit(events.CALL_TIP_CLICK)
     return
   end
@@ -855,7 +855,8 @@ function M.signature_help()
     signature.text = doc
   end
   local signature = signatures[(signature_help.activeSignature or 0) + 1]
-  view:call_tip_show(buffer.current_pos, signature.text)
+  if not view:call_tip_active() then last_pos = buffer.current_pos end
+  view:call_tip_show(last_pos, signature.text)
   local params = signature.parameters
   if not params then return end
   local param = params[(signature.activeParameter or signature_help.activeParameter or 0) + 1]
