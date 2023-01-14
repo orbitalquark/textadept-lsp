@@ -195,7 +195,7 @@ local Server = {}
 function Server.new(lang, cmd, init_options)
   local root = assert(io.get_project_root(), _L['No project root found'])
   local current_view = view
-  ui.print_to('[LSP]', 'Starting language server: ' .. cmd)
+  ui.print_silent_to('[LSP]', 'Starting language server: ' .. cmd)
   ui.goto_view(current_view)
   local server = setmetatable({lang = lang, request_id = 0, incoming_messages = {}},
     {__index = Server})
