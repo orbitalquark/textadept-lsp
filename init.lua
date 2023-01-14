@@ -258,9 +258,9 @@ function Server.new(lang, cmd, init_options)
         signatureHelp = {
           -- dynamicRegistration = false, -- not supported
           signatureInformation = {
-            documentationFormat = {'plaintext'}
-            -- parameterInformation = {labelOffsetSupport = true},
-            -- activeParameterSupport = true
+            documentationFormat = {'plaintext'}, -- LuaFormatter
+            parameterInformation = {labelOffsetSupport = true}, -- LuaFormatter
+            activeParameterSupport = true
           } -- LuaFormatter
           -- contextSupport = true
         },
@@ -823,38 +823,43 @@ local signatures
 -- If a call tip is already shown, cycles to the next one if it exists.
 -- @name signature_help
 function M.signature_help()
-  if view:call_tip_active() then
+  if view:call_tip_active() and #signatures > 0 then
     events.emit(events.CALL_TIP_CLICK)
     return
   end
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.signatureHelpProvider then
-    server:sync_buffer()
-    signatures = server:request('textDocument/signatureHelp', get_buffer_position_params())
-    if not signatures or #signatures.signatures == 0 then
-      signatures = {} -- reset
-      return
-    end
-    signatures.signatures.active = (signatures.activeSignature or 0) + 1
-    signatures = signatures.signatures
-    for i, signature in ipairs(signatures) do
-      local doc = signature.documentation or ''
-      -- Construct calltip text.
-      if type(doc) == 'table' then doc = doc.value end -- LSP MarkupContent
-      doc = string.format('%s\n%s', signature.label, doc)
-      -- Wrap long lines in a rudimentary way.
-      local lines, edge_column = {}, view.edge_column
-      if edge_column == 0 then edge_column = 80 end
-      for line in doc:gmatch('[^\n]+') do
-        for j = 1, #line, edge_column do lines[#lines + 1] = line:sub(j, j + edge_column - 1) end
-      end
-      doc = table.concat(lines, '\\\n')
-      -- Add arrow indicators for multiple signatures.
-      if #signatures > 1 then doc = '\001' .. doc:gsub('\n', '\n\002', 1) end
-      signatures[i] = doc
-    end
-    view:call_tip_show(buffer.current_pos, signatures[signatures.active])
+  if not (server and buffer.filename and server.capabilities.signatureHelpProvider) then return end
+  server:sync_buffer()
+  local params = get_buffer_position_params()
+  if view:call_tip_active() then params.isRetrigger = true end
+  local signature_help = server:request('textDocument/signatureHelp', params)
+  if not signature_help or #signature_help.signatures == 0 then
+    signatures = {} -- reset
+    return
   end
+  signatures = signature_help.signatures
+  for _, signature in ipairs(signatures) do
+    local doc = signature.documentation or ''
+    -- Construct calltip text.
+    if type(doc) == 'table' then doc = doc.value end -- LSP MarkupContent
+    doc = string.format('%s\n%s', signature.label, doc)
+    -- Wrap long lines in a rudimentary way.
+    local lines, edge_column = {}, view.edge_column
+    if edge_column == 0 then edge_column = not CURSES and 100 or 80 end
+    for line in doc:gmatch('[^\n]+') do
+      for j = 1, #line, edge_column do lines[#lines + 1] = line:sub(j, j + edge_column - 1) end
+    end
+    doc = table.concat(lines, '\n')
+    -- Add arrow indicators for multiple signatures.
+    if #signatures > 1 then doc = '\001' .. doc:gsub('\n', '\n\002', 1) end
+    signature.text = doc
+  end
+  local signature = signatures[(signature_help.activeSignature or 0) + 1]
+  view:call_tip_show(buffer.current_pos, signature.text)
+  local params = signature.parameters
+  if not params then return end
+  local param = params[(signature.activeParameter or signature_help.activeParameter or 0) + 1]
+  if param then view:call_tip_set_hlt(param.label[1] + 1, param.label[2] + 1) end
 end
 -- Cycle through signatures.
 -- TODO: this conflicts with textadept.editing's CALL_TIP_CLICK handler.
