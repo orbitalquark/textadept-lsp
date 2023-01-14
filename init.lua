@@ -753,21 +753,20 @@ end
 -- @name hover
 function M.hover(position)
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.hoverProvider then
-    server:sync_buffer()
-    local hover = server:request('textDocument/hover', get_buffer_position_params(position))
-    if not hover then return end
-    local contents = hover.contents
-    if type(contents) == 'table' then
-      -- LSP MarkedString[] or MarkupContent.
-      for i, content in ipairs(contents) do
-        if type(content) == 'table' then contents[i] = content.value end
-      end
-      contents = contents.value or table.concat(contents, '\n')
+  if not (server and buffer.filename and server.capabilities.hoverProvider) then return end
+  server:sync_buffer()
+  local hover = server:request('textDocument/hover', get_buffer_position_params(position))
+  if not hover then return end
+  local contents = hover.contents
+  if type(contents) == 'table' then
+    -- LSP MarkedString[] or MarkupContent.
+    for i, content in ipairs(contents) do
+      if type(content) == 'table' then contents[i] = content.value end
     end
-    if contents == '' then return end
-    view:call_tip_show(position or buffer.current_pos, contents)
+    contents = contents.value or table.concat(contents, '\n')
   end
+  if contents == '' then return end
+  view:call_tip_show(position or buffer.current_pos, contents)
 end
 
 local signatures
@@ -813,16 +812,15 @@ end
 -- TODO: this conflicts with textadept.editing's CALL_TIP_CLICK handler.
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.signatureHelpProvider and signatures and
-    signatures.active then
-    signatures.active = signatures.active + (position == 1 and -1 or 1)
-    if signatures.active > #signatures then
-      signatures.active = 1
-    elseif signatures.active < 1 then
-      signatures.active = #signatures
-    end
-    view:call_tip_show(buffer.current_pos, signatures[signatures.active])
+  if not (server and buffer.filename and server.capabilities.signatureHelpProvider and signatures and
+    signatures.active) then return end
+  signatures.active = signatures.active + (position == 1 and -1 or 1)
+  if signatures.active > #signatures then
+    signatures.active = 1
+  elseif signatures.active < 1 then
+    signatures.active = #signatures
   end
+  view:call_tip_show(buffer.current_pos, signatures[signatures.active])
 end)
 
 -- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface),
@@ -832,31 +830,28 @@ end)
 -- @return `true` if a declaration/definition was found; `false` otherwise
 local function goto_definition(kind)
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities[kind .. 'Provider'] then
-    server:sync_buffer()
-    local location = server:request('textDocument/' .. kind, get_buffer_position_params())
-    if not location or not location.uri and #location == 0 then return false end
-    if not location.uri then
-      -- List of LSP Locations, instead of a single Location.
-      if #location == 1 then
-        location = location[1]
-      else
-        -- Select one from a list.
-        local items = {}
-        for i = 1, #location do items[#items + 1] = tofilename(location[i].uri) end
-        local title =
-          (kind == 'declaration' and _L['Go To Declaration'] or _L['Go To Definition']):gsub('[_&]',
-            '')
-        local i = ui.dialogs.list{title = title, items = items}
-        if not i then return true end -- definition found; user canceled
-        location = location[i]
-      end
+  if not (server and buffer.filename and server.capabilities[kind .. 'Provider']) then return false end
+  server:sync_buffer()
+  local location = server:request('textDocument/' .. kind, get_buffer_position_params())
+  if not location or not location.uri and #location == 0 then return false end
+  if not location.uri then
+    -- List of LSP Locations, instead of a single Location.
+    if #location == 1 then
+      location = location[1]
+    else
+      -- Select one from a list.
+      local items = {}
+      for i = 1, #location do items[#items + 1] = tofilename(location[i].uri) end
+      local title =
+        (kind == 'declaration' and _L['Go To Declaration'] or _L['Go To Definition']):gsub('[_&]',
+          '')
+      local i = ui.dialogs.list{title = title, items = items}
+      if not i then return true end -- definition found; user canceled
+      location = location[i]
     end
-    goto_location(location)
-    return true
-  else
-    return false
   end
+  goto_location(location)
+  return true
 end
 
 ---
@@ -917,14 +912,15 @@ end
 -- @name select_all_symbol
 function M.select_all_symbol()
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.linkedEditingRangeProvider then
-    server:sync_buffer()
-    local ranges = server:request('textDocument/linkedEditingRange', get_buffer_position_params())
-    if not ranges then return end
-    ranges = ranges.ranges
-    buffer:set_selection(tobufferrange(ranges[1]))
-    for i = 2, #ranges do buffer:add_selection(tobufferrange(ranges[i])) end
+  if not (server and buffer.filename and server.capabilities.linkedEditingRangeProvider) then
+    return
   end
+  server:sync_buffer()
+  local ranges = server:request('textDocument/linkedEditingRange', get_buffer_position_params())
+  if not ranges then return end
+  ranges = ranges.ranges
+  buffer:set_selection(tobufferrange(ranges[1]))
+  for i = 2, #ranges do buffer:add_selection(tobufferrange(ranges[i])) end
 end
 
 -- Setup events to automatically start language servers and notify them as files are opened.
