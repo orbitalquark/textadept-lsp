@@ -1009,14 +1009,16 @@ events.connect(events.DWELL_END, function()
   if server then view:call_tip_cancel() end
 end)
 
--- Gracefully shutdown language servers on reset. They will be restarted as buffers are reloaded.
-events.connect(events.RESET_BEFORE, function()
+-- Gracefully shut down servers on reset or quit.
+function shutdown_servers()
   for _, server in ipairs(servers) do
     server:request('shutdown')
     server:notify('exit')
     servers[buffer.lexer_language] = nil
   end
-end)
+end
+events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as buffers are reloaded
+events.connect(events.QUIT, shutdown_servers, 1)
 
 -- Add a menu.
 -- (Insert 'Language Server' menu in alphabetical order.)
