@@ -877,23 +877,47 @@ function M.goto_type_definition() return goto_definition('typeDefinition') end
 function M.goto_implementation() return goto_definition('implementation') end
 
 ---
--- Searches for project references to the current symbol and prints them.
+-- Searches for project references to the current symbol and prints them like "Find in Files".
 -- @name find_references
 function M.find_references()
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.referencesProvider then
-    server:sync_buffer()
-    local params = get_buffer_position_params()
-    params.context = {includeDeclaration = true}
-    local locations = server:request('textDocument/references', params)
-    if not locations or #locations == 0 then return end
-    for _, location in ipairs(locations) do
-      -- Print trailing ': ' to enable 'find in files' features like double-click, menu items,
-      -- Return keypress, etc.
-      ui.print_to(_L['[Files Found Buffer]'],
-        string.format('%s:%d: ', tofilename(location.uri), location.range.start.line + 1))
-    end
+  if not (server and buffer.filename and server.capabilities.referencesProvider) then return end
+  server:sync_buffer()
+  local params = get_buffer_position_params()
+  params.context = {includeDeclaration = true}
+  local locations = server:request('textDocument/references', params)
+  if not locations or #locations == 0 then return end
+
+  local line, pos = buffer:get_cur_line()
+  local before, after = line:sub(1, pos - 1), line:sub(pos)
+  local symbol = before:match('[%w_]*$') .. after:match('^[%w_]*') -- TODO: lang-specific chars
+  local root = io.get_project_root()
+  ui.print_to(_L['[Files Found Buffer]'],
+    string.format('%s: %s\n%s %s', _L['Find References']:gsub('[_&]', ''), symbol, _L['Directory:'],
+      root))
+  buffer.indicator_current = ui.find.INDIC_FIND
+
+  local orig_buffer, buffer = buffer, buffer.new()
+  view:goto_buffer(orig_buffer)
+  for _, location in ipairs(locations) do
+    local filename = tofilename(location.uri)
+    local f = io.open(filename, 'rb')
+    buffer:target_whole_document()
+    buffer:replace_target(f:read('a'))
+    f:close()
+    if filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
+    local line_num = location.range.start.line + 1
+    line = buffer:get_line(line_num)
+    _G.buffer:add_text(string.format('%s:%d:%s', filename, line_num, line))
+    local pos = _G.buffer.current_pos - #line + location.range.start.character
+    _G.buffer:indicator_fill_range(pos,
+      location.range['end'].character - location.range.start.character)
+    if not line:find('\n$') then _G.buffer:add_text('\n') end
+    buffer:clear_all()
+    buffer:empty_undo_buffer()
+    view:scroll_caret() -- [Files Found Buffer]
   end
+  buffer:close(true) -- temporary buffer
 end
 
 -- TODO: function M.select()
