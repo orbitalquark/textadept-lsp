@@ -8,7 +8,7 @@ local json = require('lsp.dkjson')
 ---
 -- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
--- It implements version 3.16.0 of the protocol, but does not support all protocol features. The
+-- It implements version 3.17.0 of the protocol, but does not support all protocol features. The
 -- [`Server.new()`]() function contains the client's current set of capabilities.
 --
 -- Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
@@ -239,10 +239,13 @@ function Server.new(lang, cmd, init_options)
             -- tagSupport = {valueSet = {}},
             -- insertReplaceSupport = true,
             -- resolveSupport = {properties = {}},
-            -- insertTextModeSupport = {valueSet = {}}
+            -- insertTextModeSupport = {valueSet = {}},
+            -- labelDetailsSupport = true
           }, -- LuaFormatter
           completionItemKind = {valueSet = completion_item_kind_set}
-          -- contextSupport = true
+          -- contextSupport = true,
+          -- insertTextMode = 1,
+          -- completionList = {}
         }, -- LuaFormatter
         hover = {
           -- dynamicRegistration = false, -- not supported
@@ -257,6 +260,22 @@ function Server.new(lang, cmd, init_options)
           } -- LuaFormatter
           -- contextSupport = true
         },
+        -- declaration = {
+        --   dynamicRegistration = false, -- not supported
+        --   linkSupport = true
+        -- }
+        -- definition = {
+        --   dynamicRegistration = false, -- not supported
+        --   linkSupport = true
+        -- },
+        -- typeDefinition = {
+        --   dynamicRegistration = false, -- not supported
+        --   linkSupport = true
+        -- },
+        -- implementation = {
+        --   dynamicRegistration = false, -- not supported
+        --   linkSupport = true
+        -- },
         -- references = {dynamicRegistration = false}, -- not supported
         -- documentHighlight = {dynamicRegistration = false}, -- not supported
         documentSymbol = {
@@ -265,79 +284,86 @@ function Server.new(lang, cmd, init_options)
           -- hierarchicalDocumentSymbolSupport = true,
           -- tagSupport = {valueSet = {}},
           -- labelSupport = true
-        } -- LuaFormatter
-        -- formatting = {dynamicRegistration = false}, -- not supported
-        -- rangeFormatting = {dynamicRegistration = false}, -- not supported
-        -- onTypeFormatting = {dynamicRegistration = false}, -- not supported
-        -- declaration = {
-        --  dynamicRegistration = false, -- not supported
-        --  linkSupport = true
-        -- }
-        -- definition = {
-        --  dynamicRegistration = false, -- not supported
-        --  linkSupport = true
-        -- },
-        -- typeDefinition = {
-        --  dynamicRegistration = false, -- not supported
-        --  linkSupport = true
-        -- },
-        -- implementation = {
-        --  dynamicRegistration = false, -- not supported
-        --  linkSupport = true
-        -- },
+        }, -- LuaFormatter
         -- codeAction = {
-        --  dynamicRegistration = false, -- not supported
-        --  codeActionLiteralSupport = {valueSet = {}},
-        --  isPreferredSupport = true,
-        --  disabledSupport = true,
-        --  dataSupport = true,
-        --  resolveSupport = {properties = {}},
-        --  honorsChangeAnnotations = true
+        --   dynamicRegistration = false, -- not supported
+        --   codeActionLiteralSupport = {valueSet = {}},
+        --   isPreferredSupport = true,
+        --   disabledSupport = true,
+        --   dataSupport = true,
+        --   resolveSupport = {properties = {}},
+        --   honorsChangeAnnotations = true
         -- },
         -- codeLens = {dynamicRegistration = false}, -- not supported
         -- documentLink = {
-        --  dynamicRegistration = false, -- not supported
-        --  tooltipSupport = true
+        --   dynamicRegistration = false, -- not supported
+        --   tooltipSupport = true
         -- },
         -- colorProvider = {dynamicRegistration = false}, -- not supported
+        -- formatting = {dynamicRegistration = false}, -- not supported
+        -- rangeFormatting = {dynamicRegistration = false}, -- not supported
+        -- onTypeFormatting = {dynamicRegistration = false}, -- not supported
         -- rename = {
-        --  dynamicRegistration = false, -- not supported
-        --  prepareSupport = false
+        --   dynamicRegistration = false, -- not supported
+        --   prepareSupport = false,
+        --   prepareSupportDefaultBehavior = 1,
+        --   honorsChangeAnnotations = true
         -- },
         -- publishDiagnostics = {
-        -- relatedInformation = true,
-        --  tagSupport = {valueSet = {}},
-        --  versionSupport = true,
-        --  codeDescriptionSupport = true,
-        --  dataSupport = true
+        --   relatedInformation = true,
+        --   tagSupport = {valueSet = {}},
+        --   versionSupport = true,
+        --   codeDescriptionSupport = true,
+        --   dataSupport = true
         -- },
         -- foldingRange = {
-        --  dynamicRegistration = false, -- not supported
-        --  rangeLimit = ?,
-        --  lineFoldingOnly = true
+        --   dynamicRegistration = false, -- not supported
+        --   rangeLimit = ?,
+        --   lineFoldingOnly = true,
+        --   foldingRangeKind = {valueSet = {'comment', 'imports', 'region'}},
+        --   foldingRange = {collapsedText = true}
         -- },
+        selectionRange = {}
         -- selectionRange = {dynamicRegistration = false}, -- not supported
         -- linkedEditingRange = {dynamicRegistration = false}, -- not supported
         -- callHierarchy = {dynamicRegistration = false}, -- not supported
         -- semanticTokens = {
-        --  dynamicRegistration = false, -- not supported
-        --  requests = {},
-        --  tokenTypes = {},
-        --  tokenModifiers = {},
-        --  formats = {},
-        --  overlappingTokenSupport = true,
-        --  multilineTokenSupport = true
+        --   dynamicRegistration = false, -- not supported
+        --   requests = {},
+        --   tokenTypes = {},
+        --   tokenModifiers = {},
+        --   formats = {},
+        --   overlappingTokenSupport = true,
+        --   multilineTokenSupport = true,
+        --   serverCancelSupport = true,
+        --   augmentsSyntaxTokens = true
         -- },
-        -- moniker = {dynamicRegistration = false} -- not supported
+        -- moniker = {dynamicRegistration = false}, -- not supported
+        -- typeHierarchy = {dynamicRegistration = false}, -- not supported
+        -- inlineValue = {dynamicRegistration = false}, -- not supported
+        -- inlayHint = {
+        --   dynamicRegistration = false, -- not supported
+        --   resolveSupport = {properties = {}}
+        -- },
+        -- diagnostic = {
+        --   dynamicRegistration = false, -- not supported
+        --   relatedDocumentSupport = true
+        -- }
       } -- LuaFormatter
+      -- notebookDocument = nil, -- notebook documents are not supported at all
       -- window = {
-      --  workDoneProgress = true,
-      --  showMessage = {},
-      --  showDocument = {}
+      --   workDoneProgress = true,
+      --   showMessage = {messageActionItem = {additionalPropertiesSupport = true}},
+      --   showDocument = {support = true}
       -- },
       -- general = {
-      --  regularExpressions = {},
-      --  markdown = {}
+      --   staleRequestSupport = {
+      --     cancel = true,
+      --     retryOnContentModified = {}
+      --   },
+      --   regularExpressions = {},
+      --   markdown = {},
+      --   positionEncodings = 'utf-8'
       -- },
       -- experimental = nil
     }
