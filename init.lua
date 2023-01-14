@@ -920,16 +920,31 @@ function M.find_references()
   buffer:close(true) -- temporary buffer
 end
 
--- TODO: function M.select()
---  local server = servers[buffer.lexer_language]
---  if server and buffer.filename and server.capabilities.selectionRangeProvider then
---    server:sync_buffer()
---    local params = get_buffer_position_params()
---    params.positions, params.position = {params.position}, nil
---    local ranges = server:request('textDocument/selectionRange', params)
---    if ranges then buffer:set_sel(tobufferrange(ranges[1].range)) end
---  end
--- end
+---
+-- Selects or expands the selection around the current position.
+-- @name select
+function M.select()
+  local server = servers[buffer.lexer_language]
+  if not (server and buffer.filename and server.capabilities.selectionRangeProvider) then return end
+  server:sync_buffer()
+  local position = buffer.selection_empty and buffer.current_pos or
+    buffer:position_before(buffer.selection_start)
+  local selections = server:request('textDocument/selectionRange', {
+    textDocument = {
+      uri = not WIN32 and 'file://' .. buffer.filename or
+        ('file:///' .. buffer.filename:gsub('\\', '/'))
+    }, -- LuaFormatter
+    positions = {
+      {line = buffer:line_from_position(position) - 1, character = buffer.column[position] - 1}
+    }
+  })
+  if not selections then return end
+  local selection = selections[1]
+  local s, e = tobufferrange(selection.range)
+  if not buffer.selection_empty and s == buffer.selection_start and e == buffer.selection_end and
+    selection.parent then s, e = tobufferrange(selection.parent.range) end
+  buffer:set_sel(s, e)
+end
 
 ---
 -- Selects all instances of the symbol at the current position as multiple selections.
@@ -1060,6 +1075,7 @@ for i = 1, #m_tools - 1 do
         {_L['Go To Type Definition'], M.goto_type_definition},
         {_L['Go To Implementation'], M.goto_implementation},
         {_L['Find References'], M.find_references},
+        {_L['Select Around'], M.select},
         {_L['Select All Symbol'], M.select_all_symbol},
         {''},
         {_L['Toggle Show Diagnostics'], function()
