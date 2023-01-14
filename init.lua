@@ -98,7 +98,8 @@ local json = require('lsp.dkjson')
 --   etc. request.
 -- @field autocomplete_num_chars (number)
 --   The number of characters typed after which autocomplete is automatically triggered.
---   The default value is `3`.
+--   The default value is `nil`, which disables this feature. A value greater than or equal to
+--   3 is recommended to enable this feature.
 module('lsp')]]
 local M = {}
 
@@ -141,7 +142,7 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 M.log_rpc = false
 M.show_diagnostics = true
 M.show_all_diagnostics = false
-M.autocomplete_num_chars = 3
+M.autocomplete_num_chars = nil
 
 ---
 -- Map of lexer names to LSP language server commands or configurations, or functions that
