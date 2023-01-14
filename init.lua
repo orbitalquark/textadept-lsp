@@ -96,6 +96,9 @@ local json = require('lsp.dkjson')
 --   The default value is `false`, and assumes any diagnostics on the current line or next line
 --   are due to an incomplete statement during something like an autocompletion, signature help,
 --   etc. request.
+-- @field autocomplete_num_chars (number)
+--   The number of characters typed after which autocomplete is automatically triggered.
+--   The default value is `3`.
 module('lsp')]]
 local M = {}
 
@@ -138,6 +141,7 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 M.log_rpc = false
 M.show_diagnostics = true
 M.show_all_diagnostics = false
+M.autocomplete_num_chars = 3
 
 ---
 -- Map of lexer names to LSP language server commands or configurations, or functions that
@@ -369,6 +373,20 @@ function Server.new(lang, cmd, init_options)
     }
   })
   server.capabilities = result.capabilities
+  if server.capabilities.completionProvider then
+    server.auto_c_triggers = {}
+    for _, char in ipairs(server.capabilities.completionProvider.triggerCharacters or {}) do
+      if char ~= ' ' then server.auto_c_triggers[string.byte(char)] = true end
+    end
+    server.auto_c_fill_ups = table.concat(
+      server.capabilities.completionProvider.allCommitCharacters or {})
+  end
+  if server.capabilities.signatureHelpProvider then
+    server.call_tip_triggers = {}
+    for _, char in ipairs(server.capabilities.signatureHelpProvider.triggerCharacters or {}) do
+      server.call_tip_triggers[string.byte(char)] = true
+    end
+  end
   server.info = result.serverInfo
   if server.info then
     server:log(string.format('Connected to %s %s', server.info.name,
@@ -737,40 +755,44 @@ function M.goto_symbol(symbol)
 end
 
 -- Autocompleter function using a language server.
+local auto_c_incomplete = false
 textadept.editing.autocompleters.lsp = function()
   local server = servers[buffer.lexer_language]
-  if server and buffer.filename and server.capabilities.completionProvider then
-    server:sync_buffer()
-    -- Fetch a completion list.
-    local completions = server:request('textDocument/completion', get_buffer_position_params())
-    if not completions then return end
-    if completions.isIncomplete then ui.statusbar_text = _L['Note: completion list incomplete'] end
-    if completions.items then completions = completions.items end
-    if #completions == 0 then return end
-    -- Associate completion items with icons.
-    local symbols = {}
-    for _, symbol in ipairs(completions) do
-      local label = symbol.textEdit and symbol.textEdit.newText or symbol.insertText or symbol.label
-      -- TODO: some labels can have spaces and need proper handling.
-      if xpm_map[symbol.kind] > 0 then
-        symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
-      else
-        symbols[#symbols + 1] = label
-      end
-      -- TODO: if symbol.preselect then symbols.selected = label end?
-    end
-    -- Return the autocompletion list.
-    local len_entered
-    if symbols[1].textEdit then
-      local s, e = tobufferrange(symbols[1].textEdit.range)
-      len_entered = e - s
+  if not (server and buffer.filename and server.capabilities.completionProvider) then return end
+  server:sync_buffer()
+  -- Fetch a completion list.
+  local completions = server:request('textDocument/completion', get_buffer_position_params())
+  if not completions then return end
+  auto_c_incomplete = completions.isIncomplete
+  if auto_c_incomplete then ui.statusbar_text = _L['Note: completion list incomplete'] end
+  if completions.items then completions = completions.items end
+  if #completions == 0 then return end
+  -- Associate completion items with icons.
+  local symbols = {}
+  for _, symbol in ipairs(completions) do
+    local label = symbol.textEdit and symbol.textEdit.newText or symbol.insertText or symbol.label
+    -- TODO: some labels can have spaces and need proper handling.
+    if symbol.kind and xpm_map[symbol.kind] > 0 then
+      symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
     else
-      local s = buffer:word_start_position(buffer.current_pos, true)
-      len_entered = buffer.current_pos - s
+      symbols[#symbols + 1] = label
     end
-    return len_entered, symbols
+    -- TODO: if symbol.preselect then symbols.selected = label end?
   end
+  -- Return the autocompletion list.
+  local len_entered
+  if symbols[1].textEdit then
+    local s, e = tobufferrange(symbols[1].textEdit.range)
+    len_entered = e - s
+  else
+    local s = buffer:word_start_position(buffer.current_pos, true)
+    len_entered = buffer.current_pos - s
+  end
+  return len_entered, symbols
 end
+
+--- Requests autocompletion at the current position, returning `true` on success.
+function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 
 ---
 -- Shows a calltip with information about the identifier at the given or current position.
@@ -1024,6 +1046,22 @@ end)
 
 -- TODO: textDocument/didClose
 
+events.connect(events.CHAR_ADDED, function(code)
+  local server = servers[buffer.lexer_language]
+  if not server or code < 32 or code > 255 then return end
+  if buffer:auto_c_active() then
+    if auto_c_incomplete then M.autocomplete() end -- re-trigger
+    return
+  end
+  if server.call_tip_triggers[code] then
+    M.signature_help()
+    if view:call_tip_active() then return end
+  end
+  local trigger = server.auto_c_triggers[code] or (M.autocomplete_num_chars and buffer.current_pos -
+    buffer:word_start_position(buffer.current_pos, true) >= M.autocomplete_num_chars)
+  if trigger then M.autocomplete() end
+end)
+
 -- Query the language server for hover information when mousing over identifiers.
 events.connect(events.DWELL_START, function(position)
   local server = servers[buffer.lexer_language]
@@ -1095,7 +1133,7 @@ for i = 1, #m_tools - 1 do
           if query and query ~= '' then M.goto_symbol(query) end
         end},
         {_L['Go To Document Symbol...'], M.goto_symbol},
-        {_L['Autocomplete'], function() textadept.editing.autocomplete('lsp') end},
+        {_L['Autocomplete'], M.autocomplete},
         {_L['Show Hover Information'], M.hover},
         {_L['Show Signature Help'], M.signature_help},
         {_L['Go To Declaration'], M.goto_declaration},
