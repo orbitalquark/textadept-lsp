@@ -1046,7 +1046,15 @@ events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   end
 end)
 
--- TODO: textDocument/didClose
+-- Notify the language server when a file is closed.
+events.connect(events.BUFFER_DELETED, function(buffer)
+  if not buffer then return end -- older version of Textadept
+  local server = servers[buffer._lexer] -- undocumented
+  if not server or not buffer.filename then return end
+  server:notify('textDocument/didClose', {
+    textDocument = {uri = touri(buffer.filename), languageId = buffer._lexer, version = 0}
+  })
+end)
 
 events.connect(events.CHAR_ADDED, function(code)
   local server = servers[buffer.lexer_language]
