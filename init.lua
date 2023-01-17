@@ -892,7 +892,12 @@ local function goto_definition(kind)
     else
       -- Select one from a list.
       local items = {}
-      for i = 1, #location do items[#items + 1] = tofilename(location[i].uri) end
+      local root = io.get_project_root()
+      for i = 1, #location do
+        local filename = tofilename(location[i].uri)
+        if root and filename:find(root, 1, true) then filename = filename:sub(#root + 2) end
+        items[#items + 1] = filename
+      end
       local title =
         (kind == 'declaration' and _L['Go To Declaration'] or _L['Go To Definition']):gsub('[_&]',
           '')
