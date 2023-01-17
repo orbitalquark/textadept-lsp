@@ -1077,7 +1077,7 @@ end)
 
 -- Gracefully shut down servers on reset or quit.
 function shutdown_servers()
-  for _, server in ipairs(servers) do
+  for _, server in pairs(servers) do
     server:request('shutdown')
     server:notify('exit')
     servers[buffer.lexer_language] = nil
