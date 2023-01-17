@@ -533,6 +533,12 @@ local function tofilename(uri)
   return filename
 end
 
+-- Converts the given filename into a valid LSP DocumentUri and returns it.
+-- @param filename String filename to convert into an LSP DocumentUri.
+local function touri(filename)
+  return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
+end
+
 -- Returns the start and end buffer positions for the given LSP Range.
 -- @param range LSP Range.
 local function tobufferrange(range)
@@ -620,9 +626,7 @@ end
 function Server:sync_buffer()
   self:notify('textDocument/didChange', {
     textDocument = {
-      uri = not WIN32 and 'file://' .. buffer.filename or
-        ('file:///' .. buffer.filename:gsub('\\', '/')), -- LuaFormatter
-      version = os.time() -- just make sure it keeps increasing
+      uri = touri(buffer.filename), version = os.time() -- just make sure it keeps increasing
     }, -- LuaFormatter
     contentChanges = {{text = buffer:get_text()}}
   })
@@ -637,9 +641,8 @@ function Server:notify_opened()
   if not buffer.filename or self._opened[buffer.filename] then return end
   self:notify('textDocument/didOpen', {
     textDocument = {
-      uri = not WIN32 and 'file://' .. buffer.filename or
-        ('file:///' .. buffer.filename:gsub('\\', '/')), -- LuaFormatter
-      languageId = buffer.lexer_language, version = 0, text = buffer:get_text()
+      uri = touri(buffer.filename), languageId = buffer.lexer_language, version = 0,
+      text = buffer:get_text()
     }
   })
   self._opened[buffer.filename] = true
@@ -686,10 +689,7 @@ end
 -- @return table LSP TextDocumentPositionParams
 local function get_buffer_position_params(position)
   return {
-    textDocument = {
-      uri = not WIN32 and 'file://' .. buffer.filename or
-        ('file:///' .. buffer.filename:gsub('\\', '/'))
-    }, -- LuaFormatter
+    textDocument = {uri = touri(buffer.filename)}, -- LuaFormatter
     position = {
       line = buffer:line_from_position(position or buffer.current_pos) - 1,
       character = buffer.column[position or buffer.current_pos] - 1
@@ -745,12 +745,8 @@ function M.goto_symbol(symbol)
     symbols = server:request('workspace/symbol', {query = symbol})
   elseif server.capabilities.documentSymbolProvider then
     -- Fetching symbols in the current buffer.
-    symbols = server:request('textDocument/documentSymbol', {
-      textDocument = {
-        uri = not WIN32 and 'file://' .. buffer.filename or
-          ('file:///' .. buffer.filename:gsub('\\', '/'))
-      }
-    })
+    symbols = server:request('textDocument/documentSymbol',
+      {textDocument = {uri = touri(buffer.filename)}})
   end
   if symbols and #symbols > 0 then goto_selected_symbol(symbols) end
 end
@@ -985,10 +981,7 @@ function M.select()
   local position = buffer.selection_empty and buffer.current_pos or
     buffer:position_before(buffer.selection_start)
   local selections = server:request('textDocument/selectionRange', {
-    textDocument = {
-      uri = not WIN32 and 'file://' .. buffer.filename or
-        ('file:///' .. buffer.filename:gsub('\\', '/'))
-    }, -- LuaFormatter
+    textDocument = {uri = touri(buffer.filename)}, -- LuaFormatter
     positions = {
       {line = buffer:line_from_position(position) - 1, character = buffer.column[position] - 1}
     }
@@ -1043,10 +1036,7 @@ events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
     server:notify_opened()
   else
     server:notify('textDocument/didSave', {
-      textDocument = {
-        uri = not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/'),
-        languageId = buffer.lexer_language, version = 0
-      }
+      textDocument = {uri = touri(filename), languageId = buffer.lexer_language, version = 0}
     })
   end
 end)
