@@ -2,9 +2,8 @@
 
 local json = require('lsp.dkjson')
 
--- TODO: LuaDoc links for Server:notify() do not work.
+-- TODO: LDoc links for Server:notify() do not work.
 
---[[ This comment is for LuaDoc.
 ---
 -- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
@@ -52,55 +51,7 @@ local json = require('lsp.dkjson')
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
--- @field _G.textadept.editing.autocompleters.lsp (function)
---   Autocompleter function for a language server.
--- @field _G.events.LSP_INITIALIZED (string)
---   Emitted when an LSP connection has been initialized.
---   This is useful for sending server-specific notifications to the server upon init via
---   [`Server:notify()`]().
---   Emitted by [`lsp.start()`]().
---   Arguments:
---
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
--- @field _G.events.LSP_NOTIFICATION (string)
---   Emitted when an LSP server emits an unhandled notification.
---   This is useful for handling server-specific notifications.
---   An event handler should return `true`.
---   Arguments:
---
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
---   * _`method`_: The string LSP notification method name.
---   * _`params`_: The table of LSP notification params. Contents may be server-specific.
--- @field _G.events.LSP_REQUEST (string)
---   Emitted when an LSP server emits an unhandled request.
---   This is useful for handling server-specific requests. Responses are sent using
---   [`Server:respond()`]().
---   An event handler should return `true`.
---   Arguments:
---
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
---   * _`id`_: The integer LSP request ID.
---   * _`method`_: The string LSP request method name.
---   * _`params`_: The table of LSP request params.
--- @field log_rpc (bool)
---   Log RPC correspondence to the LSP message buffer.
---   The default value is `false`.
--- @field show_diagnostics (bool)
---   Whether or not to show diagnostics.
---   The default value is `true`, and shows them as annotations.
--- @field show_all_diagnostics (bool)
---   Whether or not to show all diagnostics if `show_diagnostics` is `true`.
---   The default value is `false`, and assumes any diagnostics on the current line or next line
---   are due to an incomplete statement during something like an autocompletion, signature help,
---   etc. request.
--- @field autocomplete_num_chars (number)
---   The number of characters typed after which autocomplete is automatically triggered.
---   The default value is `nil`, which disables this feature. A value greater than or equal to
---   3 is recommended to enable this feature.
-module('lsp')]]
+-- @module lsp
 local M = {}
 
 -- Localizations.
@@ -138,12 +89,65 @@ if not rawget(_L, 'Language Server') then
   _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
 end
 
+-- Events.
 local lsp_events = {'lsp_initialized', 'lsp_notification', 'lsp_request'}
 for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
-M.log_rpc = false
+---
+-- Emitted when an LSP connection has been initialized.
+-- This is useful for sending server-specific notifications to the server upon init via
+-- [`Server:notify()`]().
+-- Emitted by [`lsp.start()`]().
+-- Arguments:
+--
+--   * _`lang`_: The lexer name of the LSP language.
+--   * _`server`_: The LSP server.
+-- @field _G.events.LSP_INITIALIZED
+
+---
+-- Emitted when an LSP server emits an unhandled notification.
+-- This is useful for handling server-specific notifications.
+-- An event handler should return `true`.
+-- Arguments:
+--
+--   * _`lang`_: The lexer name of the LSP language.
+--   * _`server`_: The LSP server.
+--   * _`method`_: The string LSP notification method name.
+--   * _`params`_: The table of LSP notification params. Contents may be server-specific.
+-- @field _G.events.LSP_NOTIFICATION
+
+---
+--   Emitted when an LSP server emits an unhandled request.
+--   This is useful for handling server-specific requests. Responses are sent using
+--   [`Server:respond()`]().
+--   An event handler should return `true`.
+--   Arguments:
+--
+--   * _`lang`_: The lexer name of the LSP language.
+--   * _`server`_: The LSP server.
+--   * _`id`_: The integer LSP request ID.
+--   * _`method`_: The string LSP request method name.
+--   * _`params`_: The table of LSP request params.
+-- @field _G.events.LSP_REQUEST
+
+---
+-- Log RPC correspondence to the LSP message buffer.
+-- The default value is `false`.
+M.log_rpc = true
+---
+-- Whether or not to show diagnostics.
+-- The default value is `true`, and shows them as annotations.
 M.show_diagnostics = true
+---
+-- Whether or not to show all diagnostics if `show_diagnostics` is `true`.
+-- The default value is `false`, and assumes any diagnostics on the current line or next line
+-- are due to an incomplete statement during something like an autocompletion, signature help,
+-- etc. request.
 M.show_all_diagnostics = false
+---
+-- The number of characters typed after which autocomplete is automatically triggered.
+-- The default value is `nil`, which disables this feature. A value greater than or equal to
+-- 3 is recommended to enable this feature.
 M.autocomplete_num_chars = nil
 
 ---
@@ -154,8 +158,6 @@ M.autocomplete_num_chars = nil
 --   * `command`: String shell command used to run the LSP language server.
 --   * `init_options`: Table of initialization options to pass to the language server in the
 --     "initialize" request.
--- @class table
--- @name server_commands
 M.server_commands = {}
 
 -- Map of lexer names to active LSP servers.
@@ -654,7 +656,6 @@ end
 ---
 -- Starts a language server based on the current language.
 -- @param cmd Optional language server command to run. The default is read from `server_commands`.
--- @name start
 function M.start(cmd)
   local lang = buffer.lexer_language
   if servers[lang] then return end -- already running
@@ -686,9 +687,7 @@ function M.start(cmd)
   end
 end
 
----
--- Stops a running language server based on the current language.
--- @name stop
+--- Stops a running language server based on the current language.
 function M.stop()
   local server = servers[buffer.lexer_language]
   if not server then return end
@@ -748,7 +747,6 @@ end
 -- or based on buffer symbols.
 -- @param symbol Optional string symbol to query for in the current project. If `nil`, symbols
 --   are presented from the current buffer.
--- @name goto_symbol
 function M.goto_symbol(symbol)
   local server = servers[buffer.lexer_language]
   if not server or not buffer.filename then return end
@@ -767,6 +765,9 @@ end
 
 -- Autocompleter function using a language server.
 local auto_c_incomplete = false
+---
+-- Autocompleter function for a language server.
+-- @function _G.textadept.editing.autocompleters.lsp
 textadept.editing.autocompleters.lsp = function()
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.completionProvider) then return end
@@ -809,7 +810,6 @@ function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 -- Shows a calltip with information about the identifier at the given or current position.
 -- @param position Optional buffer position of the identifier to show information for. If `nil`,
 --   uses the current buffer position.
--- @name hover
 function M.hover(position)
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.hoverProvider) then return end
@@ -832,7 +832,6 @@ local signatures, last_pos
 ---
 -- Shows a calltip for the current function.
 -- If a call tip is already shown, cycles to the next one if it exists.
--- @name signature_help
 function M.signature_help()
   if view:call_tip_active() and #signatures > 1 then
     events.emit(events.CALL_TIP_CLICK)
@@ -927,28 +926,22 @@ end
 ---
 -- Jumps to the declaration of the current symbol, returning whether or not a declaration was found.
 -- @return `true` if a declaration was found; `false` otherwise.
--- @name goto_declaration
 function M.goto_declaration() return goto_definition('declaration') end
 ---
 -- Jumps to the definition of the current symbol, returning whether or not a definition was found.
 -- @return `true` if a definition was found; `false` otherwise.
--- @name goto_definition
 function M.goto_definition() return goto_definition('definition') end
 ---
 -- Jumps to the definition of the current type, returning whether or not a definition was found.
 -- @return `true` if a definition was found; `false` otherwise.
--- @name goto_type_definition
 function M.goto_type_definition() return goto_definition('typeDefinition') end
 ---
 -- Jumps to the implementation of the current symbol, returning whether or not an implementation
 -- was found.
 -- @return `true` if an implementation was found; `false` otherwise.
--- @name goto_implementation
 function M.goto_implementation() return goto_definition('implementation') end
 
----
--- Searches for project references to the current symbol and prints them like "Find in Files".
--- @name find_references
+--- Searches for project references to the current symbol and prints them like "Find in Files".
 function M.find_references()
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.referencesProvider) then return end
@@ -990,9 +983,7 @@ function M.find_references()
   buffer:close(true) -- temporary buffer
 end
 
----
--- Selects or expands the selection around the current position.
--- @name select
+--- Selects or expands the selection around the current position.
 function M.select()
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.selectionRangeProvider) then return end
@@ -1013,9 +1004,7 @@ function M.select()
   buffer:set_sel(s, e)
 end
 
----
--- Selects all instances of the symbol at the current position as multiple selections.
--- @name select_all_symbol
+--- Selects all instances of the symbol at the current position as multiple selections.
 function M.select_all_symbol()
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.linkedEditingRangeProvider) then
