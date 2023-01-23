@@ -1047,6 +1047,15 @@ events.connect(events.INITIALIZED, function()
   start()
 end)
 
+-- Synchronizes the current buffer with its language server if it is modified.
+-- This allows for any unsaved changes to be reflected in another buffer.
+local function sync_if_modified()
+  local server = servers[buffer.lexer_language]
+  if server and buffer.filename and buffer.modify then server:sync_buffer() end
+end
+events.connect(events.BUFFER_BEFORE_SWITCH, sync_if_modified)
+events.connect(events.VIEW_BEFORE_SWITCH, sync_if_modified)
+
 -- Notify the language server when a buffer is saved.
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
   local server = servers[buffer.lexer_language]
