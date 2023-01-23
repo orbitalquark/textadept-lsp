@@ -115,6 +115,8 @@ if not rawget(_L, 'Language Server') then
   _L['Stop the language server for'] = 'Stop the language server for'
   _L['Symbol name or name part:'] = 'Symbol name or name part:'
   -- Status.
+  _L['LSP server started'] = 'LSP server started'
+  _L['Unable to start LSP server'] = 'Unable to start LSP server'
   _L['Note: completion list incomplete'] = 'Note: completion list incomplete'
   _L['Showing diagnostics'] = 'Showing diagnostics'
   _L['Hiding diagnostics'] = 'Hiding diagnostics'
@@ -448,6 +450,7 @@ function Server:request(method, params)
     end
   until message.id
   -- Return the response's result.
+  if message.error then self:log('Server returned an error: ' .. message.error.message) end
   return message.result ~= json.null and message.result or nil
 end
 
@@ -661,12 +664,23 @@ function M.start(cmd)
   if type(cmd) == 'function' then cmd, init_options = cmd() end
   if type(cmd) == 'table' then cmd, init_options = cmd.command, cmd.init_options end
   if cmd then
-    local orig_buffer = buffer
-    local ok, server = pcall(Server.new, lang, cmd, init_options)
+    local orig_buffer, orig_view, num_views = buffer, view, #_VIEWS
+    local ok, server = xpcall(function() return Server.new(lang, cmd, init_options) end,
+      function(errmsg)
+        if errmsg:find(_L['No project root found']) then return end
+        local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
+        ui.print_silent_to('[LSP]', debug.traceback(message))
+        ui.statusbar_text = message
+      end)
+    if #_VIEWS > num_views then
+      if view ~= orig_view then ui.goto_view(orig_view) end
+      view:unsplit()
+    end
     servers[lang] = ok and server or nil -- replace sentinel
-    assert(ok, server)
+    if not ok then return end
     if buffer ~= orig_buffer then view:goto_buffer(orig_buffer) end
     server:notify_opened()
+    ui.statusbar_text = _L['LSP server started']
   else
     servers[lang] = nil -- replace sentinel
   end
