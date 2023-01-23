@@ -1108,10 +1108,10 @@ end)
 
 -- Gracefully shut down servers on reset or quit.
 function shutdown_servers()
-  for _, server in pairs(servers) do
+  for lang, server in pairs(servers) do
     server:request('shutdown')
     server:notify('exit')
-    servers[buffer.lexer_language] = nil
+    servers[lang] = nil
   end
 end
 events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as buffers are reloaded
