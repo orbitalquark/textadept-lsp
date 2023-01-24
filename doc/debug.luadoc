@@ -117,9 +117,9 @@
 -- when the hook will be called. The string mask may have any combination of the following
 -- characters, with the given meaning:
 --
---   * "c": the hook is called every time Lua calls a function;
---   * "r": the hook is called every time Lua returns from a function;
---   * "l": the hook is called every time Lua enters a new line of code.
+--   - "c": the hook is called every time Lua calls a function;
+--   - "r": the hook is called every time Lua returns from a function;
+--   - "l": the hook is called every time Lua enters a new line of code.
 --
 -- Moreover, with a `count` different from zero, the hook is called also after every `count`
 -- instructions.

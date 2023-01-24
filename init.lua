@@ -58,11 +58,11 @@ local json = require('lsp.dkjson')
 -- Lua file. The server looks in the project root for a *.lua-lsp* configuration file. That
 -- file can have the following fields:
 --
---   * ignore: List of globs that match directories and files to ignore. Globs are relative to
---     the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
+--   - `ignore`: List of globs that match directories and files to ignore. Globs are relative
+--     to the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
 --     and node_modules. Setting this field overrides the default.
---   * max_scan: Maximum number of files to scan before giving up. This is not the number of
---     Lua files scanned, but the number of files encountered in non-ignored directories.
+--   - `max_scan`: Maximum number of files to scan before giving up. This is not the number
+--     of Lua files scanned, but the number of files encountered in non-ignored directories.
 --     The primary purpose of this field is to avoid hammering the disk when accidentally
 --     opening a large project or root. The default value is 10,000.
 --
@@ -129,10 +129,10 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- An event handler should return `true`.
 -- Arguments:
 --
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
---   * _`method`_: The string LSP notification method name.
---   * _`params`_: The table of LSP notification params. Contents may be server-specific.
+--   - *lang*: The lexer name of the LSP language.
+--   - *server*: The LSP server.
+--   - *method*: The string LSP notification method name.
+--   - *params*: The table of LSP notification params. Contents may be server-specific.
 -- @field _G.events.LSP_NOTIFICATION
 
 ---
@@ -142,11 +142,11 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- An event handler should return `true`.
 -- Arguments:
 --
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
---   * _`id`_: The integer LSP request ID.
---   * _`method`_: The string LSP request method name.
---   * _`params`_: The table of LSP request params.
+--   - *lang*: The lexer name of the LSP language.
+--   - *server*: The LSP server.
+--   - *id*: The integer LSP request ID.
+--   - *method*: The string LSP request method name.
+--   - *params*: The table of LSP request params.
 -- @field _G.events.LSP_REQUEST
 
 ---
@@ -174,8 +174,8 @@ M.autocomplete_num_chars = nil
 -- return either a server command or a configuration.
 -- Commands are simple string shell commands. Configurations are tables with the following keys:
 --
---   * `command`: String shell command used to run the LSP language server.
---   * `init_options`: Table of initialization options to pass to the language server in the
+--   - *command*: String shell command used to run the LSP language server.
+--   - *init_options*: Table of initialization options to pass to the language server in the
 --     "initialize" request.
 M.server_commands = {}
 
