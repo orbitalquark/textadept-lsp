@@ -79,7 +79,7 @@ local function write_apidoc(file, m, b)
   if class == 'module' then
     -- Modules usually have additional Markdown documentation so just grab the documentation
     -- before a Markdown header.
-    description = description:match('^(.-)[\r\n]+#') or description
+    description = description:match('^(.-)[\r\n]+%s*#') or description
   elseif class == 'field' then
     -- Type information is already in the header; discard it in the description.
     description = description:match('^%s*%b()[\t ]*[\r\n]*(.+)$') or description
