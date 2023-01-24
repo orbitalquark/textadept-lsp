@@ -136,11 +136,11 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- @field _G.events.LSP_NOTIFICATION
 
 ---
---   Emitted when an LSP server emits an unhandled request.
---   This is useful for handling server-specific requests. Responses are sent using
---   [`Server:respond()`]().
---   An event handler should return `true`.
---   Arguments:
+-- Emitted when an LSP server emits an unhandled request.
+-- This is useful for handling server-specific requests. Responses are sent using
+-- [`Server:respond()`]().
+-- An event handler should return `true`.
+-- Arguments:
 --
 --   * _`lang`_: The lexer name of the LSP language.
 --   * _`server`_: The LSP server.
