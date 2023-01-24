@@ -258,7 +258,7 @@ end)
 -- @usage expr_types['^spawn%b()%s*$'] = 'proc'
 local expr_types = {['^[\'"]'] = 'string', ['^io%.p?open%s*%b()%s*$'] = 'file'}
 
--- Map of ctags kinds to LSP CompletionItemKinds.
+-- Map of tags kinds to LSP CompletionItemKinds.
 local kinds = {m = 7, f = 3, F = 5, t = 8}
 
 -- LSP textDocument/completion request.
@@ -290,7 +290,7 @@ register('textDocument/completion', function(params)
     ::continue::
   end
 
-  -- Search through ctags for completions for that symbol.
+  -- Search through tags for completions for that symbol.
   local name_patt, seen = '^' .. part, {}
   for _, filename in ipairs(tags) do
     if not filename or not lfs.attributes(filename) then goto continue end
@@ -391,7 +391,7 @@ register('textDocument/definition', function(params)
   if not symbol then return json.null end
   log('Go to definition of ', symbol)
 
-  -- Search through ctags for that symbol.
+  -- Search through tags for that symbol.
   local patt = '^(' .. symbol:match('[%w_]+$') .. ')\t([^\t]+)\t(.-);"\t?(.*)$'
   for _, filename in ipairs(tags) do
     if not filename or not lfs.attributes(filename) then goto continue end

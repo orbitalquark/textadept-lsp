@@ -119,8 +119,8 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- Emitted by [`lsp.start()`]().
 -- Arguments:
 --
---   * _`lang`_: The lexer name of the LSP language.
---   * _`server`_: The LSP server.
+--   - *lang*: The lexer name of the LSP language.
+--   - *server*: The LSP server.
 -- @field _G.events.LSP_INITIALIZED
 
 ---

@@ -125,19 +125,19 @@ local function write_apidoc(file, m, b)
 end
 
 -- Writes out the tags and api files.
--- @param ctags Table of string tag lines.
+-- @param tags Table of string tag lines.
 -- @param apidoc Table of API documentation lines.
 -- @param output_dir Directory to output tags and api files into.
 -- @param filename Optional string filename prefix to tags and api files.
 -- @param module_name Optional string module name prefix to tags and api files.
-local function write_files(ctags, apidoc, output_dir, filename, module_name)
-  table.sort(ctags)
+local function write_files(tags, apidoc, output_dir, filename, module_name)
+  table.sort(tags)
   table.sort(apidoc)
   local prefix = output_dir .. '/'
   if filename then prefix = prefix .. filename .. '_' end
   if module_name then prefix = prefix .. module_name .. '_' end
   local f = io.open(prefix .. 'tags', 'wb')
-  f:write(table.concat(ctags, '\n'))
+  f:write(table.concat(tags, '\n'))
   f:close()
   f = io.open(prefix .. 'api', 'wb')
   f:write(table.concat(apidoc, '\n'))
@@ -163,7 +163,7 @@ end
 -- @param doc The LDoc doc object.
 -- @usage ldoc --filter tadoc.ldoc [file or directory]
 function M.ldoc(doc)
-  local ctags, apidoc = {}, {}
+  local tags, apidoc = {}, {}
   for _, module in ipairs(doc) do
     -- Read the file by lines for putting definition text in tags files. (LDoc only contains
     -- line number info.)
@@ -171,12 +171,12 @@ function M.ldoc(doc)
     for line in io.lines(module.file) do lines[#lines + 1] = line end
 
     -- Tag and document the module.
-    write_tag(ctags, module.name:match('^[^.]+'), module.file, find_line(lines, module.lineno), 'm',
+    write_tag(tags, module.name:match('^[^.]+'), module.file, find_line(lines, module.lineno), 'm',
       '')
     if module.name:find('%.') then
       -- Tag the last part of the module as a table of the first part.
       local parent, child = module.name:match('^(.-)%.([^.]+)$')
-      write_tag(ctags, child, module.file, find_line(lines, module.lineno), 'm', 'class:' .. parent)
+      write_tag(tags, child, module.file, find_line(lines, module.lineno), 'm', 'class:' .. parent)
     end
     write_apidoc(apidoc, {name = '_G'}, module)
 
@@ -198,30 +198,30 @@ function M.ldoc(doc)
       end
       if item.type == 'function' then
         local class = item.kind:match('^class (%S+)')
-        write_tag(ctags, item_name:match('[^:]+$'), module.file, find_line(lines, item.lineno), 'f',
+        write_tag(tags, item_name:match('[^:]+$'), module.file, find_line(lines, item.lineno), 'f',
           'class:' .. (class or module_name))
         write_apidoc(apidoc, module, item)
       elseif item.type == 'lfunction' then
-        write_tag(ctags, item.name, module.file, find_line(lines, item.lineno), 'l', '')
+        write_tag(tags, item.name, module.file, find_line(lines, item.lineno), 'l', '')
         write_apidoc(apidoc, module, item)
       elseif item.type == 'table' then
         if not item.modifiers['local'] then
-          write_tag(ctags, item_name, module.file, find_line(lines, item.lineno), 't',
+          write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 't',
             'class:' .. module_name)
           write_apidoc(apidoc, module, item)
           item_name = string.format('%s.%s', module_name, item_name)
           for _, name in ipairs(item.params) do
-            write_tag(ctags, name, module.file, find_line(lines, item.lineno), 'F',
+            write_tag(tags, name, module.file, find_line(lines, item.lineno), 'F',
               'class:' .. item_name)
             write_apidoc(apidoc, {name = item_name},
               {name = name, type = 'field', description = item.params.map[name]})
           end
         else
-          write_tag(ctags, item.name, module.file, find_line(lines, item.lineno), 'L', '')
+          write_tag(tags, item.name, module.file, find_line(lines, item.lineno), 'L', '')
           write_apidoc(apidoc, {name = "(local)"}, item)
         end
       elseif item.type == 'field' then
-        write_tag(ctags, item_name, module.file, find_line(lines, item.lineno), 'F',
+        write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 'F',
           module_name ~= '' and 'class:' .. module_name or '')
         write_apidoc(apidoc, {name = module_name}, item)
       end
@@ -229,13 +229,13 @@ function M.ldoc(doc)
 
     -- Write individual tags and api files if desired.
     if multiple then
-      write_files(ctags, apidoc, output_dir,
+      write_files(tags, apidoc, output_dir,
         module.file:gsub(ROOT .. '[/\\]', ''):gsub('[/\\.]', '_'), module.name)
-      ctags, apidoc = {}, {}
+      tags, apidoc = {}, {}
     end
   end
 
-  if not multiple then write_files(ctags, apidoc, output_dir) end
+  if not multiple then write_files(tags, apidoc, output_dir) end
 end
 
 -- Returns the absolute path of the given relative path.
@@ -308,17 +308,17 @@ function M.start(doc)
   end
 
   -- Process LuaDoc and write the tags and api files.
-  local ctags, apidoc = {}, {}
+  local tags, apidoc = {}, {}
   for _, module_name in ipairs(modules) do
     local m = modules[module_name]
     local filename = files[m.doc]
     if not m.fake then
       -- Tag and document the module.
-      write_tag(ctags, m.name, filename, m.doc[1].code[1], 'm', '')
+      write_tag(tags, m.name, filename, m.doc[1].code[1], 'm', '')
       if m.name:find('%.') then
         -- Tag the last part of the module as a table of the first part.
         local parent, child = m.name:match('^(.-)%.([^.]+)$')
-        write_tag(ctags, child, filename, m.doc[1].code[1], 'm', 'class:' .. parent)
+        write_tag(tags, child, filename, m.doc[1].code[1], 'm', 'class:' .. parent)
       end
       m.class = 'module'
       write_apidoc(apidoc, {name = '_G'}, m)
@@ -328,7 +328,7 @@ function M.start(doc)
       local module_name, name = function_name:match('^(.-)[.:]?([^.:]+)$')
       if module_name == '' then module_name = m.name end
       local func = m.functions[function_name]
-      write_tag(ctags, name, filename, func.code[1], 'f', 'class:' .. module_name)
+      write_tag(tags, name, filename, func.code[1], 'f', 'class:' .. module_name)
       write_apidoc(apidoc, m, func)
     end
     if m.tables then
@@ -344,13 +344,13 @@ function M.start(doc)
             module_name = '_G' -- _G.keys or _G.snippets
           end
         end
-        write_tag(ctags, table_name, filename, table.code[1], 't', 'class:' .. module_name)
+        write_tag(tags, table_name, filename, table.code[1], 't', 'class:' .. module_name)
         write_apidoc(apidoc, m, table)
         if table.field then
           -- Tag and document the table's fields.
           table_name = string.format('%s.%s', module_name, table_name)
           for _, field_name in ipairs(table.field) do
-            write_tag(ctags, field_name, filename, table.code[1], 'F', 'class:' .. table_name)
+            write_tag(tags, field_name, filename, table.code[1], 'F', 'class:' .. table_name)
             write_apidoc(apidoc, {name = table_name}, {
               name = field_name, description = table.field[field_name], class = 'table'
             })
@@ -369,7 +369,7 @@ function M.start(doc)
             print('[ERROR] Cannot determine module name for ' .. field.name)
           end
         end
-        write_tag(ctags, field_name, filename, m.doc[1].code[1], 'F', 'class:' .. module_name)
+        write_tag(tags, field_name, filename, m.doc[1].code[1], 'F', 'class:' .. module_name)
         write_apidoc(apidoc, {name = field_name}, {
           name = string.format('%s.%s', module_name, field_name), description = field,
           class = 'field'
@@ -377,7 +377,7 @@ function M.start(doc)
       end
     end
   end
-  write_files(ctags, apidoc, M.options.output_dir)
+  write_files(tags, apidoc, M.options.output_dir)
 end
 
 return M
