@@ -859,7 +859,7 @@ local signatures, last_pos
 -- If a call tip is already shown, cycles to the next one if it exists.
 function M.signature_help()
   if view:call_tip_active() and #signatures > 1 then
-    events.emit(events.CALL_TIP_CLICK)
+    events.emit(events.CALL_TIP_CLICK, 1)
     return
   end
   local server = servers[buffer.lexer_language]
@@ -875,6 +875,7 @@ function M.signature_help()
     return
   end
   signatures = signature_help.signatures
+  signatures.activeSignature = signature_help.activeSignature
   for _, signature in ipairs(signatures) do
     local doc = signature.documentation or ''
     -- Construct calltip text.
@@ -904,14 +905,14 @@ end
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
   if not (server and buffer.filename and server.capabilities.signatureHelpProvider and signatures and
-    signatures.active) then return end
-  signatures.active = signatures.active + (position == 1 and -1 or 1)
-  if signatures.active > #signatures then
-    signatures.active = 1
-  elseif signatures.active < 1 then
-    signatures.active = #signatures
+    signatures.activeSignature) then return end
+  signatures.activeSignature = signatures.activeSignature + (position == 1 and -1 or 1)
+  if signatures.activeSignature > #signatures then
+    signatures.activeSignature = 1
+  elseif signatures.activeSignature < 1 then
+    signatures.activeSignature = #signatures
   end
-  view:call_tip_show(buffer.current_pos, signatures[signatures.active])
+  view:call_tip_show(buffer.current_pos, signatures[signatures.activeSignature].text)
 end)
 
 -- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface),
