@@ -51,6 +51,25 @@ local json = require('lsp.dkjson')
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
+--
+-- ## Lua Language Server
+--
+-- This module comes with a simple Lua language server that starts up when Textadept opens a
+-- Lua file. The server looks in the project root for a *.lua-lsp* configuration file. That
+-- file can have the following fields:
+--
+--   * ignore: List of globs that match directories and files to ignore. Globs are relative to
+--     the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
+--     and node_modules. Setting this field overrides the default.
+--   * max_scan: Maximum number of files to scan before giving up. This is not the number of
+--     Lua files scanned, but the number of files encountered in non-ignored directories.
+--     The primary purpose of this field is to avoid hammering the disk when accidentally
+--     opening a large project or root. The default value is 10,000.
+--
+-- For example:
+--
+--   ignore = {'.git', 'build', 'test'}
+--   max_scan = 20000
 -- @module lsp
 local M = {}
 
@@ -632,7 +651,8 @@ end
 function Server:sync_buffer()
   self:notify('textDocument/didChange', {
     textDocument = {
-      uri = touri(buffer.filename), version = os.time() -- just make sure it keeps increasing
+      uri = touri(buffer.filename or 'untitled:'), -- if server supports untitledDocumentCompletions
+      version = os.time() -- just make sure it keeps increasing
     }, -- LuaFormatter
     contentChanges = {{text = buffer:get_text()}}
   })
@@ -703,7 +723,9 @@ end
 -- @return table LSP TextDocumentPositionParams
 local function get_buffer_position_params(position)
   return {
-    textDocument = {uri = touri(buffer.filename)}, -- LuaFormatter
+    textDocument = {
+      uri = touri(buffer.filename or 'untitled:') -- server may support untitledDocumentCompletions
+    }, -- LuaFormatter
     position = {
       line = buffer:line_from_position(position or buffer.current_pos) - 1,
       character = buffer.column[position or buffer.current_pos] - 1
@@ -771,7 +793,9 @@ local auto_c_incomplete = false
 -- @function _G.textadept.editing.autocompleters.lsp
 textadept.editing.autocompleters.lsp = function()
   local server = servers[buffer.lexer_language]
-  if not (server and buffer.filename and server.capabilities.completionProvider) then return end
+  if not (server and server.capabilities.completionProvider and (buffer.filename or
+    (server.capabilities.experimental and
+      server.capabilities.experimental.untitledDocumentCompletions))) then return end
   server:sync_buffer()
   -- Fetch a completion list.
   local completions = server:request('textDocument/completion', get_buffer_position_params())
@@ -839,7 +863,9 @@ function M.signature_help()
     return
   end
   local server = servers[buffer.lexer_language]
-  if not (server and buffer.filename and server.capabilities.signatureHelpProvider) then return end
+  if not (server and server.capabilities.signatureHelpProvider and (buffer.filename or
+    (server.capabilities.experimental and
+      server.capabilities.experimental.untitledDocumentSignatureHelp))) then return end
   server:sync_buffer()
   local params = get_buffer_position_params()
   if view:call_tip_active() then params.isRetrigger = true end
@@ -1194,5 +1220,10 @@ end
 textadept.menu.menubar[_L['Tools']][_L['Show Documentation']][2] = show_documentation
 keys['ctrl+?'] = show_documentation
 if OSX or CURSES then keys[OSX and 'cmd+?' or 'meta+?'] = show_documentation end
+
+-- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
+local root = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
+M.server_commands.lua = string.format('"%s" -L "%s"', arg[0],
+  package.searchpath('lsp', package.path):gsub('init%.lua$', 'server.lua'))
 
 return M
