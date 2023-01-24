@@ -222,6 +222,7 @@ function Server.new(lang, cmd, init_options)
   server.proc = assert(os.spawn(cmd, root, function(output) server:handle_stdout(output) end,
     function(output) server:log(output) end, function(status)
       server:log('Server exited with status ' .. status)
+      servers[lang] = nil
     end))
   local result = server:request('initialize', {
     processId = json.null, -- LuaFormatter
