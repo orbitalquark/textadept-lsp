@@ -5,7 +5,7 @@
 local lfs = require('lfs')
 local dir = arg[0]:match('^(.+)[/\\]')
 lfs.chdir(dir) -- cd to this directory
-local ldoc = string.format('"%s" -L "%s/ldoc.lua"', arg[-2] or 'ldoc', dir)
+local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
 package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
 
 local json = require('dkjson')
