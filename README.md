@@ -29,12 +29,7 @@ so this module uses `io.get_project_root()` for this. If the file being opened i
 of a project recognized by Textadept, the language server will not be started.
 
 Language Server features are available from the Tools > Language Server menu. Note that not
-all language servers may support the menu options. You can assign key bindings for these
-features, such as:
-
-    keys['ctrl+alt+ '] = function() textadept.editing.autocomplete('lsp') end
-    keys['ctrl+H'] = lsp.signature_help
-    keys.f12 = lsp.goto_definition
+all language servers may support the menu options.
 
 **Note:** If you want to inspect the LSP messages sent back and forth, you can use the Lua
 command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
@@ -47,17 +42,17 @@ Textadept and restart.
 [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
 
-# Lua Language Server
+## Lua Language Server
 
 This module comes with a simple Lua language server that starts up when Textadept opens a
 Lua file. The server looks in the project root for a *.lua-lsp* configuration file. That
 file can have the following fields:
 
-  * ignore: List of globs that match directories and files to ignore. Globs are relative to
-    the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
+  - `ignore`: List of globs that match directories and files to ignore. Globs are relative
+    to the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
     and node_modules. Setting this field overrides the default.
-  * max_scan: Maximum number of files to scan before giving up. This is not the number of
-    Lua files scanned, but the number of files encountered in non-ignored directories.
+  - `max_scan`: Maximum number of files to scan before giving up. This is not the number
+    of Lua files scanned, but the number of files encountered in non-ignored directories.
     The primary purpose of this field is to avoid hammering the disk when accidentally
     opening a large project or root. The default value is 10,000.
 
@@ -65,6 +60,17 @@ For example:
 
   ignore = {'.git', 'build', 'test'}
   max_scan = 20000
+
+## Key Bindings
+
+Windows and Linux | macOS | Terminal | Command
+-|-|-|-
+**Tools**| | |
+Ctrl+Space | ⌘Space<br/> ^Space | ^Space | Complete symbol
+Ctrl+? | ⌘?<br/>^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
+F12 | F12 | F12 | Go To Definition
+
+‡: Windows terminal version only.
 
 ## Fields defined by `lsp`
 
@@ -77,8 +83,8 @@ This is useful for sending server-specific notifications to the server upon init
 Emitted by [`lsp.start()`](#lsp.start).
 Arguments:
 
-  * _`lang`_: The lexer name of the LSP language.
-  * _`server`_: The LSP server.
+  - *lang*: The lexer name of the LSP language.
+  - *server*: The LSP server.
 
 <a id="events.LSP_NOTIFICATION"></a>
 ### `events.LSP_NOTIFICATION` 
@@ -88,10 +94,10 @@ This is useful for handling server-specific notifications.
 An event handler should return `true`.
 Arguments:
 
-  * _`lang`_: The lexer name of the LSP language.
-  * _`server`_: The LSP server.
-  * _`method`_: The string LSP notification method name.
-  * _`params`_: The table of LSP notification params. Contents may be server-specific.
+  - *lang*: The lexer name of the LSP language.
+  - *server*: The LSP server.
+  - *method*: The string LSP notification method name.
+  - *params*: The table of LSP notification params. Contents may be server-specific.
 
 <a id="events.LSP_REQUEST"></a>
 ### `events.LSP_REQUEST` 
@@ -102,11 +108,11 @@ This is useful for handling server-specific requests. Responses are sent using
 An event handler should return `true`.
 Arguments:
 
-  * _`lang`_: The lexer name of the LSP language.
-  * _`server`_: The LSP server.
-  * _`id`_: The integer LSP request ID.
-  * _`method`_: The string LSP request method name.
-  * _`params`_: The table of LSP request params.
+  - *lang*: The lexer name of the LSP language.
+  - *server*: The LSP server.
+  - *id*: The integer LSP request ID.
+  - *method*: The string LSP request method name.
+  - *params*: The table of LSP request params.
 
 <a id="lsp.autocomplete_num_chars"></a>
 ### `lsp.autocomplete_num_chars` 
@@ -145,9 +151,9 @@ Starts, initializes, and returns a new language server.
 
 Parameters:
 
-* *lang*:  Lexer name of the language server.
-* *cmd*:  String command to start the language server.
-* *init_options*:  Optional table of options to be passed to the language server for
+- *lang*:  Lexer name of the language server.
+- *cmd*:  String command to start the language server.
+- *init_options*:  Optional table of options to be passed to the language server for
    initialization.
 
 <a id="Server.handle_data"></a>
@@ -158,7 +164,7 @@ Cache any incoming messages (particularly responses) that happen to be picked up
 
 Parameters:
 
-* *data*:  String message from the Language Server.
+- *data*:  String message from the Language Server.
 
 <a id="Server.handle_notification"></a>
 ### `Server:handle_notification`(*method*, *params*)
@@ -167,8 +173,8 @@ Handles an unsolicited notification from this language server.
 
 Parameters:
 
-* *method*:  String method name of the notification.
-* *params*:  Table of parameters for the notification.
+- *method*:  String method name of the notification.
+- *params*:  Table of parameters for the notification.
 
 <a id="Server.handle_request"></a>
 ### `Server:handle_request`(*id*, *method*, *params*)
@@ -177,9 +183,9 @@ Responds to a request from this language server.
 
 Parameters:
 
-* *id*:  ID number of the server's request.
-* *method*:  String method name of the request.
-* *params*:  Table of parameters for the request.
+- *id*:  ID number of the server's request.
+- *method*:  String method name of the request.
+- *params*:  Table of parameters for the request.
 
 <a id="Server.handle_stdout"></a>
 ### `Server:handle_stdout`(*output*)
@@ -189,7 +195,7 @@ notifications and act on them.
 
 Parameters:
 
-* *output*:  String stdout from the Language Server.
+- *output*:  String stdout from the Language Server.
 
 <a id="Server.log"></a>
 ### `Server:log`(*message*)
@@ -198,7 +204,7 @@ Silently logs the given message.
 
 Parameters:
 
-* *message*:  String message to log.
+- *message*:  String message to log.
 
 <a id="Server.notify"></a>
 ### `Server:notify`(*method*, *params*)
@@ -207,8 +213,8 @@ Sends a notification to this language server.
 
 Parameters:
 
-* *method*:  String method name of the notification.
-* *params*:  Table of parameters for the notification.
+- *method*:  String method name of the notification.
+- *params*:  Table of parameters for the notification.
 
 <a id="Server.notify_opened"></a>
 ### `Server:notify_opened`()
@@ -223,7 +229,7 @@ Reads and returns an incoming JSON message from this language server.
 
 Return:
 
-* table of data from JSON
+- table of data from JSON
 
 <a id="Server.request"></a>
 ### `Server:request`(*method*, *params*)
@@ -236,12 +242,12 @@ same as the id number for a request.
 
 Parameters:
 
-* *method*:  String method name of the request.
-* *params*:  Table of parameters for the request.
+- *method*:  String method name of the request.
+- *params*:  Table of parameters for the request.
 
 Return:
 
-* table result of the request, or nil if the result was `json.null`.
+- table result of the request, or nil if the result was `json.null`.
 
 <a id="Server.respond"></a>
 ### `Server:respond`(*id*, *result*)
@@ -250,8 +256,8 @@ Responds to an unsolicited request from this language server.
 
 Parameters:
 
-* *id*:  Numeric ID of the request.
-* *result*:  Table result of the request.
+- *id*:  Numeric ID of the request.
+- *result*:  Table result of the request.
 
 <a id="Server.sync_buffer"></a>
 ### `Server:sync_buffer`()
@@ -281,7 +287,7 @@ Jumps to the declaration of the current symbol, returning whether or not a decla
 
 Return:
 
-* `true` if a declaration was found; `false` otherwise.
+- `true` if a declaration was found; `false` otherwise.
 
 <a id="lsp.goto_definition"></a>
 ### `lsp.goto_definition`()
@@ -290,7 +296,7 @@ Jumps to the definition of the current symbol, returning whether or not a defini
 
 Return:
 
-* `true` if a definition was found; `false` otherwise.
+- `true` if a definition was found; `false` otherwise.
 
 <a id="lsp.goto_implementation"></a>
 ### `lsp.goto_implementation`()
@@ -300,7 +306,7 @@ was found.
 
 Return:
 
-* `true` if an implementation was found; `false` otherwise.
+- `true` if an implementation was found; `false` otherwise.
 
 <a id="lsp.goto_symbol"></a>
 ### `lsp.goto_symbol`(*symbol*)
@@ -310,7 +316,7 @@ or based on buffer symbols.
 
 Parameters:
 
-* *symbol*:  Optional string symbol to query for in the current project. If `nil`, symbols
+- *symbol*:  Optional string symbol to query for in the current project. If `nil`, symbols
    are presented from the current buffer.
 
 <a id="lsp.goto_type_definition"></a>
@@ -320,7 +326,7 @@ Jumps to the definition of the current type, returning whether or not a definiti
 
 Return:
 
-* `true` if a definition was found; `false` otherwise.
+- `true` if a definition was found; `false` otherwise.
 
 <a id="lsp.hover"></a>
 ### `lsp.hover`(*position*)
@@ -329,7 +335,7 @@ Shows a calltip with information about the identifier at the given or current po
 
 Parameters:
 
-* *position*:  Optional buffer position of the identifier to show information for. If `nil`,
+- *position*:  Optional buffer position of the identifier to show information for. If `nil`,
    uses the current buffer position.
 
 <a id="lsp.select"></a>
@@ -355,7 +361,7 @@ Starts a language server based on the current language.
 
 Parameters:
 
-* *cmd*:  Optional language server command to run. The default is read from `server_commands`.
+- *cmd*:  Optional language server command to run. The default is read from `server_commands`.
 
 <a id="lsp.stop"></a>
 ### `lsp.stop`()
@@ -372,8 +378,8 @@ Map of lexer names to LSP language server commands or configurations, or functio
 return either a server command or a configuration.
 Commands are simple string shell commands. Configurations are tables with the following keys:
 
-  * `command`: String shell command used to run the LSP language server.
-  * `init_options`: Table of initialization options to pass to the language server in the
+  - *command*: String shell command used to run the LSP language server.
+  - *init_options*: Table of initialization options to pass to the language server in the
     "initialize" request.
 
 ---
