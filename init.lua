@@ -34,12 +34,7 @@ local json = require('lsp.dkjson')
 -- of a project recognized by Textadept, the language server will not be started.
 --
 -- Language Server features are available from the Tools > Language Server menu. Note that not
--- all language servers may support the menu options. You can assign key bindings for these
--- features, such as:
---
---     keys['ctrl+alt+ '] = function() textadept.editing.autocomplete('lsp') end
---     keys['ctrl+H'] = lsp.signature_help
---     keys.f12 = lsp.goto_definition
+-- all language servers may support the menu options.
 --
 -- **Note:** If you want to inspect the LSP messages sent back and forth, you can use the Lua
 -- command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
@@ -52,7 +47,7 @@ local json = require('lsp.dkjson')
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
 --
--- ## Lua Language Server
+-- ### Lua Language Server
 --
 -- This module comes with a simple Lua language server that starts up when Textadept opens a
 -- Lua file. The server looks in the project root for a *.lua-lsp* configuration file. That
@@ -70,6 +65,17 @@ local json = require('lsp.dkjson')
 --
 --   ignore = {'.git', 'build', 'test'}
 --   max_scan = 20000
+--
+-- ### Key Bindings
+--
+-- Windows and Linux | macOS | Terminal | Command
+-- -|-|-|-
+-- **Tools**| | |
+-- Ctrl+Space | ⌘Space<br/> ^Space | ^Space | Complete symbol
+-- Ctrl+? | ⌘?<br/>^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
+-- F12 | F12 | F12 | Go To Definition
+--
+-- ‡: Windows terminal version only.
 -- @module lsp
 local M = {}
 
@@ -97,10 +103,11 @@ if not rawget(_L, 'Language Server') then
   _L['Go To Workspace Symbol...'] = 'Go To _Workspace Symbol...'
   _L['Go To Document Symbol...'] = 'Go To Document S_ymbol...'
   _L['Autocomplete'] = '_Autocomplete'
+  _L['Show Documentation'] = 'Show _Documentation'
   _L['Show Hover Information'] = 'Show _Hover Information'
   _L['Show Signature Help'] = 'Show Si_gnature Help'
   _L['Go To Declaration'] = 'Go To De_claration'
-  _L['Go To Definition'] = 'Go To _Definition'
+  _L['Go To Definition'] = 'Go To De_finition'
   _L['Go To Type Definition'] = 'Go To _Type Definition'
   _L['Go To Implementation'] = 'Go To _Implementation'
   _L['Find References'] = 'Find _References'
@@ -904,7 +911,9 @@ end
 -- TODO: this conflicts with textadept.editing's CALL_TIP_CLICK handler.
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
-  if not (server and buffer.filename and server.capabilities.signatureHelpProvider and signatures and
+  if not (server and server.capabilities.signatureHelpProvider and (buffer.filename or
+    (server.capabilities.experimental and
+      server.capabilities.experimental.untitledDocumentSignatureHelp)) and signatures and
     signatures.activeSignature) then return end
   signatures.activeSignature = signatures.activeSignature + (position == 1 and -1 or 1)
   if signatures.activeSignature > #signatures then
@@ -1184,6 +1193,13 @@ for i = 1, #m_tools - 1 do
         end},
         {_L['Go To Document Symbol...'], M.goto_symbol},
         {_L['Autocomplete'], M.autocomplete},
+        {_L['Show Documentation'], function()
+          local buffer, view = buffer, view
+          if ui.command_entry.active then _G.buffer, _G.view = ui.command_entry, ui.command_entry end
+          M.signature_help()
+          if not view:call_tip_active() then M.hover() end
+          if ui.command_entry.active then _G.buffer, _G.view = buffer, view end
+        end},
         {_L['Show Hover Information'], M.hover},
         {_L['Show Signature Help'], M.signature_help},
         {_L['Go To Declaration'], M.goto_declaration},
@@ -1207,20 +1223,19 @@ for i = 1, #m_tools - 1 do
   end
 end
 
--- Override "Tools > Complete Symbol" and "Tools > Show Documentation" menus and key bindings.
-local complete_symbol = textadept.menu.menubar[_L['Tools']][_L['Complete Symbol']][2]
-local function autocomplete() if not M.autocomplete() then complete_symbol() end end
-textadept.menu.menubar[_L['Tools']][_L['Complete Symbol']][2] = autocomplete
-keys['ctrl+ '] = autocomplete
-if OSX then keys['cmd+ '] = autocomplete end
-local function show_documentation()
-  M.signature_help()
-  if not view:call_tip_active() then M.hover() end
-  if not view:call_tip_active() then textadept.editing.show_documentation() end
+keys['ctrl+ '] = M.autocomplete
+if OSX then keys['cmd+ '] = M.autocomplete end
+local show_documentation =
+  textadept.menu.menubar[_L['Tools']][_L['Language Server']][_L['Show Documentation']][2]
+keys['ctrl+?'], ui.command_entry.editing_keys.__index['ctrl+?'] = show_documentation,
+  show_documentation
+if OSX or CURSES then
+  keys[OSX and 'cmd+?' or 'meta+?'] = show_documentation
+  ui.command_entry.editing_keys.__index[OSX and 'cmd+?' or 'meta+?'] = show_documentation
 end
-textadept.menu.menubar[_L['Tools']][_L['Show Documentation']][2] = show_documentation
-keys['ctrl+?'] = show_documentation
-if OSX or CURSES then keys[OSX and 'cmd+?' or 'meta+?'] = show_documentation end
+keys.f12 = M.goto_definition
+keys['shift+f12'] =
+  textadept.menu.menubar[_L['Tools']][_L['Language Server']][_L['Go To Workspace Symbol...']][2]
 
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
 local root = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
