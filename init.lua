@@ -268,11 +268,11 @@ function Server.new(lang, cmd, init_options)
       servers[lang] = nil
     end))
   local result = server:request('initialize', {
-    processId = json.null, -- LuaFormatter
+    processId = json.null, --
     clientInfo = {name = 'textadept', version = _RELEASE},
     -- TODO: locale
     rootUri = not WIN32 and 'file://' .. root or 'file:///' .. root:gsub('\\', '/'),
-    initializationOptions = init_options, -- LuaFormatter
+    initializationOptions = init_options, --
     capabilities = {
       -- workspace = nil, -- workspaces are not supported at all
       textDocument = {
@@ -280,7 +280,7 @@ function Server.new(lang, cmd, init_options)
           -- willSave = true,
           -- willSaveWaitUntil = true,
           didSave = true
-        }, -- LuaFormatter
+        }, --
         completion = {
           -- dynamicRegistration = false, -- not supported
           completionItem = {
@@ -294,23 +294,23 @@ function Server.new(lang, cmd, init_options)
             -- resolveSupport = {properties = {}},
             -- insertTextModeSupport = {valueSet = {}},
             -- labelDetailsSupport = true
-          }, -- LuaFormatter
+          }, --
           completionItemKind = {valueSet = completion_item_kind_set}
           -- contextSupport = true,
           -- insertTextMode = 1,
           -- completionList = {}
-        }, -- LuaFormatter
+        }, --
         hover = {
           -- dynamicRegistration = false, -- not supported
           contentFormat = {'plaintext'}
-        }, -- LuaFormatter
+        }, --
         signatureHelp = {
           -- dynamicRegistration = false, -- not supported
           signatureInformation = {
-            documentationFormat = {'plaintext'}, -- LuaFormatter
-            parameterInformation = {labelOffsetSupport = true}, -- LuaFormatter
+            documentationFormat = {'plaintext'}, --
+            parameterInformation = {labelOffsetSupport = true}, --
             activeParameterSupport = true
-          } -- LuaFormatter
+          } --
           -- contextSupport = true
         },
         -- declaration = {
@@ -337,7 +337,7 @@ function Server.new(lang, cmd, init_options)
           -- hierarchicalDocumentSymbolSupport = true,
           -- tagSupport = {valueSet = {}},
           -- labelSupport = true
-        }, -- LuaFormatter
+        }, --
         -- codeAction = {
         --   dynamicRegistration = false, -- not supported
         --   codeActionLiteralSupport = {valueSet = {}},
@@ -402,7 +402,7 @@ function Server.new(lang, cmd, init_options)
         --   dynamicRegistration = false, -- not supported
         --   relatedDocumentSupport = true
         -- }
-      } -- LuaFormatter
+      } --
       -- notebookDocument = nil, -- notebook documents are not supported at all
       -- window = {
       --   workDoneProgress = true,
@@ -673,7 +673,7 @@ function Server:sync_buffer()
     textDocument = {
       uri = touri(buffer.filename or 'untitled:'), -- if server supports untitledDocumentCompletions
       version = os.time() -- just make sure it keeps increasing
-    }, -- LuaFormatter
+    }, --
     contentChanges = {{text = buffer:get_text()}}
   })
   if WIN32 then self.wait = true end -- prefer async response reading
@@ -745,7 +745,7 @@ local function get_buffer_position_params(position)
   return {
     textDocument = {
       uri = touri(buffer.filename or 'untitled:') -- server may support untitledDocumentCompletions
-    }, -- LuaFormatter
+    }, --
     position = {
       line = buffer:line_from_position(position or buffer.current_pos) - 1,
       character = buffer.column[position or buffer.current_pos] - 1
@@ -1042,7 +1042,7 @@ function M.select()
   local position = buffer.selection_empty and buffer.current_pos or
     buffer:position_before(buffer.selection_start)
   local selections = server:request('textDocument/selectionRange', {
-    textDocument = {uri = touri(buffer.filename)}, -- LuaFormatter
+    textDocument = {uri = touri(buffer.filename)}, --
     positions = {
       {line = buffer:line_from_position(position) - 1, character = buffer.column[position] - 1}
     }
@@ -1167,88 +1167,93 @@ for i = 1, #m_tools - 1 do
   elseif found_area then
     local label = m_tools[i].title or m_tools[i][1]
     if 'Language Server' < label:gsub('^_', '') or m_tools[i][1] == '' then
-      -- LuaFormatter off
       table.insert(m_tools, i, {
-        title = _L['Language Server'],
-        {_L['Start Server...'], function()
-          local server = servers[buffer.lexer_language]
-          if server then
-            ui.dialogs.message{
-              title = _L['Start Server...']:gsub('[_&]', ''),
-              text = string.format('%s %s', buffer.lexer_language,
-                _L['language server is already running'])
+        title = _L['Language Server'], {
+          _L['Start Server...'], function()
+            local server = servers[buffer.lexer_language]
+            if server then
+              ui.dialogs.message{
+                title = _L['Start Server...']:gsub('[_&]', ''),
+                text = string.format('%s %s', buffer.lexer_language,
+                  _L['language server is already running'])
+              }
+              return
+            end
+            local cmd = ui.dialogs.input{
+              title = string.format('%s %s', buffer.lexer_language,
+                _L['language server shell command:']),
+              text = M.server_commands[buffer.lexer_language]
             }
-            return
+            if cmd and cmd ~= '' then M.start(cmd) end
           end
-          local cmd = ui.dialogs.input{
-            title = string.format('%s %s', buffer.lexer_language,
-              _L['language server shell command:']),
-            text = M.server_commands[buffer.lexer_language]
-          }
-          if cmd and cmd ~= '' then M.start(cmd) end
-        end},
-        {_L['Stop Server'], function()
-          local server = servers[buffer.lexer_language]
-          if not server then return end
-          local button = ui.dialogs.message{
-            title = _L['Stop Server?'],
-            text = string.format('%s %s?', _L['Stop the language server for'], buffer.lexer_language)
-          }
-          if button == 1 then M.stop() end
-        end},
-        {''},
-        {_L['Go To Workspace Symbol...'], function()
-          local server = servers[buffer.lexer_language]
-          if not server then return end
-          local query = ui.dialogs.input{
-            title = _L['Symbol name or name part:']
-          }
-          if query and query ~= '' then M.goto_symbol(query) end
-        end},
-        {_L['Go To Document Symbol...'], M.goto_symbol},
-        {_L['Autocomplete'], M.autocomplete},
-        {_L['Show Documentation'], function()
-          local buffer, view = buffer, view
-          if ui.command_entry.active then _G.buffer, _G.view = ui.command_entry, ui.command_entry end
-          M.signature_help()
-          if not view:call_tip_active() then M.hover() end
-          if ui.command_entry.active then _G.buffer, _G.view = buffer, view end
-        end},
-        {_L['Show Hover Information'], M.hover},
-        {_L['Show Signature Help'], M.signature_help},
-        {_L['Go To Declaration'], M.goto_declaration},
+        }, {
+          _L['Stop Server'], function()
+            local server = servers[buffer.lexer_language]
+            if not server then return end
+            local button = ui.dialogs.message{
+              title = _L['Stop Server?'],
+              text = string.format('%s %s?', _L['Stop the language server for'],
+                buffer.lexer_language)
+            }
+            if button == 1 then M.stop() end
+          end
+        }, --
+        {''}, {
+          _L['Go To Workspace Symbol...'], function()
+            local server = servers[buffer.lexer_language]
+            if not server then return end
+            local query = ui.dialogs.input{title = _L['Symbol name or name part:']}
+            if query and query ~= '' then M.goto_symbol(query) end
+          end
+        }, --
+        {_L['Go To Document Symbol...'], M.goto_symbol}, --
+        {_L['Autocomplete'], M.autocomplete}, {
+          _L['Show Documentation'], function()
+            local buffer, view = buffer, view
+            if ui.command_entry.active then
+              _G.buffer, _G.view = ui.command_entry, ui.command_entry
+            end
+            M.signature_help()
+            if not view:call_tip_active() then M.hover() end
+            if ui.command_entry.active then _G.buffer, _G.view = buffer, view end
+          end
+        }, --
+        {_L['Show Hover Information'], M.hover}, --
+        {_L['Show Signature Help'], M.signature_help}, --
+        {_L['Go To Declaration'], M.goto_declaration}, --
         {_L['Go To Definition'], M.goto_definition},
         {_L['Go To Type Definition'], M.goto_type_definition},
         {_L['Go To Implementation'], M.goto_implementation},
-        {_L['Find References'], M.find_references},
-        {_L['Select Around'], M.select},
-        {_L['Select All Symbol'], M.select_all_symbol},
-        {''},
-        {_L['Toggle Show Diagnostics'], function()
-          M.show_diagnostics = not M.show_diagnostics
-          if not M.show_diagnostics then buffer:annotation_clear_all() end
-          ui.statusbar_text = M.show_diagnostics and _L['Showing diagnostics'] or
-            _L['Hiding diagnostics']
-        end},
-        {''},
-        {_L['Show Log'], function()
-          if #log_lines == 0 then return end
-          if log_buffer and _BUFFERS[log_buffer] then
-            for _, view in ipairs(_VIEWS) do
-              if view.buffer == log_buffer then
-                ui.goto_view(view)
-                return
-              end
-            end
-            view:goto_buffer(log_buffer)
-            return
+        {_L['Find References'], M.find_references}, --
+        {_L['Select Around'], M.select}, --
+        {_L['Select All Symbol'], M.select_all_symbol}, --
+        {''}, {
+          _L['Toggle Show Diagnostics'], function()
+            M.show_diagnostics = not M.show_diagnostics
+            if not M.show_diagnostics then buffer:annotation_clear_all() end
+            ui.statusbar_text = M.show_diagnostics and _L['Showing diagnostics'] or
+              _L['Hiding diagnostics']
           end
-          ui.print_to('[LSP]', table.concat(log_lines, '\n'))
-          log_buffer = _BUFFERS[#_BUFFERS]
-        end},
+        }, --
+        {''}, {
+          _L['Show Log'], function()
+            if #log_lines == 0 then return end
+            if log_buffer and _BUFFERS[log_buffer] then
+              for _, view in ipairs(_VIEWS) do
+                if view.buffer == log_buffer then
+                  ui.goto_view(view)
+                  return
+                end
+              end
+              view:goto_buffer(log_buffer)
+              return
+            end
+            ui.print_to('[LSP]', table.concat(log_lines, '\n'))
+            log_buffer = _BUFFERS[#_BUFFERS]
+          end
+        }, --
         {_L['Clear Log'], function() log_lines = {} end}
       })
-      -- LuaFormatter on
       break
     end
   end
