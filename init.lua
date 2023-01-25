@@ -845,6 +845,7 @@ textadept.editing.autocompleters.lsp = function()
     local s = buffer:word_start_position(buffer.current_pos, true)
     len_entered = buffer.current_pos - s
   end
+  if server.auto_c_fill_ups ~= '' then buffer.auto_c_fill_ups = server.auto_c_fill_ups end
   return len_entered, symbols
 end
 
