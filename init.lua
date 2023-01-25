@@ -113,6 +113,7 @@ if not rawget(_L, 'Language Server') then
   _L['Find References'] = 'Find _References'
   _L['Select All Symbol'] = 'Select Al_l Symbol'
   _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
+  _L['Show Log'] = 'Show L_og'
 end
 
 -- Events.
@@ -229,6 +230,23 @@ local symbol_kinds = {
 local symbol_kind_set = {} -- for LSP capabilities
 for i = 1, #symbol_kinds do symbol_kind_set[i] = i end
 
+local log_lines, log_buffer = {}, nil
+local function log(...)
+  log_lines[#log_lines + 1] = table.concat(table.pack(...))
+  if not log_buffer then return end
+  if not _BUFFERS[log_buffer] then
+    log_buffer = nil
+    for _, buffer in ipairs(_BUFFERS) do
+      if buffer._type ~= '[LSP]' then goto continue end
+      log_buffer = buffer
+      break
+      ::continue::
+    end
+    if not log_buffer then return end
+  end
+  ui.print_silent_to('[LSP]', log_lines[#log_lines])
+end
+
 -- Table of lexers to running language servers.
 local Server = {}
 
@@ -240,14 +258,12 @@ local Server = {}
 --   initialization.
 function Server.new(lang, cmd, init_options)
   local root = assert(io.get_project_root(), _L['No project root found'])
-  local current_view = view
-  ui.print_silent_to('[LSP]', 'Starting language server: ' .. cmd)
-  ui.goto_view(current_view)
+  log('Starting language server: ', cmd)
   local server = setmetatable({lang = lang, request_id = 0, incoming_messages = {}},
     {__index = Server})
   server.proc = assert(os.spawn(cmd, root, function(output) server:handle_stdout(output) end,
-    function(output) server:log(output) end, function(status)
-      server:log('Server exited with status ' .. status)
+    function(output) log(output) end, function(status)
+      log('Server exited with status ', status)
       servers[lang] = nil
     end))
   local result = server:request('initialize', {
@@ -421,7 +437,7 @@ function Server.new(lang, cmd, init_options)
   end
   server.info = result.serverInfo
   if server.info then
-    server:log(string.format('Connected to %s %s', server.info.name,
+    log(string.format('Connected to %s %s', server.info.name,
       server.info.version or '(unknown version)'))
   end
   server:notify('initialized') -- required by protocol
@@ -439,7 +455,7 @@ function Server:read()
   end
   if #self.incoming_messages > 0 then
     local message = table.remove(self.incoming_messages, 1)
-    self:log('Processing cached message: ' .. message.id)
+    log('Processing cached message: ', message.id)
     return message
   end
   local line = self.proc:read()
@@ -447,7 +463,7 @@ function Server:read()
   local len = tonumber(line:match('%d+$'))
   while #line > 0 do line = self.proc:read() end -- skip other headers
   local data = self.proc:read(len)
-  if M.log_rpc then self:log('RPC recv: ' .. data) end
+  if M.log_rpc then log('RPC recv: ', data) end
   return json.decode(data)
 end
 
@@ -465,7 +481,7 @@ function Server:request(method, params)
   self.request_id = self.request_id + 1
   local message = {jsonrpc = '2.0', id = self.request_id, method = method, params = params}
   local data = json.encode(message)
-  if M.log_rpc then self:log('RPC send: ' .. data) end
+  if M.log_rpc then log('RPC send: ', data) end
   self.proc:write(string.format('Content-Length: %d\r\n\r\n%s\r\n', #data + 2, data))
   -- Read incoming JSON messages until the proper response is found.
   repeat
@@ -479,7 +495,7 @@ function Server:request(method, params)
     end
   until message.id
   -- Return the response's result.
-  if message.error then self:log('Server returned an error: ' .. message.error.message) end
+  if message.error then log('Server returned an error: ', message.error.message) end
   return message.result ~= json.null and message.result or nil
 end
 
@@ -491,7 +507,7 @@ local empty_object = json.decode('{}')
 function Server:notify(method, params)
   local message = {jsonrpc = '2.0', method = method, params = params or empty_object}
   local data = json.encode(message)
-  if M.log_rpc then self:log('RPC send: ' .. data) end
+  if M.log_rpc then log('RPC send: ', data) end
   self.proc:write(string.format('Content-Length: %d\r\n\r\n%s\r\n', #data + 2, data))
 end
 
@@ -502,7 +518,7 @@ end
 function Server:respond(id, result)
   local message = {jsonrpc = '2.0', id = id, result = result}
   local data = json.encode(message)
-  if M.log_rpc then self:log('RPC send: ' .. data) end
+  if M.log_rpc then log('RPC send: ', data) end
   self.proc:write(string.format('Content-Length: %d\r\n\r\n%s\r\n', #data + 2, data))
 end
 
@@ -511,14 +527,14 @@ end
 -- Cache any incoming messages (particularly responses) that happen to be picked up.
 -- @param data String message from the Language Server.
 function Server:handle_data(data)
-  if M.log_rpc then self:log('RPC recv: ' .. data) end
+  if M.log_rpc then log('RPC recv: ', data) end
   local message = json.decode(data)
   if not message.id then
     self:handle_notification(message.method, message.params)
   elseif message.method and not message.result then -- params may be nil
     self:handle_request(message.id, message.method, message.params)
   else
-    self:log('Caching incoming server message: ' .. message.id)
+    log('Caching incoming server message: ', message.id)
     table.insert(self.incoming_messages, message)
   end
 end
@@ -547,14 +563,9 @@ function Server:handle_stdout(output)
       self._buf = self._buf .. output
     end
   elseif not output:find('^%s*$') then
-    self:log('Unhandled server output: ' .. output)
+    log('Unhandled server output: ', output)
   end
 end
-
----
--- Silently logs the given message.
--- @param message String message to log.
-function Server:log(message) ui.print_silent_to('[LSP]', message) end
 
 -- Converts the given LSP DocumentUri into a valid filename and returns it.
 -- @param uri LSP DocumentUri to convert into a filename.
@@ -590,10 +601,10 @@ function Server:handle_notification(method, params)
   elseif method == 'window/logMessage' then
     -- Silently log a message.
     local level = {'ERROR', 'WARN', 'INFO', 'LOG'}
-    self:log(string.format('%s: %s', level[params.type], params.message))
+    log(string.format('%s: %s', level[params.type], params.message))
   elseif method == 'telemetry/event' then
     -- Silently log an event.
-    self:log(string.format('TELEMETRY: %s', json.encode(params)))
+    log('TELEMETRY: ', json.encode(params))
   elseif method == 'textDocument/publishDiagnostics' and M.show_diagnostics then
     -- Annotate the buffer based on diagnostics.
     if buffer.filename ~= tofilename(params.uri) then return end
@@ -623,10 +634,10 @@ function Server:handle_notification(method, params)
     local lines_from_top = view:visible_from_doc_line(current_line) - view.first_visible_line
     view:line_scroll(0, lines_from_top - orig_lines_from_top)
   elseif method:find('^%$/') then
-    self:log('Ignoring notification: ' .. method)
+    log('Ignoring notification: ', method)
   elseif not events.emit(events.LSP_NOTIFICATION, self.lang, self, method, params) then
     -- Unknown notification.
-    self:log('Unexpected notification: ' .. method)
+    log('Unexpected notification: ', method)
   end
 end
 
@@ -647,7 +658,7 @@ function Server:handle_request(id, method, params)
     self:respond(id, result)
   elseif not events.emit(events.LSP_REQUEST, self.lang, self, id, method, params) then
     -- Unknown notification.
-    self:log('Responding with null to server request: ' .. method)
+    log('Responding with null to server request: ', method)
     self:respond(id, nil)
   end
 end
@@ -1215,6 +1226,22 @@ for i = 1, #m_tools - 1 do
           if not M.show_diagnostics then buffer:annotation_clear_all() end
           ui.statusbar_text = M.show_diagnostics and _L['Showing diagnostics'] or
             _L['Hiding diagnostics']
+        end},
+        {''},
+        {_L['Show Log'], function()
+          if #log_lines == 0 then return end
+          if log_buffer and _BUFFERS[log_buffer] then
+            for _, view in ipairs(_VIEWS) do
+              if view.buffer == log_buffer then
+                ui.goto_view(view)
+                return
+              end
+            end
+            view:goto_buffer(log_buffer)
+            return
+          end
+          ui.print_to('[LSP]', table.concat(log_lines, '\n'))
+          log_buffer = _BUFFERS[#_BUFFERS]
         end}
       })
       -- LuaFormatter on
