@@ -159,7 +159,7 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 ---
 -- Log RPC correspondence to the LSP message buffer.
 -- The default value is `false`.
-M.log_rpc = true
+M.log_rpc = false
 ---
 -- Whether or not to show diagnostics.
 -- The default value is `true`, and shows them as annotations.

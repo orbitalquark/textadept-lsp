@@ -13,7 +13,7 @@ local pl_dir = require('pl.dir')
 
 local WIN32 = package.path:find('\\')
 
-local log_file = io.open('log', 'w')
+local log_file = io.open('server.log', 'w')
 local function log(...)
   local args = table.pack(...)
   for i = 1, args.n do log_file:write(tostring(args[i])) end
