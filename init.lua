@@ -114,6 +114,7 @@ if not rawget(_L, 'Language Server') then
   _L['Select All Symbol'] = 'Select Al_l Symbol'
   _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
   _L['Show Log'] = 'Show L_og'
+  _L['Clear Log'] = 'Cl_ear Log'
 end
 
 -- Events.
@@ -1242,7 +1243,8 @@ for i = 1, #m_tools - 1 do
           end
           ui.print_to('[LSP]', table.concat(log_lines, '\n'))
           log_buffer = _BUFFERS[#_BUFFERS]
-        end}
+        end},
+        {_L['Clear Log'], function() log_lines = {} end}
       })
       -- LuaFormatter on
       break
