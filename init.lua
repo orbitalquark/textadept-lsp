@@ -1274,8 +1274,12 @@ keys['shift+f12'] =
   textadept.menu.menubar[_L['Tools']][_L['Language Server']][_L['Go To Workspace Symbol...']][2]
 
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
-local root = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
-M.server_commands.lua = string.format('"%s" -L "%s"', arg[0],
-  package.searchpath('lsp', package.path):gsub('init%.lua$', 'server.lua'))
+if arg then
+  M.server_commands.lua = string.format('"%s" -L "%s"', arg[0], package.searchpath('lsp',
+    package.path):gsub('init%.lua$', 'server.lua'))
+end
+-- Save and restore Lua server command during reset since arg is nil.
+events.connect(events.RESET_BEFORE, function(persist) persist.lsp_lua = M.server_commands.lua end)
+events.connect(events.RESET_AFTER, function(persist) M.server_commands.lua = persist.lsp_lua end)
 
 return M
