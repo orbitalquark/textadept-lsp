@@ -1,0 +1,14 @@
+--- a/ldoc/tools.lua	2016-11-07 09:20:55.000000000 -0500
++++ b/ldoc/tools.lua	2023-01-26 09:53:47.446847946 -0500
+@@ -266,7 +266,10 @@
+    end
+    local lpath,cnt = fname:gsub('^'..utils.escape(basename),'')
+    --print('deduce',lpath,cnt,basename)
+-   if cnt ~= 1 then quit("module(...) name deduction failed: base "..basename.." "..fname) end
++   if cnt ~= 1 then
++    print("module(...) name deduction failed: base "..basename.." "..fname)
++    return '_UNKNOWN'
++  end
+    lpath = lpath:gsub(path.sep,'.')
+    return (M.name_of(lpath):gsub('%.init$',''))
+ end

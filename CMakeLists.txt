@@ -20,7 +20,9 @@ FetchContent_Declare(penlight
   URL https://github.com/lunarmodules/Penlight/archive/refs/tags/${penlight_zip})
 FetchContent_MakeAvailable(penlight)
 set(ldoc_zip 1.4.6.zip)
-FetchContent_Declare(ldoc URL https://github.com/lunarmodules/LDoc/archive/refs/tags/${ldoc_zip})
+FetchContent_Declare(ldoc
+  URL https://github.com/lunarmodules/LDoc/archive/refs/tags/${ldoc_zip}
+  PATCH_COMMAND patch -N -p1 < ${CMAKE_SOURCE_DIR}/ldoc.patch)
 FetchContent_MakeAvailable(ldoc)
 set(logging_zip v1.8.1.zip)
 FetchContent_Declare(logging
