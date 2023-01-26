@@ -22,17 +22,23 @@ FetchContent_MakeAvailable(penlight)
 set(ldoc_zip 1.4.6.zip)
 FetchContent_Declare(ldoc URL https://github.com/lunarmodules/LDoc/archive/refs/tags/${ldoc_zip})
 FetchContent_MakeAvailable(ldoc)
+set(logging_zip v1.8.1.zip)
+FetchContent_Declare(logging
+  URL https://github.com/lunarmodules/lualogging/archive/refs/tags/${logging_zip})
+FetchContent_MakeAvailable(logging)
 
 # Install.
 project(lsp)
 install(FILES ${dkjson_SOURCE_DIR}/dkjson.lua ${ldoc_SOURCE_DIR}/ldoc.lua DESTINATION ${src})
+install(FILES ${logging_SOURCE_DIR}/src/logging.lua DESTINATION ${src}/logging RENAME init.lua)
+install(FILES ${logging_SOURCE_DIR}/src/logging/file.lua DESTINATION ${src}/logging)
 install(DIRECTORY ${penlight_SOURCE_DIR}/lua/pl ${ldoc_SOURCE_DIR}/ldoc DESTINATION ${src})
 if(NOT (WIN32 OR APPLE))
   include(GNUInstallDirs)
   set(module_dir ${CMAKE_INSTALL_FULL_DATADIR}/textadept/modules/lsp)
   install(CODE "file(MAKE_DIRECTORY ${module_dir})")
   install(FILES init.lua server.lua tadoc.lua dkjson.lua ldoc.lua DESTINATION ${module_dir})
-  install(DIRECTORY lua pl ldoc DESTINATION ${module_dir})
+  install(DIRECTORY lua pl ldoc logging DESTINATION ${module_dir})
 endif()
 
 # Documentation.

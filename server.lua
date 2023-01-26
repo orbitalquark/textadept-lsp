@@ -3,34 +3,30 @@
 -- Simple Lua language server for developing with Lua and Textadept.
 
 local lfs = require('lfs')
-local dir = arg[0]:match('^(.+)[/\\]')
+local dir = arg[0]:match('^(.+)[/\\]') or '.'
 lfs.chdir(dir) -- cd to this directory
 local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
 package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
+io.open('server.log', 'w'):close() -- clear previous log
 
 local json = require('dkjson')
 local pl_dir = require('pl.dir')
+local log = require('logging.file') {filename = 'server.log', logPattern = '%level: %message\n'}
+
+log:setLevel(log.INFO)
 
 local WIN32 = package.path:find('\\')
-
-local log_file = io.open('server.log', 'w')
-local function log(...)
-  local args = table.pack(...)
-  for i = 1, args.n do log_file:write(tostring(args[i])) end
-  log_file:write('\n'):flush()
-end
-
-local log_rpc = false
 
 -- Read a request or notification from the LSP client.
 -- @return JSON RPC object received
 local function read()
+  log:debug('Waiting for client message...')
   local line = io.read()
   while not line:find('^Content%-Length: %d+') do line = io.read() end
   local len = tonumber(line:match('%d+'))
   -- while #line > 0 do line = io.read() end -- skip other headers
   local data = io.read(len)
-  if log_rpc then log('RPC recv: ', data) end
+  log:debug('Recv: %s', data)
   return json.decode(data)
 end
 
@@ -41,7 +37,7 @@ local function respond(id, result)
   local key = not (result.code and result.message) and 'result' or 'error'
   local message = {jsonrpc = '2.0', id = id, [key] = result}
   local content = json.encode(message)
-  if log_rpc then log('RPC send: ', content) end
+  log:debug('Send: %s', content)
   io.write(string.format('Content-Length: %d\r\n\r\n%s\r\n', #content + 2, content)):flush()
 end
 
@@ -79,7 +75,7 @@ register('initialize', function(params)
   os.remove(cache) -- Linux creates this file
   lfs.mkdir(cache)
   pl_dir.copyfile('tadoc.lua', cache .. '/tadoc.lua')
-  log('Initialize: root=', root, ' cache=', cache)
+  log:info('Initialize (root=%s, cache=%s)', root, cache)
   options = params.initializationOptions
   client_capabilities = params.capabilities
   return {
@@ -144,7 +140,7 @@ register('textDocument/didOpen', function(params)
   local lines = {}
   for line in params.textDocument.text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
   files[params.textDocument.uri] = lines
-  log('Cached: ', params.textDocument.uri)
+  log:debug('Cached the lines of %s', params.textDocument.uri)
 end)
 
 register('textDocument/didClose', function() end)
@@ -153,22 +149,29 @@ register('textDocument/didSave', function() end)
 -- Scans directory or file *target* and caches the result.
 -- @param target String directory or file path.
 local function scan(target)
-  log('Scanning: ', target)
+  log:debug('Scanning %s', target)
 
   -- Determine files to scan.
-  local files, seen = {}, 0
+  local files = {}
   if lfs.attributes(target, 'mode') == 'directory' then
+    log:debug('Directory detected')
+
+    -- Read config.
     local config_file, config = target .. '/.lua-lsp', {
       ignore = {'*.hg', '*.git', '*.bzr', '*.svn', '*_FOSSIL_', '*node_modules'}, max_scan = 10000
     }
     if lfs.attributes(config_file) then
-      log('Reading config: ' .. config_file)
+      log:debug('Reading config in %s', config_file)
       local ok, errmsg = pcall(assert(loadfile(target .. '/.lua-lsp', 't', config)))
-      if not ok then log('Config error: ' .. errmsg) end
-      log('Read config')
+      if not ok then log:warn('Config error: %s', errmsg) end
     end
+    log:debug(function() return 'config = ' .. require('pl.pretty').write(config, '') end)
+
+    -- Walk the directory, looking for files to scan.
     local fnmatch = pl_dir.fnmatch
+    local total_files_seen = 0
     local function walk(dir)
+      log:debug('Identifying files to scan in %s', dir)
       for _, path in ipairs(pl_dir.getdirectories(dir)) do
         if config.ignore then
           for _, ignore in ipairs(config.ignore) do
@@ -176,45 +179,44 @@ local function scan(target)
           end
         end
         walk(path)
-        if seen > config.max_scan then
-          log('Directory too large')
+        if total_files_seen > config.max_scan then
+          log:warn('Directory too large to scan (more than %d files)', config.max_scan)
           return
         end
         ::continue::
       end
-      log('Scanning: ', dir)
+      local seen = #files
       for _, path in ipairs(pl_dir.getfiles(dir)) do
         if path:find('%.luad?o?c?$') then files[#files + 1] = path end
-        seen = seen + 1
+        total_files_seen = total_files_seen + 1
       end
+      if #files > seen then log:debug('Identified %s files in %s', #files - seen, dir) end
     end
     walk(target)
   else
+    log:debug('File detected')
     files[1] = target
   end
-  log('Identified ', #files, ' files to scan')
+  log:debug('Identified a total of %d files to scan', #files)
   if #files == 0 then return end
 
   -- Write LDoc config.
   local config = cache .. '/config.ld'
   local f = assert(io.open(config, 'wb'))
-  f:write('file=', require('pl.pretty').write(files)):close()
-  log('Wrote config file: ', config)
+  local dump = require('pl.pretty').write(files)
+  f:write('file=', dump):close()
+  log:debug('Wrote config file: %s\nfile=%s', config, dump)
 
   -- Invoke LDoc.
   local command = string.format(
     '%s -d "%s" -c "%s" . --filter tadoc.ldoc -- --root="%s" --multiple', ldoc, cache, config,
     target)
-  log('Scan: ', command)
+  log:debug('Running scan command: %s', command)
   os.execute(command)
 
   -- Register results.
-  tags, api = {}, {} -- clear
-  for filename in lfs.dir(cache) do
-    if filename:find('_tags$') then tags[#tags + 1] = cache .. '/' .. filename end
-    if filename:find('_api$') then api[#api + 1] = cache .. '/' .. filename end
-  end
-  log('Read cache: #tags=', #tags, ' #api=', #api)
+  tags, api = pl_dir.getfiles(cache, '*_tags'), pl_dir.getfiles(cache, '*_api')
+  log:debug('Read cache: #tags=%d #api=%d', #tags, #api)
 end
 
 local tmpfiles = {} -- holds the prefixes for temporary file scan results
@@ -222,7 +224,7 @@ local tmpfiles = {} -- holds the prefixes for temporary file scan results
 register('textDocument/didChange', function(params)
   if tmpfiles[params.textDocument.uri] then
     local tmpfile = tmpfiles[params.textDocument.uri]
-    log('Removing temporary scan results: ', tmpfile, '*')
+    log:debug('Removing temporary scan results from cache: %s*', tmpfile)
     for file in lfs.dir(cache) do
       if file:find(tmpfile, 1, true) then os.remove(cache .. '/' .. file) end
     end
@@ -232,7 +234,7 @@ register('textDocument/didChange', function(params)
   local lines = {}
   for line in params.contentChanges[1].text:gmatch('[^\n]*') do lines[#lines + 1] = line end
   files[params.textDocument.uri] = lines
-  log('Cached: ', params.textDocument.uri)
+  log:debug('Cached the contents of %s', params.textDocument.uri)
   -- Scan it, but with a path relative to a temporary root directory.
   -- This allows "Go to Definition" to function correctly for files with unsaved changes.
   local tmpdir = os.tmpname()
@@ -240,10 +242,11 @@ register('textDocument/didChange', function(params)
   local filename = tofilename(params.textDocument.uri)
   if filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
   if WIN32 then filename = filename:gsub('^%a:', '') end
-  log('Preparing to scan: ', tofilename(params.textDocument.uri), ' relative path=', filename)
+  log:debug('Preparing to scan: %s (relative path=%s)', tofilename(params.textDocument.uri),
+    filename)
   local path = tmpdir .. '/' .. filename
   pl_dir.makepath(path:match('^.+[/\\]'))
-  log('Creating temporary file: ', filename)
+  log:debug('Creating temporary file: %s', filename)
   io.open(path, 'wb'):write(params.contentChanges[1].text):close()
   scan(tmpdir)
   tmpfiles[params.textDocument.uri] = tmpdir:gsub('[/\\]', '_') -- tadoc saves files like this
@@ -271,8 +274,8 @@ register('textDocument/completion', function(params)
   local line_num, col_num = params.position.line + 1, params.position.character + 1
   local lines = files[params.textDocument.uri]
   local symbol, op, part = lines[line_num]:sub(1, col_num - 1):match('([%w_%.]-)([%.:]?)([%w_]*)$')
-  log('Getting completions: file=', tofilename(params.textDocument.uri), ' line=', line_num,
-    ' col=', col_num, ' symbol=', symbol, ' op=', op, ' part=', part)
+  log:debug('Get completions at %s:%d:%d: symbol=%s op=%s part=%s',
+    tofilename(params.textDocument.uri), line_num, col_num, symbol, op, part)
   if symbol == '' and part == '' then return json.null end -- nothing to complete
   symbol, part = symbol:gsub('^_G%.?', ''), part ~= '_G' and part or ''
   -- Attempt to identify string type and file type symbols.
@@ -282,7 +285,7 @@ register('textDocument/completion', function(params)
     if not expr then goto continue end
     for patt, type in pairs(expr_types) do
       if expr:find(patt) then
-        log('Inferred type: symbol=', symbol, ' type=', type)
+        log:debug('Inferred type of %s (%s); using it instead', symbol, type)
         symbol = type
         break
       end
@@ -291,6 +294,7 @@ register('textDocument/completion', function(params)
   end
 
   -- Search through tags for completions for that symbol.
+  log:debug('Searching for completions in cache')
   local name_patt, seen = '^' .. part, {}
   for _, filename in ipairs(tags) do
     if not filename or not lfs.attributes(filename) then goto continue end
@@ -298,9 +302,13 @@ register('textDocument/completion', function(params)
       local name = line:match('^%S+')
       if not name:find(name_patt) or seen[name] then goto continue end
       local fields = line:match(';"\t(.*)$')
+      if part ~= '' then
+        -- When part == '', every symbol is a candidate, so there's no point in logging that.
+        log:debug('Found candidate: (name=%s file=%s fields=%s)', name, filename, fields)
+      end
       local k, class = fields:sub(1, 1), fields:match('class:(%S+)') or ''
       if class == symbol and (op ~= ':' or k == 'f') then
-        log('Found completion: ', name, ' file=', filename, ' fields=', fields)
+        log:debug('Found completion: %s (file=%s fields=%s)', name, filename, fields)
         items[#items + 1], seen[name] = {label = name, kind = kinds[k]}, true
       end
       ::continue::
@@ -308,7 +316,7 @@ register('textDocument/completion', function(params)
     ::continue::
   end
 
-  if #items == 1 and items[1].label:find(name_patt .. '%?') then return json.null end
+  log:debug('Found %d completions', #items)
   return items
 end)
 
@@ -328,20 +336,23 @@ end
 -- @param symbol String symbol get get API docs for.
 -- @return list of documentation strings
 local function get_api(symbol)
+  log:debug('Searching cache for documentation about %s', symbol)
   local docs = {}
   local symbol_patt = '^' .. symbol:match('[%w_]+$')
   for _, filename in ipairs(api) do
     if not filename or not lfs.attributes(filename) then goto continue end
     for line in io.lines(filename) do
       if not line:find(symbol_patt) then goto continue end
-      log('Found api: ', symbol, ' file=', filename)
+      log:debug('Found candidate: (name=%s file=%s)', line:match('^%S+'), filename)
       local doc = line:match(symbol_patt .. '%s+(.+)$')
       if not doc then goto continue end
+      log:debug('Confirmed')
       docs[#docs + 1] = doc:gsub('%f[\\]\\n', '\n'):gsub('\\\\', '\\')
       ::continue::
     end
     ::continue::
   end
+  log:debug('Found %d documentation items', #docs)
   return docs
 end
 
@@ -349,7 +360,7 @@ end
 register('textDocument/hover', function(params)
   local symbol = get_symbol(params)
   if not symbol then return json.null end
-  log('Hover: ', symbol)
+  log:debug('Hover: %s', symbol)
   local docs = get_api(symbol)
   return #docs > 0 and {contents = {kind = 'plaintext', value = docs[1]}} or json.null
 end)
@@ -363,21 +374,20 @@ register('textDocument/signatureHelp', function(params)
   local lines, prev_lines = files[params.textDocument.uri], {}
   for i = 1, line_num - 1 do prev_lines[#prev_lines + 1] = lines[i] end
   local text, pos = table.concat(lines), #table.concat(prev_lines) + col_num - 1
-  log('Getting signature: file=', params.textDocument.uri, ' line=', line_num, ' col=', col_num,
-    ' pos=', pos)
+  log:debug('Get signature at %s:%d:%d (pos=%d)', params.textDocument.uri, line_num, col_num, pos)
   local s = pos
   ::retry::
   while s > 1 and not text:find('^[({]', s) do s = s - 1 end
   local e = select(2, text:find('^%b()', s)) or select(2, text:find('^%b{}', s))
   if e and e < pos then
-    log('Skipping previous () or {}: s=', s, ' e=', e)
+    log:debug('Skipping previous () or {} (s=%d e=%d)', s, e)
     s = s - 1
     goto retry
   end
   local func = text:sub(1, s - 1):match('[%w_]+$')
   if not func then return json.null end
-  log('Identified function: ', func)
 
+  -- Get its signature(s).
   for _, doc in ipairs(get_api(func)) do signatures[#signatures + 1] = {label = doc} end
   return {signatures = signatures, activeSignature = 0}
 end)
@@ -389,9 +399,9 @@ register('textDocument/definition', function(params)
   -- Retrieve the symbol at the caret.
   local symbol = get_symbol(params)
   if not symbol then return json.null end
-  log('Go to definition of ', symbol)
 
   -- Search through tags for that symbol.
+  log:debug('Searching cache for definition of %s', symbol)
   local patt = '^(' .. symbol:match('[%w_]+$') .. ')\t([^\t]+)\t(.-);"\t?(.*)$'
   for _, filename in ipairs(tags) do
     if not filename or not lfs.attributes(filename) then goto continue end
@@ -399,7 +409,7 @@ register('textDocument/definition', function(params)
       local name, file, ex_cmd, ext_fields = tag_line:match(patt)
       if not name then goto continue end
       file = file:gsub('^_ROOT', root)
-      log('Found definition: ', ex_cmd, ' file=', filename)
+      log:debug('Found candidate: %s (file=%s)', ex_cmd, filename)
       local uri = touri(file)
       ex_cmd = ex_cmd:match('/^?(.-)$?/$')
       if files[uri] then
@@ -407,7 +417,7 @@ register('textDocument/definition', function(params)
         for i, line in ipairs(files[uri]) do
           local s, e = line:find(ex_cmd, 1, true)
           if not s and not e then goto continue end
-          log('Found location in cached file: line ', i - 1)
+          log:debug('Confirmed in cached file, line %d', i - 1)
           locations[#locations + 1] = {
             uri = uri,
             range = {
@@ -424,7 +434,7 @@ register('textDocument/definition', function(params)
       for line in io.lines(file) do
         local s, e = line:find(ex_cmd, 1, true)
         if s and e then
-          log('Found location in file: line ', i - 1)
+          log:debug('Confirmed in file on disk, line %d', i - 1)
           locations[#locations + 1] = {
             uri = uri,
             range = {
@@ -450,30 +460,26 @@ end)
 
 -- LSP shutdown request.
 register('shutdown', function(params)
-  log('Shutting down')
+  log:info('Shutting down')
   pl_dir.rmtree(cache)
-  log('Cleaned up')
+  log:debug('Cleaned up')
   return json.null
 end)
 
 -- Main server loop.
-log('Starting up')
+log:info('Starting up')
 local message = read()
 while message.method ~= 'exit' do
-  log('Request: id=', message.id, ' method=', message.method)
   local ok, result = pcall(handlers[message.method], message.params)
   if not ok then
-    log('Error: ', result)
+    log:error('Error: %s', result)
     result = {code = 1, message = result}
   end
-  if result then
-    log('Response: id=', message.id)
-    respond(message.id, result)
-  end
+  if result then respond(message.id, result) end
   if message.method == 'initialize' then
     if root then scan(root) end
-    scan(lfs.currentdir() .. '/doc')
+    scan(lfs.currentdir() .. '/doc') -- Lua stdlib
   end
   message = read()
 end
-log('Exiting')
+log:info('Exiting')
