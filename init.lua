@@ -163,6 +163,18 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- The default value is `false`.
 M.log_rpc = false
 ---
+-- Whether or not to automatically show completions when a trigger character is typed (e.g. '.').
+-- The default value is `true`.
+M.show_completions = true
+---
+-- Whether or not to automatically show signature help when a trigger character is typed (e.g. '(').
+-- The default value is `true`.
+M.show_signature_help = true
+---
+-- Whether or not to automatically show symbol information via mouse hovering.
+-- The default value is `true`.
+M.show_hover = true
+---
 -- Whether or not to show diagnostics.
 -- The default value is `true`, and shows them as annotations.
 M.show_diagnostics = true
@@ -1131,17 +1143,19 @@ events.connect(events.BUFFER_DELETED, function(buffer)
   })
 end)
 
+-- Show completions or signature help if a trigger character is typed.
 events.connect(events.CHAR_ADDED, function(code)
   local server = servers[buffer.lexer_language]
   if not server or code < 32 or code > 255 then return end
   if buffer:auto_c_active() then
-    if auto_c_incomplete then M.autocomplete() end -- re-trigger
+    if M.show_completions and auto_c_incomplete then M.autocomplete() end -- re-trigger
     return
   end
-  if server.call_tip_triggers[code] then
+  if M.show_signature_help and server.call_tip_triggers[code] then
     M.signature_help()
     if view:call_tip_active() then return end
   end
+  if not M.show_completions then return end
   local trigger = server.auto_c_triggers[code] or (M.autocomplete_num_chars and buffer.current_pos -
     buffer:word_start_position(buffer.current_pos, true) >= M.autocomplete_num_chars)
   if trigger then M.autocomplete() end
@@ -1150,7 +1164,7 @@ end)
 -- Query the language server for hover information when mousing over identifiers.
 events.connect(events.DWELL_START, function(position)
   local server = servers[buffer.lexer_language]
-  if server then M.hover(position) end
+  if server and M.show_hover then M.hover(position) end
 end)
 events.connect(events.DWELL_END, function()
   if not buffer.get_lexer then return end
