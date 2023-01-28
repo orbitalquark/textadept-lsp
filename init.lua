@@ -922,7 +922,6 @@ function M.signature_help()
   if param then view:call_tip_set_hlt(param.label[1] + 1, param.label[2] + 1) end
 end
 -- Cycle through signatures.
--- TODO: this conflicts with textadept.editing's CALL_TIP_CLICK handler.
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
   if not (server and server.capabilities.signatureHelpProvider and (buffer.filename or
@@ -937,6 +936,19 @@ events.connect(events.CALL_TIP_CLICK, function(position)
   end
   view:call_tip_show(buffer.current_pos, signatures[signatures.activeSignature].text)
 end)
+
+-- Close the call tip when a trigger's complement is typed (e.g. ')').
+events.connect(events.KEYPRESS, function(key)
+  if not view:call_tip_active() then return end
+  local server = servers[buffer.lexer_language]
+  if not server or not server.call_tip_triggers then return end
+  for byte in pairs(server.call_tip_triggers) do
+    if textadept.editing.auto_pairs[string.char(byte)] == key then
+      view:call_tip_cancel()
+      return
+    end
+  end
+end, 1) -- needs to come before editing.lua's typeover character handler
 
 -- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface),
 -- returning whether or not a definition was found.
