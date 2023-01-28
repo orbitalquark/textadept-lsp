@@ -460,11 +460,11 @@ end)
 log:info('Starting up')
 local message = read()
 while message.method ~= 'exit' do
-  local ok, result = pcall(handlers[message.method], message.params)
-  if not ok then
-    log:error('Error: %s', result)
-    result = {code = 1, message = result}
-  end
+  local ok, result = xpcall(handlers[message.method], function(errmsg)
+    errmsg = debug.traceback(errmsg)
+    log:error(errmsg)
+    return {code = 1, message = errmsg}
+  end, message.params)
   if result then respond(message.id, result) end
   if message.method == 'initialize' then
     if root then scan(root) end
