@@ -92,7 +92,7 @@ register('initialize', function(params)
         -- completionItem = {labelDetailsSupport = true},
       }, --
       hoverProvider = true,
-      signatureHelpProvider = {triggerCharacters = {'(', ','}, retriggerCharacters = {','}},
+      signatureHelpProvider = {triggerCharacters = {'(', '{', ','}, retriggerCharacters = {','}},
       -- declarationProvider = true,
       definitionProvider = true,
       -- typeDefinitionProvider = true,
