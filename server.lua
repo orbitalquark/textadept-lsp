@@ -209,6 +209,24 @@ local function scan(target)
   log:debug('Read cache: #tags=%d #api=%d', #tags, #api)
 end
 
+local _HOME = os.getenv('TEXTADEPT_HOME') or (arg[-2] and arg[-2]:match('^.+[/\\]'))
+local scanned_textadept = false
+-- LSP textDocument/didOpen notification.
+register('textDocument/didOpen', function(params)
+  local lines = {}
+  for line in params.textDocument.text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
+  files[params.textDocument.uri] = lines
+  log:debug('Cached the lines of %s', params.textDocument.uri)
+
+  if params.textDocument.uri:find('[/\\]%.?textadept[/\\]') and not scanned_textadept and _HOME then
+    scanned_textadept = true
+    scan(_HOME)
+  end
+end)
+
+register('textDocument/didClose', function() end)
+register('textDocument/didSave', function() end)
+
 local tmpfiles = {} -- holds the prefixes for temporary file scan results
 -- LSP textDocument/didChange notification.
 register('textDocument/didChange', function(params)
