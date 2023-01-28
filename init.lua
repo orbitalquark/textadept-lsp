@@ -82,8 +82,6 @@ local M = {}
 -- Localizations.
 local _L = _L
 if not rawget(_L, 'Language Server') then
-  -- Error messages.
-  _L['No project root found'] = 'No project root found'
   -- Dialogs.
   _L['language server is already running'] = 'language server is already running'
   _L['language server shell command:'] = 'language server shell command:'
@@ -270,20 +268,21 @@ local Server = {}
 -- @param init_options Optional table of options to be passed to the language server for
 --   initialization.
 function Server.new(lang, cmd, init_options)
-  local root = assert(io.get_project_root(), _L['No project root found'])
   log('Starting language server: ', cmd)
   local server = setmetatable({lang = lang, request_id = 0, incoming_messages = {}},
     {__index = Server})
-  server.proc = assert(os.spawn(cmd, root, function(output) server:handle_stdout(output) end,
+  server.proc = assert(os.spawn(cmd, function(output) server:handle_stdout(output) end,
     function(output) log(output) end, function(status)
       log('Server exited with status ', status)
       servers[lang] = nil
     end))
+  local root = io.get_project_root()
   local result = server:request('initialize', {
     processId = json.null, --
     clientInfo = {name = 'textadept', version = _RELEASE},
     -- TODO: locale
-    rootUri = not WIN32 and 'file://' .. root or 'file:///' .. root:gsub('\\', '/'),
+    rootUri = root and (not WIN32 and 'file://' .. root or 'file:///' .. root:gsub('\\', '/')) or
+      nil, --
     initializationOptions = init_options, --
     capabilities = {
       -- workspace = nil, -- workspaces are not supported at all
@@ -721,7 +720,6 @@ function M.start(cmd)
     local orig_buffer, orig_view, num_views = buffer, view, #_VIEWS
     local ok, server = xpcall(function() return Server.new(lang, cmd, init_options) end,
       function(errmsg)
-        if errmsg:find(_L['No project root found']) then return end
         local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
         ui.print_silent_to('[LSP]', debug.traceback(message))
         ui.statusbar_text = message

@@ -69,13 +69,14 @@ end
 
 -- LSP initialize request.
 register('initialize', function(params)
-  root = tofilename(params.workspaceFolders and params.workspaceFolders[1].uri or params.rootUri or
-    params.rootPath)
+  local uri = params.workspaceFolders and params.workspaceFolders[1].uri or params.rootUri or
+    params.rootPath
+  if uri then root = tofilename(uri) end
   cache = os.tmpname()
   os.remove(cache) -- Linux creates this file
   lfs.mkdir(cache)
   pl_dir.copyfile('tadoc.lua', cache .. '/tadoc.lua')
-  log:info('Initialize (root=%s, cache=%s)', root, cache)
+  log:info('Initialize (root=%s, cache=%s)', root or 'nil', cache)
   options = params.initializationOptions
   client_capabilities = params.capabilities
   return {
@@ -134,17 +135,6 @@ end)
 
 -- LSP initialized notification.
 register('initialized', function() end) -- no-op
-
--- LSP textDocument/didOpen notification.
-register('textDocument/didOpen', function(params)
-  local lines = {}
-  for line in params.textDocument.text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
-  files[params.textDocument.uri] = lines
-  log:debug('Cached the lines of %s', params.textDocument.uri)
-end)
-
-register('textDocument/didClose', function() end)
-register('textDocument/didSave', function() end)
 
 -- Scans directory or file *target* and caches the result.
 -- @param target String directory or file path.
@@ -240,7 +230,7 @@ register('textDocument/didChange', function(params)
   local tmpdir = os.tmpname()
   os.remove(tmpdir) -- Linux creates this file
   local filename = tofilename(params.textDocument.uri)
-  if filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
+  if root and filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
   if WIN32 then filename = filename:gsub('^%a:', '') end
   log:debug('Preparing to scan: %s (relative path=%s)', tofilename(params.textDocument.uri),
     filename)
@@ -408,7 +398,7 @@ register('textDocument/definition', function(params)
     for tag_line in io.lines(filename) do
       local name, file, ex_cmd, ext_fields = tag_line:match(patt)
       if not name then goto continue end
-      file = file:gsub('^_ROOT', root)
+      if root then file = file:gsub('^_ROOT', root) end
       log:debug('Found candidate: %s (file=%s)', ex_cmd, filename)
       local uri = touri(file)
       ex_cmd = ex_cmd:match('/^?(.-)$?/$')
