@@ -86,7 +86,7 @@ local function write_apidoc(file, m, b)
   end
   doc[#doc + 1] = sanitize_markdown(description)
   -- Function parameters (@param).
-  if class:find('^l?function') and b.param then
+  if class:find('^l?function') and (b.params or b.param) then
     for _, p in ipairs(b.params or b.param) do
       if b.params and b.params.map and #b.params.map[p] > 0 or
         (b.param and b.param[p] and #b.param[p] > 0) then
