@@ -1225,8 +1225,8 @@ for i = 1, #m_tools - 1 do
             if ui.command_entry.active then
               _G.buffer, _G.view = ui.command_entry, ui.command_entry
             end
-            M.signature_help()
-            if not view:call_tip_active() then M.hover() end
+            M.hover()
+            if not view:call_tip_active() then M.signature_help() end
             if ui.command_entry.active then _G.buffer, _G.view = buffer, view end
           end
         }, --
