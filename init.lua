@@ -928,9 +928,7 @@ end
 -- Cycle through signatures.
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
-  if not (server and server.capabilities.signatureHelpProvider and (buffer.filename or
-    (server.capabilities.experimental and
-      server.capabilities.experimental.untitledDocumentSignatureHelp)) and signatures and
+  if not (server and server.capabilities.signatureHelpProvider and signatures and
     signatures.activeSignature) then return end
   signatures.activeSignature = signatures.activeSignature + (position == 1 and -1 or 1)
   if signatures.activeSignature > #signatures then
@@ -1144,7 +1142,7 @@ events.connect(events.CHAR_ADDED, function(code)
     return
   end
   if M.show_signature_help and server.call_tip_triggers[code] then
-    M.signature_help()
+    if not view:call_tip_active() then M.signature_help() end
     if view:call_tip_active() then return end
   end
   if not M.show_completions then return end
@@ -1231,8 +1229,9 @@ for i = 1, #m_tools - 1 do
             if ui.command_entry.active then
               _G.buffer, _G.view = ui.command_entry, ui.command_entry
             end
-            M.hover()
-            if not view:call_tip_active() then M.signature_help() end
+            local cycle = view:call_tip_active()
+            if not cycle then M.hover() end
+            if not view:call_tip_active() or cycle then M.signature_help() end
             if ui.command_entry.active then _G.buffer, _G.view = buffer, view end
           end
         }, --
