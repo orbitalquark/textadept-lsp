@@ -346,7 +346,7 @@ end
 local function get_api(symbol)
   log:debug('Searching cache for documentation about %s', symbol)
   local docs = {}
-  local symbol_patt = '^' .. symbol:match('[%w_]+$')
+  local symbol_patt, full_patt = '^' .. symbol:match('[%w_]+$'), '^' .. symbol:gsub('%p', '%%%0')
   for _, filename in ipairs(api) do
     if not filename or not lfs.attributes(filename) then goto continue end
     for line in io.lines(filename) do
@@ -354,8 +354,10 @@ local function get_api(symbol)
       log:debug('Found candidate: (name=%s file=%s)', line:match('^%S+'), filename)
       local doc = line:match(symbol_patt .. '%s+(.+)$')
       if not doc then goto continue end
-      log:debug('Confirmed')
+      local full_match = doc:find(full_patt)
+      log:debug(full_match and 'Confirmed' or 'Fuzzy match')
       docs[#docs + 1] = doc:gsub('%f[\\]\\n', '\n'):gsub('\\\\', '\\')
+      if full_match then return {docs[#docs]} end
       ::continue::
     end
     ::continue::
@@ -392,7 +394,7 @@ register('textDocument/signatureHelp', function(params)
     s = s - 1
     goto retry
   end
-  local func = text:sub(1, s - 1):match('[%w_]+$')
+  local func = text:sub(1, s - 1):match('[%w_.:]+$')
   if not func then return json.null end
 
   -- Get its signature(s).
