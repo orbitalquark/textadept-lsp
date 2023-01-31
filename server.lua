@@ -240,7 +240,7 @@ register('textDocument/didChange', function(params)
   end
 
   local lines = {}
-  for line in params.contentChanges[1].text:gmatch('[^\n]*') do lines[#lines + 1] = line end
+  for line in params.contentChanges[1].text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
   files[params.textDocument.uri] = lines
   log:debug('Cached the contents of %s', params.textDocument.uri)
   -- Scan it, but with a path relative to a temporary root directory.
