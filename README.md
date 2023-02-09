@@ -1,5 +1,9 @@
 # Language Server Protocol
 
+<a id="lsp"></a>
+# The `lsp` Module
+---
+
 A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 language servers in order to provide autocompletion, calltips, go to definition, and more.
 It implements version 3.17.0 of the protocol, but does not support all protocol features. The
@@ -12,18 +16,12 @@ Install this module by copying it into your *~/.textadept/modules/* directory or
 
 You can then set up some language server commands. For example:
 
-    lsp.server_commands.lua = 'lua-lsp'
-    lsp.server_commands.cpp = function()
-      return 'cquery', {
-        cacheDirectory = '/tmp/cquery-cache',
-        compilationDatabaseDirectory = io.get_project_root(),
-        progressReportFrequencyMs = -1
-      }
-    end
+    lsp.server_commands.cpp = 'clangd'
+    lsp.server_commands.go = 'gopls'
 
 (For more example configurations, see the [wiki][].)
 
-When either Lua or cpp files are opened, their associated language servers are automatically
+When either C++ or Go files are opened, their associated language servers are automatically
 started (one per language, though). Note that language servers typically require a root URI,
 so this module uses `io.get_project_root()` for this. If the file being opened is not part
 of a project recognized by Textadept, the language server will not be started.
@@ -33,7 +31,8 @@ all language servers may support the menu options.
 
 **Note:** If you want to inspect the LSP messages sent back and forth, you can use the Lua
 command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
-already active -- from this point forward all messages will be logged to the "[LSP]" buffer.
+already active -- from this point forward all messages will be logged. View the log via the
+"Tools > Language Server > View Log" menu item.
 
 **Warning:** Buggy language servers that do not respect the protocol may cause this module
 and Textadept to hang, waiting for a response. There is no recourse other than to force-quit
@@ -135,11 +134,29 @@ The default value is `false`, and assumes any diagnostics on the current line or
 are due to an incomplete statement during something like an autocompletion, signature help,
 etc. request.
 
+<a id="lsp.show_completions"></a>
+### `lsp.show_completions` 
+
+Whether or not to automatically show completions when a trigger character is typed (e.g. '.').
+The default value is `true`.
+
 <a id="lsp.show_diagnostics"></a>
 ### `lsp.show_diagnostics` 
 
 Whether or not to show diagnostics.
 The default value is `true`, and shows them as annotations.
+
+<a id="lsp.show_hover"></a>
+### `lsp.show_hover` 
+
+Whether or not to automatically show symbol information via mouse hovering.
+The default value is `true`.
+
+<a id="lsp.show_signature_help"></a>
+### `lsp.show_signature_help` 
+
+Whether or not to automatically show signature help when a trigger character is typed (e.g. '(').
+The default value is `true`.
 
 
 ## Functions defined by `lsp`
@@ -196,15 +213,6 @@ notifications and act on them.
 Parameters:
 
 - *output*:  String stdout from the Language Server.
-
-<a id="Server.log"></a>
-### `Server:log`(*message*)
-
-Silently logs the given message.
-
-Parameters:
-
-- *message*:  String message to log.
 
 <a id="Server.notify"></a>
 ### `Server:notify`(*method*, *params*)

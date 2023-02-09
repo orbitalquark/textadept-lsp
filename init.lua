@@ -17,18 +17,12 @@ local json = require('lsp.dkjson')
 --
 -- You can then set up some language server commands. For example:
 --
---     lsp.server_commands.lua = 'lua-lsp'
---     lsp.server_commands.cpp = function()
---       return 'cquery', {
---         cacheDirectory = '/tmp/cquery-cache',
---         compilationDatabaseDirectory = io.get_project_root(),
---         progressReportFrequencyMs = -1
---       }
---     end
+--     lsp.server_commands.cpp = 'clangd'
+--     lsp.server_commands.go = 'gopls'
 --
 -- (For more example configurations, see the [wiki][].)
 --
--- When either Lua or cpp files are opened, their associated language servers are automatically
+-- When either C++ or Go files are opened, their associated language servers are automatically
 -- started (one per language, though). Note that language servers typically require a root URI,
 -- so this module uses `io.get_project_root()` for this. If the file being opened is not part
 -- of a project recognized by Textadept, the language server will not be started.
@@ -38,7 +32,8 @@ local json = require('lsp.dkjson')
 --
 -- **Note:** If you want to inspect the LSP messages sent back and forth, you can use the Lua
 -- command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
--- already active -- from this point forward all messages will be logged to the "[LSP]" buffer.
+-- already active -- from this point forward all messages will be logged. View the log via the
+-- "Tools > Language Server > View Log" menu item.
 --
 -- **Warning:** Buggy language servers that do not respect the protocol may cause this module
 -- and Textadept to hang, waiting for a response. There is no recourse other than to force-quit
