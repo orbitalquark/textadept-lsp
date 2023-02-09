@@ -718,12 +718,11 @@ function M.start(cmd)
   if type(cmd) == 'function' then cmd, init_options = cmd() end
   if type(cmd) == 'table' then cmd, init_options = cmd.command, cmd.init_options end
   if cmd then
-    local ok, server = xpcall(function() return Server.new(lang, cmd, init_options) end,
-      function(errmsg)
-        local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
-        log('[LSP]', debug.traceback(message))
-        ui.statusbar_text = message
-      end)
+    local ok, server = xpcall(Server.new, function(errmsg)
+      local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
+      log('[LSP]', debug.traceback(message))
+      ui.statusbar_text = message
+    end, lang, cmd, init_options)
     servers[lang] = ok and server or nil -- replace sentinel
     if not ok then return end
     server:notify_opened()
