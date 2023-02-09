@@ -109,8 +109,9 @@ if not rawget(_L, 'Language Server') then
   _L['Go To Type Definition'] = 'Go To _Type Definition'
   _L['Go To Implementation'] = 'Go To _Implementation'
   _L['Find References'] = 'Find _References'
+  _L['Select Around'] = 'Select Aro_und'
   _L['Select All Symbol'] = 'Select Al_l Symbol'
-  _L['Toggle Show Diagnostics'] = 'Toggle Show Diagnosti_cs'
+  _L['Toggle Show Diagnostics'] = 'Toggle Show Diag_nostics'
   _L['Show Log'] = 'Show L_og'
   _L['Clear Log'] = 'Cl_ear Log'
 end
