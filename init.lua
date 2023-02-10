@@ -1040,6 +1040,7 @@ function M.find_references()
     buffer:empty_undo_buffer()
     view:scroll_caret() -- [Files Found Buffer]
   end
+  _G.buffer:set_save_point()
   buffer:close(true) -- temporary buffer
 end
 
