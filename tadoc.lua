@@ -230,7 +230,7 @@ function M.ldoc(doc)
     -- Write individual tags and api files if desired.
     if multiple then
       write_files(tags, apidoc, output_dir,
-        module.file:gsub(ROOT .. '[/\\]', ''):gsub('[/\\.]', '_'), module.name)
+        module.file:gsub(ROOT .. '[/\\]', ''):gsub('[/\\.:]', '_'), module.name)
       tags, apidoc = {}, {}
     end
   end

@@ -467,7 +467,7 @@ function Server:read()
     return message
   end
   local line = self.proc:read()
-  while not line:find('^Content%-Length: %d+$') do line = self.proc:read() end
+  while not line:find('^\n?Content%-Length: %d+$') do line = self.proc:read() end
   local len = tonumber(line:match('%d+$'))
   while #line > 0 do line = self.proc:read() end -- skip other headers
   local data = self.proc:read(len)
@@ -552,9 +552,9 @@ end
 -- notifications and act on them.
 -- @param output String stdout from the Language Server.
 function Server:handle_stdout(output)
-  if output:find('^Content%-Length:') then
-    local len = tonumber(output:match('^Content%-Length: (%d+)'))
-    local _, _, e = output:find('\r\n\r\n()')
+  if output:find('^\n?Content%-Length:') then
+    local len = tonumber(output:match('^\n?Content%-Length: (%d+)'))
+    local _, _, e = output:find('\r\n\r\n?()')
     if e + len - 1 <= #output then
       self:handle_data(output:sub(e, e + len - 1))
       self:handle_stdout(output:sub(e + len)) -- process any other messages

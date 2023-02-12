@@ -22,7 +22,7 @@ local WIN32 = package.path:find('\\')
 local function read()
   log:debug('Waiting for client message...')
   local line = io.read()
-  while not line:find('^Content%-Length: %d+') do line = io.read() end
+  while not line:find('^\n?Content%-Length: %d+') do line = io.read() end
   local len = tonumber(line:match('%d+'))
   -- while #line > 0 do line = io.read() end -- skip other headers
   local data = io.read(len)
@@ -58,6 +58,7 @@ local function tofilename(uri)
   local filename = uri:gsub(not WIN32 and '^file://' or '^file:///', '')
   filename = filename:gsub('%%(%x%x)', function(hex) return string.char(tonumber(hex, 16)) end)
   if WIN32 then filename = filename:gsub('/', '\\') end
+  if filename == 'untitled:' then filename = 'untitled' end
   return filename
 end
 
@@ -201,6 +202,7 @@ local function scan(target)
   local command = string.format(
     '%s -d "%s" -c "%s" . --filter tadoc.ldoc -- --root="%s" --multiple', ldoc, cache, config,
     target)
+  if WIN32 then command = '"' .. command .. '"' end -- quote for os.execute()'s "cmd /C [command]"
   log:debug('Running scan command: %s', command)
   os.execute(command)
 

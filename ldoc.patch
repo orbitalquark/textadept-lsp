@@ -1,3 +1,16 @@
+--- a/ldoc.lua	2016-11-07 09:20:55.000000000 -0500
++++ b/ldoc.lua	2023-01-26 09:53:47.446847946 -0500
+@@ -15,7 +15,10 @@
+ -- @copyright 2011
+ -- @license MIT/X11
+ -- @script ldoc
+ 
++local dir = arg[0]:match('^(.+)[/\\]')
++package.path = string.format('%s/?.lua;%s/?/init.lua', dir, dir)
++
+ local class = require 'pl.class'
+ local app = require 'pl.app'
+ local path = require 'pl.path'
 --- a/ldoc/tools.lua	2016-11-07 09:20:55.000000000 -0500
 +++ b/ldoc/tools.lua	2023-01-26 09:53:47.446847946 -0500
 @@ -266,7 +266,10 @@
