@@ -1289,9 +1289,10 @@ keys['shift+f12'] =
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
 if arg then
   local ta = arg[0]:gsub('%.exe$', '')
-  if not ta:find('%-curses$') then ta = ta .. '-curses' end -- run as background app
-  M.server_commands.lua = string.format('"%s" -L "%s"', ta,
-    package.searchpath('lsp', package.path):gsub('init%.lua$', 'server.lua'))
+  if not ta:find('%-curses$') then ta = ta:gsub('%-gtk$', '') .. '-curses' end -- run as background app
+  if not lfs.attributes(ta) then ta = arg[0] end -- fallback
+  M.server_commands.lua = string.format('"%s" -L "%s"', lfs.abspath(ta), package.searchpath('lsp',
+    package.path):gsub('init%.lua$', 'server.lua'))
 end
 -- Save and restore Lua server command during reset since arg is nil.
 events.connect(events.RESET_BEFORE, function(persist) persist.lsp_lua = M.server_commands.lua end)
