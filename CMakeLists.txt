@@ -40,7 +40,7 @@ if(NOT (WIN32 OR APPLE))
   set(module_dir ${CMAKE_INSTALL_FULL_DATADIR}/textadept/modules/lsp)
   install(CODE "file(MAKE_DIRECTORY ${module_dir})")
   install(FILES init.lua server.lua tadoc.lua dkjson.lua ldoc.lua DESTINATION ${module_dir})
-  install(DIRECTORY lua pl ldoc logging DESTINATION ${module_dir})
+  install(DIRECTORY doc pl ldoc logging DESTINATION ${module_dir})
 endif()
 
 # Documentation.
