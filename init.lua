@@ -1288,8 +1288,8 @@ keys['shift+f12'] =
 
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
 if arg then
-  local ta = arg[0]
-  if OSX then ta = ta .. '_osx' end -- wrapper script
+  local ta = arg[0]:gsub('%.exe$', '')
+  if not ta:find('%-curses$') then ta = ta .. '-curses' end -- run as background app
   M.server_commands.lua = string.format('"%s" -L "%s"', ta,
     package.searchpath('lsp', package.path):gsub('init%.lua$', 'server.lua'))
 end

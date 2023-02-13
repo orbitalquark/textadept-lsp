@@ -5,9 +5,7 @@
 local lfs = require('lfs')
 local dir = arg[0]:match('^(.+)[/\\]') or '.'
 lfs.chdir(dir) -- cd to this directory
-local ta = arg[-2]
-if ta and lfs.attributes('/Applications', 'mode') == 'directory' then ta = ta .. '_osx' end -- macOS
-local ldoc = ta and string.format('"%s" -L "%s/ldoc.lua"', ta, dir) or 'ldoc'
+local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
 package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
 io.open('server.log', 'w'):close() -- clear previous log
 
