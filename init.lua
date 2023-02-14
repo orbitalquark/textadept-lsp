@@ -857,7 +857,9 @@ function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 --   uses the current buffer position.
 function M.hover(position)
   local server = servers[buffer.lexer_language]
-  if not (server and buffer.filename and server.capabilities.hoverProvider) then return end
+  if not (server and (buffer.filename or
+    (server.capabilities.experimental and server.capabilities.experimental.untitledDocumentHover)) and
+    server.capabilities.hoverProvider) then return end
   server:sync_buffer()
   local hover = server:request('textDocument/hover', get_buffer_position_params(position))
   if not hover then return end

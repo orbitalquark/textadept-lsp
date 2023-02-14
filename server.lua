@@ -127,7 +127,8 @@ register('initialize', function(params)
       -- workspace={},
       experimental = {
         untitledDocumentCompletions = true, -- custom for this server
-        untitledDocumentSignatureHelp = true -- custom for this server
+        untitledDocumentSignatureHelp = true, -- custom for this server
+        untitledDocumentHover = true -- custom for this server
       }
     }
     -- serverInfo = 'Textadept'
