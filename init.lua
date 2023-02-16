@@ -715,7 +715,7 @@ function M.start(cmd)
   if cmd then
     local ok, server = xpcall(Server.new, function(errmsg)
       local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
-      log('[LSP]', debug.traceback(message))
+      log(debug.traceback(message))
       ui.statusbar_text = message
     end, lang, cmd, init_options)
     servers[lang] = ok and server or nil -- replace sentinel
