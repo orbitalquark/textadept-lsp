@@ -1096,6 +1096,7 @@ events.connect(events.INITIALIZED, function()
   events.connect(events.FILE_OPENED, notify_opened)
   events.connect(events.BUFFER_AFTER_SWITCH, notify_opened)
   events.connect(events.VIEW_AFTER_SWITCH, notify_opened)
+  events.connect(events.RESET_AFTER, start)
   -- Automatically start language server for the current file, if possible.
   start()
 end)
