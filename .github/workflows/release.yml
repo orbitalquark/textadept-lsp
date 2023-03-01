@@ -16,6 +16,9 @@ jobs:
           cmake -S . -B build -D CMAKE_INSTALL_PREFIX=build/install
           cmake --build build --config Release -j
           cmake --install build --config Release
+          git archive HEAD --prefix lsp/ | tar -xf -
+          mv ldoc ldoc.lua logging pl lsp
+          zip -r lsp.zip lsp
       - name: Tag
         run: |
           git tag latest
