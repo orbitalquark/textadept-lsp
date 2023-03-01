@@ -17,7 +17,7 @@ jobs:
           cmake --build build --config Release -j
           cmake --install build --config Release
           git archive HEAD --prefix lsp/ | tar -xf -
-          mv ldoc ldoc.lua logging pl lsp
+          mv dkjson.lua ldoc ldoc.lua logging pl lsp
           zip -r lsp.zip lsp
       - name: Tag
         run: |
