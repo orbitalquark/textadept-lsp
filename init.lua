@@ -587,7 +587,7 @@ end
 -- Converts the given filename into a valid LSP DocumentUri and returns it.
 -- @param filename String filename to convert into an LSP DocumentUri.
 local function touri(filename)
-  if filename:find(':') then return filename end -- different scheme like "untitled:"
+  if filename:find('^%a%a+:') then return filename end -- different scheme like "untitled:"
   return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
 end
 
