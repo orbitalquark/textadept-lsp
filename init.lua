@@ -383,7 +383,6 @@ function Server.new(lang, cmd, init_options)
         --   foldingRangeKind = {valueSet = {'comment', 'imports', 'region'}},
         --   foldingRange = {collapsedText = true}
         -- },
-        selectionRange = {}
         -- selectionRange = {dynamicRegistration = false}, -- not supported
         -- linkedEditingRange = {dynamicRegistration = false}, -- not supported
         -- callHierarchy = {dynamicRegistration = false}, -- not supported
