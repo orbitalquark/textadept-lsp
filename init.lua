@@ -1140,7 +1140,7 @@ events.connect(events.CHAR_ADDED, function(code)
     if M.show_completions and auto_c_incomplete then M.autocomplete() end -- re-trigger
     return
   end
-  if M.show_signature_help and server.call_tip_triggers[code] then
+  if M.show_signature_help and server.call_tip_triggers and server.call_tip_triggers[code] then
     if not view:call_tip_active() then M.signature_help() end
     if view:call_tip_active() then return end
   end
