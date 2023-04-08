@@ -2,20 +2,22 @@
 -- Copyright 2023 Mitchell. See LICENSE.
 -- Simple Lua language server for developing with Lua and Textadept.
 
+local WIN32 = package.path:find('\\')
+
 local lfs = require('lfs')
 local dir = arg[0]:match('^(.+)[/\\]') or '.'
 lfs.chdir(dir) -- cd to this directory
 local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
 package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
-io.open('server.log', 'w'):close() -- clear previous log
+local userhome = os.getenv(not WIN32 and 'HOME' or 'USERPROFILE') .. '/.textadept'
+local logfile = userhome .. '/lua_lsp_server.log'
+io.open(logfile, 'w'):close() -- clear previous log
 
 local json = require('dkjson')
 local pl_dir = require('pl.dir')
-local log = require('logging.file') {filename = 'server.log', logPattern = '%level: %message\n'}
+local log = require('logging.file') {filename = logfile, logPattern = '%level: %message\n'}
 
 log:setLevel(log.INFO)
-
-local WIN32 = package.path:find('\\')
 
 -- Read a request or notification from the LSP client.
 -- @return JSON RPC object received
