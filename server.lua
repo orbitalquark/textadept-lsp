@@ -203,7 +203,7 @@ local function scan(target)
 
   -- Invoke LDoc.
   local command = string.format(
-    '%s -d "%s" -c "%s" . --filter tadoc.ldoc -- --root="%s" --multiple', ldoc, cache, config,
+    '%s -d "%s" -c "%s" . --filter tadoc.ldoc --all -- --root="%s" --multiple', ldoc, cache, config,
     target)
   if WIN32 then command = '"' .. command .. '"' end -- quote for os.execute()'s "cmd /C [command]"
   log:debug('Running scan command: %s', command)
@@ -275,7 +275,7 @@ end)
 local expr_types = {['^[\'"]'] = 'string', ['^io%.p?open%s*%b()%s*$'] = 'file'}
 
 -- Map of tags kinds to LSP CompletionItemKinds.
-local kinds = {m = 7, f = 3, F = 5, t = 8}
+local kinds = {m = 7, f = 3, F = 5, t = 8, l = 3, L = 6}
 
 -- LSP textDocument/completion request.
 -- Uses the text previously sent via textDocument/didChange to determine the symbol at the
@@ -284,11 +284,12 @@ register('textDocument/completion', function(params)
   local items = {}
 
   -- Retrieve the symbol behind the caret.
+  local filename = tofilename(params.textDocument.uri)
   local line_num, col_num = params.position.line + 1, params.position.character + 1
   local lines = files[params.textDocument.uri]
   local symbol, op, part = lines[line_num]:sub(1, col_num - 1):match('([%w_%.]-)([%.:]?)([%w_]*)$')
-  log:debug('Get completions at %s:%d:%d: symbol=%s op=%s part=%s',
-    tofilename(params.textDocument.uri), line_num, col_num, symbol, op, part)
+  log:debug('Get completions at %s:%d:%d: symbol=%s op=%s part=%s', filename, line_num, col_num,
+    symbol, op, part)
   if symbol == '' and part == '' then return json.null end -- nothing to complete
   symbol, part = symbol:gsub('^_G%.?', ''), part ~= '_G' and part or ''
   -- Attempt to identify string type and file type symbols.
@@ -309,19 +310,22 @@ register('textDocument/completion', function(params)
   -- Search through tags for completions for that symbol.
   log:debug('Searching for completions in cache')
   local name_patt, seen = '^' .. part, {}
-  for _, filename in ipairs(tags) do
-    if not filename or not lfs.attributes(filename) then goto continue end
-    for line in io.lines(filename) do
-      local name = line:match('^%S+')
+  for _, tag_file in ipairs(tags) do
+    if not tag_file or not lfs.attributes(tag_file) then goto continue end
+    for line in io.lines(tag_file) do
+      local name, src_file = line:match('^(%S+)%s+([^\t]+)')
       if not name:find(name_patt) or seen[name] then goto continue end
       local fields = line:match(';"\t(.*)$')
       if part ~= '' then
         -- When part == '', every symbol is a candidate, so there's no point in logging that.
-        log:debug('Found candidate: (name=%s file=%s fields=%s)', name, filename, fields)
+        log:debug('Found candidate: (name=%s file=%s fields=%s)', name, tag_file, fields)
       end
       local k, class = fields:sub(1, 1), fields:match('class:(%S+)') or ''
       if class == symbol and (op ~= ':' or k == 'f') then
-        log:debug('Found completion: %s (file=%s fields=%s)', name, filename, fields)
+        if (k == 'l' or k == 'L') and filename ~= src_file:gsub('^_ROOT', root or '') then
+          goto continue -- only allow for local completions in the same file
+        end
+        log:debug('Found completion: %s (file=%s fields=%s)', name, tag_file, fields)
         items[#items + 1], seen[name] = {label = name, kind = kinds[k]}, true
       end
       ::continue::
@@ -347,19 +351,39 @@ end
 
 -- Returns a list of API docs for the given symbol.
 -- @param symbol String symbol get get API docs for.
+-- @param filename String filename containing the given symbol.
 -- @return list of documentation strings
-local function get_api(symbol)
+local function get_api(symbol, filename)
   log:debug('Searching cache for documentation about %s', symbol)
   local docs = {}
   local symbol_patt, full_patt = '^' .. symbol:match('[%w_]+$'), '^' .. symbol:gsub('%p', '%%%0')
-  for _, filename in ipairs(api) do
-    if not filename or not lfs.attributes(filename) then goto continue end
-    for line in io.lines(filename) do
+  for _, api_file in ipairs(api) do
+    if not api_file or not lfs.attributes(api_file) then goto continue end
+    local api_src -- the source file this API file was generated from
+    for line in io.lines(api_file) do
       if not line:find(symbol_patt) then goto continue end
-      log:debug('Found candidate: (name=%s file=%s)', line:match('^%S+'), filename)
+      log:debug('Found candidate: (name=%s file=%s)', line:match('^%S+'), api_file)
       local doc = line:match(symbol_patt .. '%s+(.+)$')
       if not doc then goto continue end
       local full_match = doc:find(full_patt)
+      if not full_match and doc:find('^local ') then
+        -- Reject the local candidate if it is not within the current file.
+        if not api_src then
+          -- Determine the candidate's file from its companion tags file's contents.
+          local ok, f = pcall(io.open, (api_file:gsub('_api$', '_tags')))
+          if ok then
+            api_src = f:read():match('^%S+%s+([^\t]+)'):gsub('^_ROOT', ''):gsub('%p', '%%%0') .. '$'
+            f:close()
+          else
+            api_src = ''
+          end
+        end
+        if api_src == '' or not filename:find(api_src) then
+          log:debug('Local candidate rejected (not in %s)', api_src)
+          goto continue
+        end
+        full_match = doc:gsub('^local ', ''):find(full_patt)
+      end
       log:debug(full_match and 'Confirmed' or 'Fuzzy match')
       docs[#docs + 1] = doc:gsub('%f[\\]\\n', '\n'):gsub('\\\\', '\\')
       if full_match then return {docs[#docs]} end
@@ -376,7 +400,7 @@ register('textDocument/hover', function(params)
   local symbol = get_symbol(params)
   if not symbol then return json.null end
   log:debug('Hover: %s', symbol)
-  local docs = get_api(symbol)
+  local docs = get_api(symbol, tofilename(params.textDocument.uri))
   return #docs > 0 and {contents = {kind = 'plaintext', value = docs[1]}} or json.null
 end)
 
@@ -385,11 +409,12 @@ register('textDocument/signatureHelp', function(params)
   local signatures = {}
 
   -- Retrieve the function behind the caret.
+  local filename = tofilename(params.textDocument.uri)
   local line_num, col_num = params.position.line + 1, params.position.character + 1
   local lines, prev_lines = files[params.textDocument.uri], {}
   for i = 1, line_num - 1 do prev_lines[#prev_lines + 1] = lines[i] end
   local text, pos = table.concat(lines), #table.concat(prev_lines) + col_num - 1
-  log:debug('Get signature at %s:%d:%d (pos=%d)', params.textDocument.uri, line_num, col_num, pos)
+  log:debug('Get signature at %s:%d:%d (pos=%d)', filename, line_num, col_num, pos)
   local s = pos
   ::retry::
   while s > 1 and not text:find('^[({]', s) do s = s - 1 end
@@ -403,7 +428,7 @@ register('textDocument/signatureHelp', function(params)
   if not func then return json.null end
 
   -- Get its signature(s).
-  for _, doc in ipairs(get_api(func)) do signatures[#signatures + 1] = {label = doc} end
+  for _, doc in ipairs(get_api(func, filename)) do signatures[#signatures + 1] = {label = doc} end
   return {signatures = signatures, activeSignature = 0}
 end)
 

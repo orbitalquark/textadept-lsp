@@ -51,12 +51,12 @@ end
 
 -- Writes a function or field apidoc.
 -- @param file The file to write to.
--- @param m The LDoc/LuaDoc module object.
+-- @param m The LDoc/LuaDoc module object, or nil if the block object is local.
 -- @param b The LDoc/LuaDoc block object.
 local function write_apidoc(file, m, b)
   -- Function or field name.
   local name = b.name
-  if not name:find('[.:]') then name = string.format('%s.%s', m.name, name) end
+  if not name:find('[.:]') then name = m and string.format('%s.%s', m.name, name) or name end
   name = name:gsub('^_G%.', '')
   -- Block documentation for the function or field.
   local doc = {}
@@ -68,7 +68,10 @@ local function write_apidoc(file, m, b)
     header = header ..
       (b.args or b.param and string.format('(%s)', table.concat(b.param, ', ')) or '()')
   elseif class == 'module' or class == 'table' then
+    if class == 'table' and not m then header = 'local ' .. header end
     header = string.format('%s (%s)', header, class)
+  elseif class == 'field' and not m then
+    header = 'local ' .. header
   end
   doc[#doc + 1] = header
   -- Function or field description.
@@ -183,10 +186,16 @@ function M.ldoc(doc)
     -- Tag and document the functions, tables, and fields.
     for _, item in ipairs(module.items) do
       local module_name, item_name = module.name, item.name
-      if item.name:find('%.') then
+      if item_name:find('[.:]') and item.modifiers['local'] then
+        -- When table functions and methods are explicitly marked local, LDoc uses a
+        -- fully-qualified name. Split it to be like other table functions and methods, but
+        -- keep the local label.
+        module_name, item_name = item_name:match('^(.+)[.:]([^.:]+)$')
+        item.kind = 'class ' .. module_name
+      elseif item_name:find('%.') then
         -- The field, table, or function has been named _G.name. Tag it as a global instead of
         -- in the current module.
-        module_name, item_name = item.name:match('^_G%.(.-)%.?([^.]+)$')
+        module_name, item_name = item_name:match('^_G%.(.-)%.?([^.]+)$')
         if not module_name then module_name, item_name = item.name:match('^(.-)%.([^.]+)$') end
         if not module_name or not item_name then
           print(string.format('%s:%d: [ERROR] Cannot determine module name for %s', module.file,
@@ -202,23 +211,33 @@ function M.ldoc(doc)
           'class:' .. (class or module_name))
         write_apidoc(apidoc, module, item)
       elseif item.type == 'lfunction' then
-        write_tag(tags, item.name, module.file, find_line(lines, item.lineno), 'l', '')
-        write_apidoc(apidoc, module, item)
+        local class = item.kind:match('^class (%S+)') -- explicitly marked local
+        write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 'l',
+          not class and '' or 'class:' .. class)
+        write_apidoc(apidoc, nil, item)
       elseif item.type == 'table' then
         if not item.modifiers['local'] then
           write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 't',
             'class:' .. module_name)
           write_apidoc(apidoc, module, item)
           item_name = string.format('%s.%s', module_name, item_name)
-          for _, name in ipairs(item.params) do
+          for _, name in ipairs(item.params) do -- table fields
             write_tag(tags, name, module.file, find_line(lines, item.lineno), 'F',
               'class:' .. item_name)
             write_apidoc(apidoc, {name = item_name},
               {name = name, type = 'field', description = item.params.map[name]})
           end
         else
-          write_tag(tags, item.name, module.file, find_line(lines, item.lineno), 'L', '')
-          write_apidoc(apidoc, {name = "(local)"}, item)
+          write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 'L', '')
+          write_apidoc(apidoc, nil, item)
+          for _, name in ipairs(item.params) do -- table fields
+            write_tag(tags, name, module.file, find_line(lines, item.lineno), 'L',
+              'class:' .. item_name)
+            write_apidoc(apidoc, nil, {
+              name = string.format('%s.%s', item_name, name), type = 'field',
+              description = item.params.map[name]
+            })
+          end
         end
       elseif item.type == 'field' then
         write_tag(tags, item_name, module.file, find_line(lines, item.lineno), 'F',
