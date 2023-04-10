@@ -513,7 +513,7 @@ local message = read()
 while message.method ~= 'exit' do
   local ok, result = xpcall(handlers[message.method], function(errmsg)
     errmsg = debug.traceback(errmsg)
-    log:error(errmsg)
+    log:error(string.format('%s\n%s', json.encode(message), errmsg))
     return {code = 1, message = errmsg}
   end, message.params)
   if result then respond(message.id, result) end
