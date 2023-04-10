@@ -879,7 +879,7 @@ local signatures, last_pos
 -- Shows a calltip for the current function.
 -- If a call tip is already shown, cycles to the next one if it exists.
 function M.signature_help()
-  if view:call_tip_active() and #signatures > 1 then
+  if view:call_tip_active() and signatures and #signatures > 1 then
     events.emit(events.CALL_TIP_CLICK, 1)
     return
   end
