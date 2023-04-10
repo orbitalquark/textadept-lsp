@@ -128,7 +128,7 @@
 -- @param[opt] chunkname
 -- @param[optchain] mode
 -- @param[optchain] env
--- @param function load
+-- @function load
 
 ---
 -- Similar to `load`, but gets the chunk from file `filename` or from the standard input,
