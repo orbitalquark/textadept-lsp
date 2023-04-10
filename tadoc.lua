@@ -69,7 +69,7 @@ local function write_apidoc(file, m, b)
       (b.args or b.param and string.format('(%s)', table.concat(b.param, ', ')) or '()')
   elseif class == 'module' or class == 'table' then
     if class == 'table' and not m then header = 'local ' .. header end
-    header = string.format('%s (%s)', header, class)
+    header = string.format('%s <%s>', header, class)
   elseif class == 'field' and not m then
     header = 'local ' .. header
   end
