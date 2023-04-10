@@ -471,6 +471,7 @@ register('textDocument/definition', function(params)
       end
       -- Find definition in file on disk.
       local i = 1
+      if not lfs.attributes(file) then goto continue end
       for line in io.lines(file) do
         local s, e = line:find(ex_cmd, 1, true)
         if s and e then
