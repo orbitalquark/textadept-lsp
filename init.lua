@@ -1264,8 +1264,7 @@ for i = 1, #m_tools - 1 do
               view:goto_buffer(log_buffer)
               return
             end
-            ui.print_to('[LSP]', table.concat(log_lines, '\n'))
-            log_buffer = _BUFFERS[#_BUFFERS]
+            log_buffer = ui.print_to('[LSP]', table.concat(log_lines, '\n'))
           end
         }, --
         {_L['Clear Log'], function() log_lines = {} end}
