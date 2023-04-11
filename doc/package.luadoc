@@ -1,7 +1,6 @@
 --- @module package
 
----
--- Loads the given module. The function starts by looking into the `package.loaded` table to
+--- Loads the given module. The function starts by looking into the `package.loaded` table to
 -- determine whether `modname` is already loaded. If it is, then `require` returns the value
 -- stored at `package.loaded[modname]`. (The absence of a second result in this case signals
 -- that this call did not have to load the module.) Otherwise, it tries to find a *loader*
@@ -33,8 +32,7 @@
 -- @param modname
 -- @function _G.require
 
----
--- A string describing some compile-time configurations for packages. This string is a sequence
+--- A string describing some compile-time configurations for packages. This string is a sequence
 -- of lines:
 --
 --   - The first line is the directory separator string. Default is '`\`' for Windows and '`/`'
@@ -50,16 +48,14 @@
 -- New in Lua 5.2.
 -- @field config
 
----
--- A string with the path used by `require` to search for a C loader.
+--- A string with the path used by `require` to search for a C loader.
 --
 -- Lua initializes the C path `package.cpath` in the same way it initializes the Lua path
 -- `package.path`, using the environment variable `LUA_CPATH_5_4` or the environment variable
 -- `LUA_CPATH` or a default path defined in `luaconf.h`.
 -- @field cpath
 
----
--- A table used by `require` to control which modules are already loaded. When you require a
+--- A table used by `require` to control which modules are already loaded. When you require a
 -- module `modname` and `package.loaded[modname]` is not false, `require` simply returns the
 -- value stored there.
 --
@@ -67,14 +63,12 @@
 -- change the table used by `require`.
 -- @table loaded
 
----
--- See `package.searchers`.
+--- See `package.searchers`.
 --
 -- Deprecated in Lua 5.2.
 -- @table loaders
 
----
--- A string with the path used by `require` to search for a Lua loader.
+--- A string with the path used by `require` to search for a Lua loader.
 --
 -- At start-up, Lua initializes this variable with the value of the environment variable
 -- `LUA_PATH_5_4` or the environment variable `LUA_PATH` or with a default path defined in
@@ -82,15 +76,13 @@
 -- environment variable is replaced by the default path.
 -- @field path
 
----
--- A table to store loaders for specific modules (see `require`).
+--- A table to store loaders for specific modules (see `require`).
 --
 -- This variable is only a reference to the real table; assignments to this variable do not
 -- change the table used by `require`.
 -- @table preload
 
----
--- A table used by `require` to control how to find modules.
+--- A table used by `require` to control how to find modules.
 --
 -- Each entry in this table is a *searcher function*. When looking for a module, `require`
 -- calls each of these searchers in ascending order, with the module name (the argument given
@@ -137,8 +129,7 @@
 -- New in Lua 5.2.
 -- @table searchers
 
----
--- Dynamically links the host program with the C library `libname`.
+--- Dynamically links the host program with the C library `libname`.
 --
 -- If `funcname` is "`*`", then it only links with the library, making the symbols exported
 -- by the library available to other dynamically linked libraries. Otherwise, it looks for
@@ -163,8 +154,7 @@
 -- @param funcname
 -- @function package.loadlib
 
----
--- Searches for the given `name` in the given `path`.
+--- Searches for the given `name` in the given `path`.
 --
 -- A path is a string containing a sequence of _templates_ separated by semicolons. For each
 -- template, the function replaces each interrogation mark (if any) in the template with a copy
@@ -188,8 +178,7 @@
 -- @param[optchain] rep
 -- @function package.searchpath
 
----
--- Sets a metatable for `module` with its `__index` field referring to the global environment,
+--- Sets a metatable for `module` with its `__index` field referring to the global environment,
 -- so that this module inherits values from the global environment. To be used as an option to
 -- function `module`.
 --

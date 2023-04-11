@@ -1,7 +1,6 @@
 --- @module string
 
----
--- Returns the internal numerical codes of the characters `s[i]`, `s[i+1]`, ···, `s[j]`. The
+--- Returns the internal numerical codes of the characters `s[i]`, `s[i+1]`, ···, `s[j]`. The
 -- default value for `i` is 1; the default value for `j` is `i`. These indices are corrected
 -- following the same rules of function `string.sub`.
 --
@@ -11,19 +10,17 @@
 -- @param[optchain] j
 -- @function string.byte
 
----
--- Receives zero or more integers. Returns a string with length equal to the number of arguments,
+--- Receives zero or more integers. Returns a string with length equal to the number of arguments,
 -- in which each character has the internal numerical code equal to its corresponding argument.
 --
 -- Numerical codes are not necessarily portable across platforms.
 -- @param ...
 -- @function string.char
 
----
--- Returns a string containing a binary representation (a _binary chunk_) of the given function, so
--- that a later `load` on this string returns a copy of the function (but with new upvalues). If
--- `strip` is a true value, the binary representation is created without debug information
--- about the function (local variable names, lines, etc.).
+--- Returns a string containing a binary representation (a _binary chunk_) of the given
+-- function, so that a later `load` on this string returns a copy of the function (but with
+-- new upvalues). If `strip` is a true value, the binary representation is created without
+-- debug information about the function (local variable names, lines, etc.).
 --
 -- Functions with upvalues have only their number of upvalues saved. When (re)loaded, those
 -- upvalues receive fresh instances. (See the `load` function for details about how these
@@ -33,8 +30,7 @@
 -- @param[opt] strip
 -- @function string.dump
 
----
--- Looks for the first match of `pattern` (see §6.4.1) in the string `s`. If it finds a match,
+--- Looks for the first match of `pattern` (see §6.4.1) in the string `s`. If it finds a match,
 -- then `find` returns the indices of `s` where this occurrence starts and ends; otherwise,
 -- it returns nil. A third, optional numerical argument `init` specifies where to start the
 -- search; its default value is 1 and can be negative. A value of true as a fourth, optional
@@ -49,8 +45,7 @@
 -- @param[optchain] plain
 -- @function string.find
 
----
--- Returns a formatted version of its variable number of arguments following the description
+--- Returns a formatted version of its variable number of arguments following the description
 -- given in its first argument, which must be a string. The format string follows the same rules
 -- as the ISO C function `sprintf`. The only differences are that the conversion specifiers and
 -- modifiers `*`, `h`, `L`, `l`, and `n` are not supported and that there is an extra specifier,
@@ -86,8 +81,7 @@
 -- @param ...
 -- @function string.format
 
----
--- Returns an iterator function that, each time it is called, returns the next captures from
+--- Returns an iterator function that, each time it is called, returns the next captures from
 -- `pattern` (see §6.4.1) over the string `s`. If `pattern` specifies no captures, then the
 -- whole match is produced in each call. A third, optional argument `init` specifies where to
 -- start the search; its default value is 1 and can be negative.
@@ -110,8 +104,7 @@
 -- @param[opt] init
 -- @function string.gmatch
 
----
--- Returns a copy of `s` in which all (or the first `n`, if given) occurrences of the `pattern`
+--- Returns a copy of `s` in which all (or the first `n`, if given) occurrences of the `pattern`
 -- (see §6.4.1) have been replaced by a replacement string specified by `repl`, which can be
 -- a string, a table, or a function. `gsub` also returns, as its second value, the total number
 -- of matches that occurred. The name `gsub` comes from "Global SUBstitution".
@@ -150,21 +143,18 @@
 -- @param[opt] n
 -- @function string.gsub
 
----
--- Receives a string and returns its length. The empty string `""` has length 0. Embedded zeros
+--- Receives a string and returns its length. The empty string `""` has length 0. Embedded zeros
 -- are counted, so `"a\000bc\000"` has length 5.
 -- @param s
 -- @function string.len
 
----
--- Receives a string and returns a copy of this string with all uppercase letters changed to
+--- Receives a string and returns a copy of this string with all uppercase letters changed to
 -- lowercase. All other characters are left unchanged. The definition of what an uppercase
 -- letter is depends on the current locale.
 -- @param s
 -- @function string.lower
 
----
--- Looks for the first *match* of the `pattern` (see §6.4.1) in the string `s`. If it finds one,
+--- Looks for the first *match* of the `pattern` (see §6.4.1) in the string `s`. If it finds one,
 -- then `match` returns the captures from the pattern; otherwise it returns nil. If `pattern`
 -- specifies no captures, then the whole match is returned. A third, optional numerical argument
 -- `init` specifies where to start the search; its default value is 1 and can be negative.
@@ -173,8 +163,7 @@
 -- @param[opt] init
 -- @function string.match
 
----
--- Returns a binary string containing the values `v1`, `v2`, etc. serialized in binary form
+--- Returns a binary string containing the values `v1`, `v2`, etc. serialized in binary form
 -- (packed) according to the format string `fmt` (see §6.4.2).
 --
 -- New in Lua 5.3.
@@ -184,16 +173,14 @@
 -- @param ...
 -- @function string.pack
 
----
--- Returns the size of a string resulting from `string.pack` with the given format. The format
+--- Returns the size of a string resulting from `string.pack` with the given format. The format
 -- string cannot have the variable-length options 's' or 'z' (see §6.4.2).
 --
 -- New in Lua 5.3.
 -- @param fmt
 -- @function string.packsize
 
----
--- Returns a string that is the concatenation of `n` copies of the string `s` separated by the
+--- Returns a string that is the concatenation of `n` copies of the string `s` separated by the
 -- string `sep`. The default value for `sep` is the empty string (that is, no separator). Returns
 -- the empty string if `n` is not positive.
 --
@@ -204,13 +191,11 @@
 -- @param[opt] sep
 -- @function string.rep
 
----
--- Returns a string that is the string `s` reversed.
+--- Returns a string that is the string `s` reversed.
 -- @param s
 -- @function string.reverse
 
----
--- Returns the substring of `s` that starts at `i` and continues until `j`; `i` and `j` can
+--- Returns the substring of `s` that starts at `i` and continues until `j`; `i` and `j` can
 -- be negative. If `j` is absent, then it is assumed to be equal to -1 (which is the same as
 -- the string length). In particular, the call `string.sub(s,1,j)` returns a prefix of `s`
 -- with length `j`, and `string.sub(s, -i)` returns a suffix of `s` with length `i`.
@@ -223,8 +208,7 @@
 -- @param[opt] j
 -- @function string.sub
 
----
--- Returns the values packed in string `s` (see `string.pack`) according to the format string
+--- Returns the values packed in string `s` (see `string.pack`) according to the format string
 -- `fmt` (see §6.4.2). An optional `pos` marks where to start reading in `s` (default is
 -- 1). After the read values, this function also returns the index of the first unread byte in `s`.
 --
@@ -234,8 +218,7 @@
 -- @param[opt] pos
 -- @function string.unpack
 
----
--- Receives a string and returns a copy of this string with all lowercase letters changed to
+--- Receives a string and returns a copy of this string with all lowercase letters changed to
 -- uppercase. All other characters are left unchanged. The definition of what a lowercase letter
 -- is depends on the current locale.
 -- @param s

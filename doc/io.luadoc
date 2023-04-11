@@ -1,28 +1,22 @@
 --- @module io
 
----
--- Standard error.
+--- Standard error.
 -- @field stderr
 
----
--- Standard in.
+--- Standard in.
 -- @field stdin
 
----
--- Standard out.
+--- Standard out.
 -- @field stdout
 
----
--- Equivalent to `file:close()`. Without a `file`, closes the default output file.
+--- Equivalent to `file:close()`. Without a `file`, closes the default output file.
 -- @param[opt] file
 -- @function io.close
 
----
--- Equivalent to `io.output():flush()`.
+--- Equivalent to `io.output():flush()`.
 -- @function io.flush
 
----
--- When called with a file name, it opens the named file (in text mode), and sets its handle as
+--- When called with a file name, it opens the named file (in text mode), and sets its handle as
 -- the default input file. When called with a file handle, it simply sets this file handle as the
 -- default input file. When called without parameters, it returns the current default input file.
 --
@@ -30,8 +24,7 @@
 -- @param[opt] file
 -- @function io.input
 
----
--- Opens the given file name in read mode and returns an iterator function that works like
+--- Opens the given file name in read mode and returns an iterator function that works like
 -- `file:lines(···)` over the opened file. When the iterator function fails to read any value,
 -- it automatically closes the file. Besides the iterator function, `io.lines` returns three other
 -- values: two nil values as placeholders, plus the created file handle. Therefore, when used in
@@ -47,8 +40,7 @@
 -- @param[opt] ...
 -- @function io.lines
 
----
--- This function opens a file, in the mode specified in the string `mode`. It returns a new
+--- This function opens a file, in the mode specified in the string `mode`. It returns a new
 -- file handle, or, in case of errors, nil plus an error message.
 --
 -- The `mode` string can be any of the following:
@@ -67,13 +59,11 @@
 -- @param[opt] mode
 -- @function io.open
 
----
--- Similar to `io.input`, but operates over the default output file.
+--- Similar to `io.input`, but operates over the default output file.
 -- @param[opt] file
 -- @function io.output
 
----
--- Starts the program `prog` in a separated process and returns a file handle that you can use
+--- Starts the program `prog` in a separated process and returns a file handle that you can use
 -- to read data from this program (if `mode` is `"r"`, the default) or to write data to this
 -- program (if `mode` is `"w"`).
 --
@@ -82,44 +72,37 @@
 -- @param[opt] mode
 -- @function io.popen
 
----
--- Equivalent to `io.input():read(···)`.
+--- Equivalent to `io.input():read(···)`.
 -- @param ...
 -- @function io.read
 
----
--- In case of success, returns a handle for a temporary file. This file is opened in update
+--- In case of success, returns a handle for a temporary file. This file is opened in update
 -- mode and it is automatically removed when the program ends.
 -- @function io.tmpfile
 
----
--- Checks whether `obj` is a valid file handle. Returns the string `"file"` if `obj` is an
+--- Checks whether `obj` is a valid file handle. Returns the string `"file"` if `obj` is an
 -- open file handle, `"closed file"` if `obj` is a closed file handle, or nil if `obj` is not
 -- a file handle.
 -- @param obj
 -- @function io.type
 
----
--- Equivalent to `io.output():write(···)`.
+--- Equivalent to `io.output():write(···)`.
 -- @param ...
 -- @function io.write
 
 --- @type file
 
----
--- Closes `file`. Note that files are automatically closed when their handles are garbage
+--- Closes `file`. Note that files are automatically closed when their handles are garbage
 -- collected, but that takes an unpredictable amount of time to happen.
 --
 -- When closing a file handle created with `io.popen`, `file:close` returns the same values
 -- returned by `os.execute`.
 -- @function file:close
 
----
--- Saves any written data to `file`.
+--- Saves any written data to `file`.
 -- @function file:flush
 
----
--- Returns an iterator function that, each time it is called, reads the file according to the
+--- Returns an iterator function that, each time it is called, reads the file according to the
 -- given formats. When no format is given, uses "l" as a default. As an example, the construction
 --
 --   for c in file:lines(1) do *body* end
@@ -129,8 +112,7 @@
 -- @param ...
 -- @function file:lines
 
----
--- Reads the file `file`, according to the given formats, which specify what to read. For each
+--- Reads the file `file`, according to the given formats, which specify what to read. For each
 -- format, the function returns a string or a number with the characters read, or nil if it
 -- cannot read data with the specified format. (In this latter case, the function does not read
 -- subsequent formats.)  When called without arguments, it uses a default format that reads
@@ -156,8 +138,7 @@
 -- @param ...
 -- @function file:read
 
----
--- Sets and gets the file position, measured from the beginning of the file, to the position
+--- Sets and gets the file position, measured from the beginning of the file, to the position
 -- given by `offset` plus a base specified by the string `whence`, as follows:
 --
 --   - "set": base is position 0 (beginning of the file);
@@ -175,8 +156,7 @@
 -- @param[optchain] offset
 -- @function file:seek
 
----
--- Sets the buffering mode for a file. There are three available modes:
+--- Sets the buffering mode for a file. There are three available modes:
 --
 --   - "no": no buffering
 --   - "full": full buffering
@@ -191,8 +171,7 @@
 -- @param[opt] size
 -- @function file:setvbuf
 
----
--- Writes the value of each of its arguments to `file`. The arguments must be strings or numbers.
+--- Writes the value of each of its arguments to `file`. The arguments must be strings or numbers.
 --
 -- In case of success, this function returns `file`. Otherwise it returns nil plus a string
 -- describing the error.

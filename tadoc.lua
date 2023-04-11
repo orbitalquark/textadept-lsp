@@ -1,7 +1,6 @@
 -- Copyright 2007-2023 Mitchell. See LICENSE.
 
----
--- Textadept autocompletions and API documentation filter/doclet for LDoc/LuaDoc.
+--- Textadept autocompletions and API documentation filter/doclet for LDoc/LuaDoc.
 -- This module is used by LDoc/LuaDoc to create Lua autocompletion and API documentation files
 -- that the Lua LSP server can read.
 -- To preserve formatting, the included *luadoc.patch* file must be applied to your instance
@@ -23,7 +22,7 @@ for i = 1, #arg do
   if arg[i] == '-d' then output_dir = arg[i + 1] end
 end
 
--- Writes a ctag.
+--- Writes a ctag.
 -- @param file The file to write to.
 -- @param name The name of the tag.
 -- @param filename The filename the tag occurs in.
@@ -37,7 +36,7 @@ local function write_tag(file, name, filename, code, k, ext_fields)
   file[#file + 1] = string.format('%s\t%s\t/^%s$/;"\t%s\t%s', name, filename, code, k, ext_fields)
 end
 
--- Sanitizes Markdown from the given documentation string by stripping links and replacing
+--- Sanitizes Markdown from the given documentation string by stripping links and replacing
 -- HTML entities.
 -- @param s String to sanitize Markdown from.
 -- @return string
@@ -49,7 +48,7 @@ local function sanitize_markdown(s)
   :gsub('&([%a]+);', {quot = '"', apos = "'"})
 end
 
--- Writes a function or field apidoc.
+--- Writes a function or field apidoc.
 -- @param file The file to write to.
 -- @param m The LDoc/LuaDoc module object, or nil if the block object is local.
 -- @param b The LDoc/LuaDoc block object.
@@ -127,7 +126,7 @@ local function write_apidoc(file, m, b)
   file[#file + 1] = string.format('%s %s', name:match('[^.:]+$'), doc)
 end
 
--- Writes out the tags and api files.
+--- Writes out the tags and api files.
 -- @param tags Table of string tag lines.
 -- @param apidoc Table of API documentation lines.
 -- @param output_dir Directory to output tags and api files into.
@@ -147,7 +146,7 @@ local function write_files(tags, apidoc, output_dir, filename, module_name)
   f:close()
 end
 
--- Retrieves a symbol definition from the LDoc-reported line number.
+--- Retrieves a symbol definition from the LDoc-reported line number.
 -- LDoc typically returns the line after a doc comment, but if the doc comment is self-sufficient
 -- (e.g. @module, @function, @table, etc.), look backwards and return a previous line.
 -- @param lines List of lines in the file to search for a definition from.
@@ -161,8 +160,7 @@ local function find_line(lines, lineno)
   return lines[lineno]
 end
 
----
--- An LDoc filter function.
+--- An LDoc filter function.
 -- @param doc The LDoc doc object.
 -- @usage ldoc --filter tadoc.ldoc [file or directory]
 function M.ldoc(doc)
@@ -257,7 +255,7 @@ function M.ldoc(doc)
   if not multiple then write_files(tags, apidoc, output_dir) end
 end
 
--- Returns the absolute path of the given relative path.
+--- Returns the absolute path of the given relative path.
 -- @param string path String relative path.
 -- @return absolute path
 local function abspath(path)
@@ -270,7 +268,7 @@ local function abspath(path)
   return path
 end
 
--- Called by LuaDoc to process a doc object.
+--- Called by LuaDoc to process a doc object.
 -- @param doc The LuaDoc doc object.
 function M.start(doc)
   local modules, files = doc.modules, doc.files

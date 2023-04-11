@@ -1,7 +1,6 @@
 --- @module lpeg
 
----
--- The matching function. It attempts to match the given pattern against the subject string. If
+--- The matching function. It attempts to match the given pattern against the subject string. If
 -- the match succeeds, returns the index in the subject of the first character after the match,
 -- or the captured values (if the pattern captured any value).
 --
@@ -18,25 +17,21 @@
 -- @param[opt] init
 -- @function lpeg.match
 
----
--- If the given value is a pattern, returns the string "pattern". Otherwise returns nil.
+--- If the given value is a pattern, returns the string "pattern". Otherwise returns nil.
 -- @param value
 -- @function lpeg.type
 
----
--- Returns a string with the running version of LPeg.
+--- Returns a string with the running version of LPeg.
 -- @function lpeg.version
 
----
--- Sets the maximum size for the backtrack stack used by LPeg to track calls and choices. Most
+--- Sets the maximum size for the backtrack stack used by LPeg to track calls and choices. Most
 -- well-written patterns need little backtrack levels and therefore you seldom need to change
 -- this maximum; but a few useful patterns may need more space. Before changing this maximum
 -- you should try to rewrite your pattern to avoid the need for extra space.
 -- @param max
 -- @function lpeg.setmaxstack
 
----
--- Converts the given value into a proper pattern, according to the following rules:
+--- Converts the given value into a proper pattern, according to the following rules:
 --
 --   - If the argument is a pattern, it is returned unmodified.
 --   - If the argument is a string, it is translated to a pattern that matches the string
@@ -54,8 +49,7 @@
 -- @param value
 -- @function lpeg.P
 
----
--- Returns a pattern that matches only if the input string at the current position is preceded
+--- Returns a pattern that matches only if the input string at the current position is preceded
 -- by `patt`. Pattern `patt` must match only strings with some fixed length, and it cannot
 -- contain captures.
 --
@@ -64,8 +58,7 @@
 -- @param patt
 -- @function lpeg.B
 
----
--- Returns a pattern that matches any single character belonging to one of the given ranges. Each
+--- Returns a pattern that matches any single character belonging to one of the given ranges. Each
 -- `range` is a string xy of length 2, representing all characters with code between the codes
 -- of x and y (both inclusive).
 --
@@ -74,8 +67,7 @@
 -- @param {range}
 -- @function lpeg.R
 
----
--- Returns a pattern that matches any single character that appears in the given string. (The
+--- Returns a pattern that matches any single character that appears in the given string. (The
 -- S stands for Set.)
 --
 -- As an example, the pattern `lpeg.S("+-*/")` matches any arithmetic operator.
@@ -86,14 +78,12 @@
 -- @param string
 -- @function lpeg.S
 
----
--- This operation creates a non-terminal (a variable) for a grammar. The created non-terminal
+--- This operation creates a non-terminal (a variable) for a grammar. The created non-terminal
 -- refers to the rule indexed by `v` in the enclosing grammar. (See Grammars for details.)
 -- @param v
 -- @function lpeg.V
 
----
--- Returns a table with patterns for matching some character classes according to the current
+--- Returns a table with patterns for matching some character classes according to the current
 -- locale. The table has fields named `alnum`, `alpha`, `cntrl`, `digit`, `graph`, `lower`,
 -- `print`, `punct`, `space`, `upper`, and `xdigit`, each one containing a correspondent
 -- pattern. Each pattern matches any single character that belongs to its class.
@@ -103,21 +93,18 @@
 -- @param[opt] table
 -- @function lpeg.locale
 
----
--- Creates a simple capture, which captures the substring of the subject that matches `patt`. The
+--- Creates a simple capture, which captures the substring of the subject that matches `patt`. The
 -- captured value is a string. If `patt` has other captures, their values are returned after
 -- this one.
 -- @param patt
 -- @function lpeg.C
 
----
--- Creates an argument capture. This pattern matches the empty string and produces the value
+--- Creates an argument capture. This pattern matches the empty string and produces the value
 -- given as the nth extra argument given in the call to `lpeg.match`.
 -- @param n
 -- @function lpeg.Carg
 
----
--- Creates a back capture. This pattern matches the empty string and produces the values produced
+--- Creates a back capture. This pattern matches the empty string and produces the values produced
 -- by the most recent group capture named `name`.
 --
 -- Most recent means the last complete outermost group capture with the given name. A Complete
@@ -129,15 +116,13 @@
 -- @param name
 -- @function lpeg.Cb
 
----
--- Creates a constant capture. This pattern matches the empty string and produces all given
+--- Creates a constant capture. This pattern matches the empty string and produces all given
 -- values as its captured values.
 -- @param[opt] value
 -- @param[opt] ...
 -- @function lpeg.Cc
 
----
--- Creates a fold capture. If patt produces a list of captures C1 C2 ... Cn, this capture will
+--- Creates a fold capture. If patt produces a list of captures C1 C2 ... Cn, this capture will
 -- produce the value func(...func(func(C1, C2), C3)..., Cn), that is, it will fold (or accumulate,
 -- or reduce) the captures from `patt` using function `func`.
 --
@@ -165,8 +150,7 @@
 -- @param func
 -- @function lpeg.Cf
 
----
--- Creates a group capture. It groups all values returned by `patt` into a single capture. The
+--- Creates a group capture. It groups all values returned by `patt` into a single capture. The
 -- group may be anonymous (if no name is given) or named with the given name.
 --
 -- An anonymous group serves to join values from several captures into a single capture. A named
@@ -176,29 +160,25 @@
 -- @param[opt] name
 -- @function lpeg.Cg
 
----
--- Creates a position capture. It matches the empty string and captures the position in the
+--- Creates a position capture. It matches the empty string and captures the position in the
 -- subject where the match occurs. The captured value is a number.
 -- @function lpeg.Cp
 
----
--- Creates a substitution capture, which captures the substring of the subject that matches
+--- Creates a substitution capture, which captures the substring of the subject that matches
 -- `patt`, with substitutions. For any capture inside `patt` with a value, the substring that
 -- matched the capture is replaced by the capture value (which should be a string). The final
 -- captured value is the string resulting from all replacements.
 -- @param patt
 -- @function lpeg.Cs
 
----
--- Creates a table capture. This capture returns a table with all values from all anonymous
+--- Creates a table capture. This capture returns a table with all values from all anonymous
 -- captures made by `patt` inside this table in successive integer keys, starting at 1. Moreover,
 -- for each named capture group created by `patt`, the first value of the group is put into
 -- the table with the group name as its key. The captured value is only the table.
 -- @param patt
 -- @function lpeg.Ct
 
----
--- Creates a match-time capture. Unlike all other captures, this one is evaluated immediately
+--- Creates a match-time capture. Unlike all other captures, this one is evaluated immediately
 -- when a match occurs (even if it is part of a larger pattern that fails later). It forces
 -- the immediate evaluation of all its nested captures and then calls `function`.
 --

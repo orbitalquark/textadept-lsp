@@ -19,7 +19,7 @@ local log = require('logging.file') {filename = logfile, logPattern = '%level: %
 
 log:setLevel(log.INFO)
 
--- Read a request or notification from the LSP client.
+--- Read a request or notification from the LSP client.
 -- @return JSON RPC object received
 local function read()
   log:debug('Waiting for client message...')
@@ -32,7 +32,7 @@ local function read()
   return json.decode(data)
 end
 
--- Respond to an LSP client request.
+--- Respond to an LSP client request.
 -- @param id ID of the client request being responded to.
 -- @param result Table object to send.
 local function respond(id, result)
@@ -47,14 +47,14 @@ local root, options, client_capabilities, cache, tags, api
 local files = {} -- map of open file URIs to their content lines
 local handlers = {} -- LSP method and notification handlers
 
--- Registers function *f* as the handler for the LSP method named *method*.
+--- Registers function *f* as the handler for the LSP method named *method*.
 -- Requests must return either an object to respond with or `json.null`.
 -- Notifications must not return anything at all (`nil`).
 -- @param method String LSP method name to handle.
 -- @param f Method handler function.
 local function register(method, f) handlers[method] = f end
 
--- Converts the given LSP DocumentUri into a valid filename and returns it.
+--- Converts the given LSP DocumentUri into a valid filename and returns it.
 -- @param uri LSP DocumentUri to convert into a filename.
 local function tofilename(uri)
   local filename = uri:gsub(not WIN32 and '^file://' or '^file:///', '')
@@ -64,7 +64,7 @@ local function tofilename(uri)
   return filename
 end
 
--- Converts the given filename into a valid LSP DocumentUri and returns it.
+--- Converts the given filename into a valid LSP DocumentUri and returns it.
 -- @param filename String filename to convert into an LSP DocumentUri.
 local function touri(filename)
   return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
@@ -140,7 +140,7 @@ end)
 -- LSP initialized notification.
 register('initialized', function() end) -- no-op
 
--- Scans directory or file *target* and caches the result.
+--- Scans directory or file *target* and caches the result.
 -- @param target String directory or file path.
 local function scan(target)
   log:debug('Scanning %s', target)
@@ -266,15 +266,13 @@ register('textDocument/didChange', function(params)
   pl_dir.rmtree(tmpdir)
 end)
 
--- Map of expression patterns to their types.
+--- Map of expression patterns to their types.
 -- Used for type-hinting when showing autocompletions for variables. Expressions are expected
 -- to match after the '=' sign of a statement.
--- @class table
--- @name expr_types
 -- @usage expr_types['^spawn%b()%s*$'] = 'proc'
 local expr_types = {['^[\'"]'] = 'string', ['^io%.p?open%s*%b()%s*$'] = 'file'}
 
--- Map of tags kinds to LSP CompletionItemKinds.
+--- Map of tags kinds to LSP CompletionItemKinds.
 local kinds = {m = 7, f = 3, F = 5, t = 8, l = 3, L = 6}
 
 -- LSP textDocument/completion request.
@@ -337,8 +335,8 @@ register('textDocument/completion', function(params)
   return items
 end)
 
--- Returns the symbol at a text document position.
--- @params LSP TextDocumentPositionParams object.
+--- Returns the symbol at a text document position.
+-- @param LSP TextDocumentPositionParams object.
 -- @return symbol or nil
 local function get_symbol(params)
   local line_num, col_num = params.position.line + 1, params.position.character + 1
@@ -349,7 +347,7 @@ local function get_symbol(params)
   return symbol ~= '' and symbol or nil
 end
 
--- Returns a list of API docs for the given symbol.
+--- Returns a list of API docs for the given symbol.
 -- @param symbol String symbol get get API docs for.
 -- @param filename String filename containing the given symbol.
 -- @return list of documentation strings

@@ -1,20 +1,17 @@
 --- @module coroutine
 
----
--- Closes coroutine `co`, that is, closes all its pending to-be-closed variables and puts the
+--- Closes coroutine `co`, that is, closes all its pending to-be-closed variables and puts the
 -- coroutine in a dead state. The given coroutine must be dead or suspended. In case of error
 -- closing some variable, returns false plus the error object; otherwise returns true.
 -- @param co
 -- @function coroutine.close
 
----
--- Creates a new coroutine, with body `f`. `f` must be a Lua function. Returns this new coroutine,
+--- Creates a new coroutine, with body `f`. `f` must be a Lua function. Returns this new coroutine,
 -- an object with type `"thread"`.
 -- @param f
 -- @function coroutine.create
 
----
--- Returns true when the coroutine `co` can yield. The default for `co` is the running coroutine.
+--- Returns true when the coroutine `co` can yield. The default for `co` is the running coroutine.
 --
 -- A coroutine is yieldable if it is not the main thread and it is not inside a non-yieldable
 -- C function.
@@ -23,8 +20,7 @@
 -- @param[opt] co
 -- @function coroutine.isyieldable
 
----
--- Starts or continues the execution of coroutine `co`. The first time you resume a coroutine,
+--- Starts or continues the execution of coroutine `co`. The first time you resume a coroutine,
 -- it starts running its body. The values `val1`, ··· are passed as the arguments to the body
 -- function. If the coroutine has yielded, `resume` restarts it; the values `val1`, ··· are
 -- passed as the results from the yield.
@@ -37,12 +33,10 @@
 -- @param[optchain] ...
 -- @function coroutine.resume
 
----
--- Returns the running coroutine plus a boolean, true when the running coroutine is the main one.
+--- Returns the running coroutine plus a boolean, true when the running coroutine is the main one.
 -- @function coroutine.running
 
----
--- Returns the status of the coroutine `co`, as a string: `"running"`, if the coroutine is
+--- Returns the status of the coroutine `co`, as a string: `"running"`, if the coroutine is
 -- running (that is, it is the one that called `status`); `"suspended"`, if the coroutine
 -- is suspended in a call to `yield`, or if it has not started running yet; `"normal"` if the
 -- coroutine is active but not running (that is, it has resumed another coroutine); and `"dead"`
@@ -50,8 +44,7 @@
 -- @param co
 -- @function coroutine.status
 
----
--- Creates a new coroutine, with body `f`; `f` must be a Lua function. Returns a function that
+--- Creates a new coroutine, with body `f`; `f` must be a Lua function. Returns a function that
 -- resumes the coroutine each time it is called. Any arguments passed to this function behave as
 -- the extra arguments to `resume`. The function returns the same values returned by `resume`,
 -- except the first boolean. In case of error, the function closes the coroutine and propagates
@@ -59,8 +52,7 @@
 -- @param f
 -- @function coroutine.wrap
 
----
--- Suspends the execution of the calling coroutine. Any arguments to `yield` are passed as
+--- Suspends the execution of the calling coroutine. Any arguments to `yield` are passed as
 -- extra results to `resume`.
 -- @param ...
 -- @function coroutine.yield

@@ -1,7 +1,6 @@
 --- @module lfs
 
----
--- Returns a table with the file attributes corresponding to filepath (or nil followed by
+--- Returns a table with the file attributes corresponding to filepath (or nil followed by
 -- an error message in case of error). If the second optional argument is given and is a
 -- string, then only the value of the named attribute is returned (this use is equivalent to
 -- lfs.attributes(filepath)[aname], but the table is not created and only one attribute is
@@ -36,15 +35,13 @@
 -- @param[opt] aname | atable
 -- @function lfs.attributes
 
----
--- Changes the current working directory to the given path.
+--- Changes the current working directory to the given path.
 --
 -- Returns true in case of success or nil plus an error string.
 -- @param path
 -- @function lfs.chdir
 
----
--- Creates a lockfile (called lockfile.lfs) in path if it does not exist and returns the lock. If
+--- Creates a lockfile (called lockfile.lfs) in path if it does not exist and returns the lock. If
 -- the lock already exists checks if it's stale, using the second parameter (default for the
 -- second parameter is INT_MAX, which in practice means the lock will never be stale. To free
 -- the the lock call lock:free().
@@ -55,20 +52,17 @@
 -- @param[opt] seconds_stale
 -- @function lfs.lock_dir
 
----
--- Returns a string with the current working directory or nil plus an error string.
+--- Returns a string with the current working directory or nil plus an error string.
 -- @function lfs.currentdir
 
----
--- Lua iterator over the entries of a given directory. Each time the iterator is called
+--- Lua iterator over the entries of a given directory. Each time the iterator is called
 -- with dir_obj it returns a directory entry's name as a string, or nil if there are no more
 -- entries. You can also iterate by calling dir_obj:next(), and explicitly close the directory
 -- before the iteration finished with dir_obj:close(). Raises an error if path is not a directory.
 -- @param path
 -- @function lfs.dir
 
----
--- Locks a file or a part of it. This function works on open files; the file handle should be
+--- Locks a file or a part of it. This function works on open files; the file handle should be
 -- specified as the first argument. The string mode could be either r (for a read/shared lock)
 -- or w (for a write/exclusive lock). The optional arguments start and length can be used to
 -- specify a starting point and its length; both should be numbers.
@@ -81,8 +75,7 @@
 -- @param[optchain] length
 -- @function lfs.lock
 
----
--- Creates a link. The first argument is the object to link to and the second is the name of the
+--- Creates a link. The first argument is the object to link to and the second is the name of the
 -- link. If the optional third argument is true, the link will be a symbolic link (by default,
 -- a hard link is created).
 -- @param old
@@ -90,24 +83,21 @@
 -- @param[opt] symlink
 -- @function lfs.link
 
----
--- Creates a new directory. The argument is the name of the new directory.
+--- Creates a new directory. The argument is the name of the new directory.
 --
 -- Returns true in case of success or nil, an error message and a system-dependent error code
 -- in case of error.
 -- @param dirname
 -- @function lfs.mkdir
 
----
--- Removes an existing directory. The argument is the name of the directory.
+--- Removes an existing directory. The argument is the name of the directory.
 --
 -- Returns true in case of success or nil, an error message and a system-dependent error code
 -- in case of error.
 -- @param dirname
 -- @function lfs.rmdir
 
----
--- Sets the writing mode for a file. The mode string can be either "binary" or "text". Returns
+--- Sets the writing mode for a file. The mode string can be either "binary" or "text". Returns
 -- true followed by the previous mode string for the file, or nil followed by an error string
 -- in case of errors. On non-Windows platforms, where the two modes are identical, setting
 -- the mode has no effect, and the mode is always returned as binary.
@@ -115,8 +105,7 @@
 -- @param mode
 -- @function lfs.setmode
 
----
--- Identical to lfs.attributes except that it obtains information about the link itself (not
+--- Identical to lfs.attributes except that it obtains information about the link itself (not
 -- the file it refers to). It also adds a target field, containing the file name that the
 -- symlink points to. On Windows this function does not yet support links, and is identical
 -- to lfs.attributes.
@@ -124,8 +113,7 @@
 -- @param[opt] aname
 -- @function lfs.symlinkattributes
 
----
--- Set access and modification times of a file. This function is a bind to utime function. The
+--- Set access and modification times of a file. This function is a bind to utime function. The
 -- first argument is the filename, the second argument (atime) is the access time, and the
 -- third argument (mtime) is the modification time. Both times are provided in seconds (which
 -- should be generated with Lua standard function os.time). If the modification time is omitted,
@@ -138,8 +126,7 @@
 -- @param[optchain] mtime
 -- @function lfs.touch
 
----
--- Unlocks a file or a part of it. This function works on open files; the file handle should
+--- Unlocks a file or a part of it. This function works on open files; the file handle should
 -- be specified as the first argument. The optional arguments start and length can be used to
 -- specify a starting point and its length; both should be numbers.
 --

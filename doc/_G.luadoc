@@ -1,25 +1,21 @@
 --- @module _G
 
----
--- A global variable (not a function) that holds the global environment (see §2.2). Lua itself
+--- A global variable (not a function) that holds the global environment (see §2.2). Lua itself
 -- does not use this variable; changing its value does not affect any environment, nor vice versa.
 -- @table _G
 
----
--- A global variable (not a function) that holds a string containing the running Lua version. The
+--- A global variable (not a function) that holds a string containing the running Lua version. The
 -- current value of this variable is "`Lua 5.4`".
 -- @field _VERSION
 
----
--- Raises an error if the value of its argument `v` is false (i.e., nil or false); otherwise,
+--- Raises an error if the value of its argument `v` is false (i.e., nil or false); otherwise,
 -- returns all its arguments. In case of error, `message` is the error object; when absent,
 -- it defaults to "assertion failed!".
 -- @param v
 -- @param[opt] message
 -- @function assert
 
----
--- This function is a generic interface to the garbage collector. It performs different functions
+--- This function is a generic interface to the garbage collector. It performs different functions
 -- according to its first argument, `opt`:
 --   "collect": performs a full garbage-collection cycle. This is the default option.
 --   "stop": stops automatic execution of the garbage collector.
@@ -44,16 +40,14 @@
 -- @param[optchain] arg
 -- @function collectgarbage
 
----
--- Opens the named file and executes its content as a Lua chunk. When called without arguments,
+--- Opens the named file and executes its content as a Lua chunk. When called without arguments,
 -- `dofile` executes the content of the standard input (`stdin`). Returns all values returned
 -- by the chunk. In case of errors, `dofile` propagates the error to its caller. (That is,
 -- `dofile` does not run in protected mode.)
 -- @param[opt] filename
 -- @function dofile
 
----
--- Raises an error (see §2.3) with `message` as the error object. This function never returns.
+--- Raises an error (see §2.3) with `message` as the error object. This function never returns.
 --
 -- Usually, `error` adds some information about the error position at the beginning of the
 -- message, if the message is a string. The `level` argument specifies how to get the error
@@ -64,8 +58,7 @@
 -- @param[opt] level
 -- @function error
 
----
--- Returns the current environment in use by the function. `f` can be a Lua function or a
+--- Returns the current environment in use by the function. `f` can be a Lua function or a
 -- number that specifies the function at that stack level: Level 1 is the function calling
 -- `getfenv`. If the given function is not a Lua function, or if `f` is 0, `getfenv` returns
 -- the global environment. The default for `f` is 1.
@@ -74,15 +67,13 @@
 -- @param[opt] f
 -- @function getfenv
 
----
--- If `object` does not have a metatable, returns nil. Otherwise, if the object's metatable
+--- If `object` does not have a metatable, returns nil. Otherwise, if the object's metatable
 -- has a `__metatable` field, returns the associated value. Otherwise, returns the metatable
 -- of the given object.
 -- @param object
 -- @function getmetatable
 
----
--- Returns three values (an iterator function, the table `t`, and 0) so that the construction
+--- Returns three values (an iterator function, the table `t`, and 0) so that the construction
 --
 --   for i,v in ipairs(t) do *body* end
 --
@@ -91,8 +82,7 @@
 -- @param t
 -- @function ipairs
 
----
--- Loads a chunk.
+--- Loads a chunk.
 --
 -- If `chunk` is a string, the chunk is this string. If `chunk` is a function, `load` calls
 -- it repeatedly to get the chunk pieces. Each call to `chunk` must return a string that
@@ -130,16 +120,14 @@
 -- @param[optchain] env
 -- @function load
 
----
--- Similar to `load`, but gets the chunk from file `filename` or from the standard input,
+--- Similar to `load`, but gets the chunk from file `filename` or from the standard input,
 -- if no file name is given.
 -- @param[opt] filename
 -- @param[optchain] mode
 -- @param[optchain] env
 -- @function loadfile
 
----
--- Similar to `load`, but gets the chunk from the given string. To load and run a given string,
+--- Similar to `load`, but gets the chunk from the given string. To load and run a given string,
 -- use the idiom assert(loadstring(s))() When absent, `chunkname` defaults to the given string.
 --
 -- Deprecated in Lua 5.2.
@@ -147,8 +135,7 @@
 -- @param[opt] chunkname
 -- @function loadstring
 
----
--- Creates a module. If there is a table in `package.loaded[name]`, this table is the
+--- Creates a module. If there is a table in `package.loaded[name]`, this table is the
 -- module. Otherwise, if there is a global table `t` with the given name, this table is the
 -- module. Otherwise creates a new table `t` and sets it as the value of the global `name`
 -- and the value of `package.loaded[name]`. This function also initializes `t._NAME` with the
@@ -166,8 +153,7 @@
 -- @param[opt] ...
 -- @function module
 
----
--- Allows a program to traverse all fields of a table. Its first argument is a table and its
+--- Allows a program to traverse all fields of a table. Its first argument is a table and its
 -- second argument is an index in this table. A call to `next` returns the next index of the
 -- table and its associated value. When called with nil as its second argument, `next` returns
 -- an initial index and its associated value. When called with the last index, or with nil in
@@ -184,8 +170,7 @@
 -- @param[opt] index
 -- @function next
 
----
--- If `t` has a metamethod `__pairs`, calls it with `t` as argument and returns the first three
+--- If `t` has a metamethod `__pairs`, calls it with `t` as argument and returns the first three
 -- results from the call.
 --
 -- Otherwise, returns three values: the `next` function, the table `t`, and nil, so that the
@@ -199,8 +184,7 @@
 -- @param t
 -- @function pairs
 
----
--- Calls the function `f` with the given arguments in *protected mode*. This means that any
+--- Calls the function `f` with the given arguments in *protected mode*. This means that any
 -- error inside `f` is not propagated; instead, `pcall` catches the error and returns a status
 -- code. Its first result is the status code (a boolean), which is true if the call succeeds
 -- without errors. In such case, `pcall` also returns all results from the call, after this
@@ -211,9 +195,8 @@
 -- @param[optchain] ...
 -- @function pcall
 
----
--- Receives any number of arguments and prints their values to `stdout`, converting each argument
--- to a string following the same rules of `tostring`.
+--- Receives any number of arguments and prints their values to `stdout`, converting each
+-- argument to a string following the same rules of `tostring`.
 --
 -- The function `print` is not intended for formatted output, but only as a quick way to show a
 -- value, for instance for debugging. For complete control over the output, use `string.format`
@@ -221,29 +204,26 @@
 -- @param ...
 -- @function print
 
----
--- Checks whether `v1` is equal to `v2`, without invoking the `__eq` metamethod. Returns a boolean.
+--- Checks whether `v1` is equal to `v2`, without invoking the `__eq` metamethod. Returns
+-- a boolean.
 -- @param v1
 -- @param v2
 -- @function rawequal
 
----
--- Gets the real value of `table[index]`, without using the `__index` metavalue. `table` must
+--- Gets the real value of `table[index]`, without using the `__index` metavalue. `table` must
 -- be a table; `index` may be any value.
 -- @param table
 -- @param index
 -- @function rawget
 
----
--- Returns the length of the object `v`, which must be a table or a string, without invoking the
+--- Returns the length of the object `v`, which must be a table or a string, without invoking the
 -- `__len` metamethod. Returns an integer.
 --
 -- New in Lua 5.2.
 -- @param v
 -- @function rawlen
 
----
--- Sets the real value of `table[index]` to `value`, without using the `__newindex`
+--- Sets the real value of `table[index]` to `value`, without using the `__newindex`
 -- metavalue. `table` must be a table, `index` any value different from nil and NaN, and `value`
 -- any Lua value.
 --
@@ -253,8 +233,7 @@
 -- @param value
 -- @function rawset
 
----
--- Sets the environment to be used by the given function. `f` can be a Lua function or a
+--- Sets the environment to be used by the given function. `f` can be a Lua function or a
 -- number that specifies the function at that stack level: Level 1 is the function calling
 -- `setfenv`. `setfenv` returns the given function. As a special case, when `f` is 0 `setfenv`
 -- changes the environment of the running thread. In this case, `setfenv` returns no values.
@@ -264,16 +243,14 @@
 -- @param table
 -- @function setfenv
 
----
--- If `index` is a number, returns all arguments after argument number `index`; a negative number
+--- If `index` is a number, returns all arguments after argument number `index`; a negative number
 -- indexes from the end (-1 is the last argument). Otherwise, `index` must be the string `"#"`,
 -- and `select` returns the total number of extra arguments it received.
 -- @param index
 -- @param ...
 -- @function select
 
----
--- Sets the metatable for the given table. If `metatable` is nil, removes the metatable of the
+--- Sets the metatable for the given table. If `metatable` is nil, removes the metatable of the
 -- given table. If the original metatable has a `__metatable` field, raises an error.
 --
 -- This function returns `table`.
@@ -284,8 +261,7 @@
 -- @param metatable
 -- @function setmetatable
 
----
--- When called with no `base`, `tonumber` tries to convert its argument to a number. If the
+--- When called with no `base`, `tonumber` tries to convert its argument to a number. If the
 -- argument is already a number or a string convertible to a number, then `tonumber` returns
 -- this number; otherwise, it returns nil.
 --
@@ -301,8 +277,7 @@
 -- @param[opt] base
 -- @function tonumber
 
----
--- Receives a value of any type and converts it to a string in a human-readable format. Floats
+--- Receives a value of any type and converts it to a string in a human-readable format. Floats
 -- always produce strings with some floating-point indication (either a decimal dot or an
 -- exponent).
 --
@@ -315,15 +290,13 @@
 -- @param v
 -- @function tostring
 
----
--- Returns the type of its only argument, coded as a string. The possible results of this
+--- Returns the type of its only argument, coded as a string. The possible results of this
 -- function are " `nil`" (a string, not the value nil), "`number`", "`string`", "`boolean`",
 -- "`table`", "`function`", "`thread`", and "`userdata`".
 -- @param v
 -- @function type
 
----
--- Returns the elements from the given table. This function is equivalent to return list[i],
+--- Returns the elements from the given table. This function is equivalent to return list[i],
 -- list[i+1], ···, list[j] except that the above code can be written only for a fixed number
 -- of elements. By default, `i` is 1 and `j` is the length of the list, as defined by the length
 -- operator (see §2.5.5).
@@ -334,8 +307,7 @@
 -- @param[optchain] j
 -- @function unpack
 
----
--- Emits a warning with a message composed by the concatenation of all its arguments (which
+--- Emits a warning with a message composed by the concatenation of all its arguments (which
 -- should be strings).
 --
 -- By convention, a one-piece message starting with '`@`' is intended to be a *control message*,
@@ -348,8 +320,7 @@
 -- @param ...
 -- @function warn
 
----
--- This function is similar to `pcall`, except that it sets a new message handler `msgh`.
+--- This function is similar to `pcall`, except that it sets a new message handler `msgh`.
 -- @param f
 -- @param msgh
 -- @param[opt] arg1
