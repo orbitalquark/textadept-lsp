@@ -319,7 +319,7 @@ register('textDocument/completion', function(params)
         log:debug('Found candidate: (name=%s file=%s fields=%s)', name, tag_file, fields)
       end
       local k, class = fields:sub(1, 1), fields:match('class:(%S+)') or ''
-      if class == symbol and (op ~= ':' or k == 'f') then
+      if class == symbol and (op ~= ':' or k == 'f' or k == 'l') then
         if (k == 'l' or k == 'L') and filename ~= src_file:gsub('^_ROOT', root or '') then
           goto continue -- only allow for local completions in the same file
         end
