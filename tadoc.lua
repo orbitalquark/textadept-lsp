@@ -205,6 +205,7 @@ function M.ldoc(doc)
       end
       if item.type == 'function' then
         local class = item.kind:match('^class (%S+)')
+        if not class and item_name:find(':') then class = item_name:match('^[^:]+') end
         write_tag(tags, item_name:match('[^:]+$'), module.file, find_line(lines, item.lineno), 'f',
           'class:' .. (class or module_name))
         write_apidoc(apidoc, module, item)
