@@ -76,7 +76,7 @@ local function write_apidoc(file, m, b)
   -- Function or field description.
   local description = b.lineno and b.summary .. (b.description or '') or b.description -- ldoc has lineno
   -- Strip consistent leading whitespace.
-  local indent = (b.description or ''):match('^%s*')
+  local indent = (b.description or ''):match('^[\r\n]*(%s*)')
   if indent ~= '' then description = description:gsub('\n' .. indent, '\n') end
   if class == 'module' then
     -- Modules usually have additional Markdown documentation so just grab the documentation
