@@ -7,7 +7,7 @@ local json = require('lsp.dkjson')
 --- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
 -- It implements version 3.17.0 of the protocol, but does not support all protocol features. The
--- [`Server.new()`]() function contains the client's current set of capabilities.
+-- `Server.new()` function contains the client's current set of capabilities.
 --
 -- Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
 -- *modules/* directory, and then putting the following in your *~/.textadept/init.lua*:
@@ -116,8 +116,8 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
 --- Emitted when an LSP connection has been initialized.
 -- This is useful for sending server-specific notifications to the server upon init via
--- [`Server:notify()`]().
--- Emitted by [`lsp.start()`]().
+-- `Server:notify()`.
+-- Emitted by `lsp.start()`.
 -- Arguments:
 --
 --   - *lang*: The lexer name of the LSP language.
@@ -137,7 +137,7 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 
 --- Emitted when an LSP server emits an unhandled request.
 -- This is useful for handling server-specific requests. Responses are sent using
--- [`Server:respond()`]().
+-- `Server:respond()`.
 -- An event handler should return `true`.
 -- Arguments:
 --
