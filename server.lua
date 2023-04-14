@@ -1,6 +1,8 @@
 #!/bin/env lua
 -- Copyright 2023 Mitchell. See LICENSE.
--- Simple Lua language server for developing with Lua and Textadept.
+
+--- Simple Lua language server for developing with Lua and Textadept.
+-- @module lsp.server
 
 local WIN32 = package.path:find('\\')
 
@@ -336,7 +338,7 @@ register('textDocument/completion', function(params)
 end)
 
 --- Returns the symbol at a text document position.
--- @param LSP TextDocumentPositionParams object.
+-- @param params LSP TextDocumentPositionParams object.
 -- @return symbol or nil
 local function get_symbol(params)
   local line_num, col_num = params.position.line + 1, params.position.character + 1

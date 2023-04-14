@@ -257,7 +257,7 @@ function M.ldoc(doc)
 end
 
 --- Returns the absolute path of the given relative path.
--- @param string path String relative path.
+-- @param path String relative path.
 -- @return absolute path
 local function abspath(path)
   if path:find('^/') then return path end
