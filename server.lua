@@ -198,7 +198,7 @@ local function scan(target)
   local config = cache .. '/config.ld'
   local f = assert(io.open(config, 'wb'))
   local dump = require('pl.pretty').write(files)
-  f:write('file=', dump):close()
+  f:write('file=', dump, '\n', 'custom_see_handler(".+", function(s) return s, s end)'):close()
   log:debug('Wrote config file: %s\nfile=%s', config, dump)
 
   -- Invoke LDoc.
