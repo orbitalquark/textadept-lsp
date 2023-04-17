@@ -416,20 +416,35 @@ register('textDocument/signatureHelp', function(params)
   local text, pos = table.concat(lines), #table.concat(prev_lines) + col_num - 1
   log:debug('Get signature at %s:%d:%d (pos=%d)', filename, line_num, col_num, pos)
   local s = pos
+  local active_param = not text:find('^,', s) and 1 or 2
   ::retry::
-  while s > 1 and not text:find('^[({]', s) do s = s - 1 end
+  while s > 1 and not text:find('^[({]', s) do
+    s = s - 1
+    if text:find('^,', s) then active_param = active_param + 1 end
+  end
   local e = select(2, text:find('^%b()', s)) or select(2, text:find('^%b{}', s))
   if e and e < pos then
     log:debug('Skipping previous () or {} (s=%d e=%d)', s, e)
     s = s - 1
+    if text:find('^{', s) then active_param = 1 end -- was inside table arg, so reset param count
     goto retry
   end
   local func = text:sub(1, s - 1):match('[%w_.:]+$')
   if not func then return json.null end
 
   -- Get its signature(s).
-  for _, doc in ipairs(get_api(func, filename)) do signatures[#signatures + 1] = {label = doc} end
-  return {signatures = signatures, activeSignature = 0}
+  for _, doc in ipairs(get_api(func, filename)) do
+    local parameters = {}
+    pos = doc:find('%b()')
+    if pos then
+      pos = pos - 1
+      for s, e in doc:match('%b()'):gmatch('()[^(),]+()') do
+        parameters[#parameters + 1] = {label = {pos + s - 1, pos + e - 1}}
+      end
+    end
+    signatures[#signatures + 1] = {label = doc, parameters = parameters}
+  end
+  return {signatures = signatures, activeSignature = 0, activeParameter = active_param - 1}
 end)
 
 -- LSP textDocument/definition request.
