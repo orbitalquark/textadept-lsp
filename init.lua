@@ -861,11 +861,32 @@ function M.hover(position)
   view:call_tip_show(position or buffer.current_pos, contents)
 end
 
-local signatures, last_pos
+--- Active call tip signatures.
+-- @field activeSignature
+-- @field activeParameter
+-- @table signatures
+-- @local
+local signatures
+
+local last_pos
+--- Shows the currently active signature and highlights its current parameter if possible.
+local function show_signature()
+  local signature = signatures[(signatures.activeSignature or 0) + 1]
+  if not view:call_tip_active() then last_pos = buffer.current_pos end
+  view:call_tip_show(last_pos, signature.text)
+  local params = signature.parameters
+  if not params then return end
+  local param = params[(signature.activeParameter or signatures.activeParameter or 0) + 1]
+  local offset = #signatures == 1 and 1 or 2 -- account for Lua indices and cycle arrows
+  if param then view:call_tip_set_hlt(param.label[1] + offset, param.label[2] + offset) end
+end
+
 --- Shows a calltip for the current function.
--- If a call tip is already shown, cycles to the next one if it exists.
-function M.signature_help()
-  if view:call_tip_active() and signatures and #signatures > 1 then
+-- If a call tip is already shown, cycles to the next one if it exists unless specified otherwise.
+-- @param no_cycle Flag that indicates to not cycle to the next call tip. This is used to update
+--   the current highlighted parameter.
+function M.signature_help(no_cycle)
+  if view:call_tip_active() and signatures and #signatures > 1 and not no_cycle then
     events.emit(events.CALL_TIP_CLICK, 1)
     return
   end
@@ -883,6 +904,7 @@ function M.signature_help()
   end
   signatures = signature_help.signatures
   signatures.activeSignature = signature_help.activeSignature
+  signatures.activeParameter = signature_help.activeParameter
   for _, signature in ipairs(signatures) do
     local doc = signature.documentation or ''
     -- Construct calltip text.
@@ -899,26 +921,21 @@ function M.signature_help()
     if #signatures > 1 then doc = '\001' .. doc:gsub('\n', '\n\002', 1) end
     signature.text = doc
   end
-  local signature = signatures[(signature_help.activeSignature or 0) + 1]
-  if not view:call_tip_active() then last_pos = buffer.current_pos end
-  view:call_tip_show(last_pos, signature.text)
-  local params = signature.parameters
-  if not params then return end
-  local param = params[(signature.activeParameter or signature_help.activeParameter or 0) + 1]
-  if param then view:call_tip_set_hlt(param.label[1] + 1, param.label[2] + 1) end
+  show_signature()
 end
+
 -- Cycle through signatures.
 events.connect(events.CALL_TIP_CLICK, function(position)
   local server = servers[buffer.lexer_language]
   if not (server and server.capabilities.signatureHelpProvider and signatures and
     signatures.activeSignature) then return end
   signatures.activeSignature = signatures.activeSignature + (position == 1 and -1 or 1)
-  if signatures.activeSignature > #signatures then
-    signatures.activeSignature = 1
-  elseif signatures.activeSignature < 1 then
-    signatures.activeSignature = #signatures
+  if signatures.activeSignature >= #signatures then
+    signatures.activeSignature = 0
+  elseif signatures.activeSignature < 0 then
+    signatures.activeSignature = #signatures - 1
   end
-  view:call_tip_show(buffer.current_pos, signatures[signatures.activeSignature].text)
+  show_signature()
 end)
 
 -- Close the call tip when a trigger's complement is typed (e.g. ')').
@@ -1124,7 +1141,7 @@ events.connect(events.CHAR_ADDED, function(code)
     return
   end
   if M.show_signature_help and server.call_tip_triggers and server.call_tip_triggers[code] then
-    if not view:call_tip_active() then M.signature_help() end
+    M.signature_help(view:call_tip_active())
     if view:call_tip_active() then return end
   end
   if not M.show_completions then return end
