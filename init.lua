@@ -1176,7 +1176,7 @@ events.connect(events.QUIT, shutdown_servers, 1)
 
 -- Add a menu.
 -- (Insert 'Language Server' menu in alphabetical order.)
-local m_tools = textadept.menu.menubar[_L['Tools']]
+local m_tools = textadept.menu.menubar['Tools']
 local found_area
 for i = 1, #m_tools - 1 do
   if not found_area and m_tools[i + 1].title == _L['Bookmarks'] then
@@ -1278,8 +1278,7 @@ end
 
 keys['ctrl+ '] = M.autocomplete
 if OSX then keys['cmd+ '] = M.autocomplete end
-local show_documentation =
-  textadept.menu.menubar[_L['Tools']][_L['Language Server']][_L['Show Documentation']][2]
+local show_documentation = textadept.menu.menubar['Tools/Language Server/Show Documentation'][2]
 keys['ctrl+?'], ui.command_entry.editing_keys.__index['ctrl+?'] = show_documentation,
   show_documentation
 if OSX or CURSES then
@@ -1287,8 +1286,7 @@ if OSX or CURSES then
   ui.command_entry.editing_keys.__index[OSX and 'cmd+?' or 'meta+?'] = show_documentation
 end
 keys.f12 = M.goto_definition
-keys['shift+f12'] =
-  textadept.menu.menubar[_L['Tools']][_L['Language Server']][_L['Go To Workspace Symbol...']][2]
+keys['shift+f12'] = textadept.menu.menubar['Tools/Language Server/Go To Workspace Symbol...'][2]
 
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.
 if arg then
