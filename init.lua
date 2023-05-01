@@ -878,7 +878,7 @@ local function show_signature()
   if not params then return end
   local param = params[(signature.activeParameter or signatures.activeParameter or 0) + 1]
   local offset = #signatures == 1 and 1 or 2 -- account for Lua indices and cycle arrows
-  if param and type(param) == 'table' then
+  if param and type(param.label) == 'table' then
     view:call_tip_set_hlt(param.label[1] + offset, param.label[2] + offset)
   end
 end
