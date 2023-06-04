@@ -730,13 +730,14 @@ end
 -- @param position Optional buffer position to use. If `nil`, uses the current buffer position.
 -- @return table LSP TextDocumentPositionParams
 local function get_buffer_position_params(position)
+	local line = buffer:line_from_position(position or buffer.current_pos)
 	return {
 		textDocument = {
 			uri = touri(buffer.filename or 'untitled:') -- server may support untitledDocumentCompletions
 		}, --
 		position = {
-			line = buffer:line_from_position(position or buffer.current_pos) - 1,
-			character = buffer.column[position or buffer.current_pos] - 1
+			line = line - 1,
+			character = (position or buffer.current_pos) - buffer:position_from_line(line)
 		}
 	}
 end
@@ -1055,11 +1056,10 @@ function M.select()
 	server:sync_buffer()
 	local position = buffer.selection_empty and buffer.current_pos or
 		buffer:position_before(buffer.selection_start)
+	local line = buffer:line_from_position(position)
 	local selections = server:request('textDocument/selectionRange', {
 		textDocument = {uri = touri(buffer.filename)}, --
-		positions = {
-			{line = buffer:line_from_position(position) - 1, character = buffer.column[position] - 1}
-		}
+		positions = {{line = line - 1, character = position - buffer:position_from_line(line)}}
 	})
 	if not selections then return end
 	local selection = selections[1]
