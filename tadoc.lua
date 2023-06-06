@@ -28,7 +28,7 @@ end
 -- @param filename The filename the tag occurs in.
 -- @param code The line of code the tag occurs on.
 -- @param k The kind of ctag: m Module, f Function, l Local function, t Table, L Local table,
---   and F Field.
+--	and F Field.
 -- @param ext_fields The ext_fields for the ctag.
 local function write_tag(file, name, filename, code, k, ext_fields)
 	if ROOT then filename = filename:gsub(ROOT, '_ROOT') end

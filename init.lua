@@ -12,12 +12,12 @@ local json = require('lsp.dkjson')
 -- Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
 -- *modules/* directory, and then putting the following in your *~/.textadept/init.lua*:
 --
---     local lsp = require('lsp')
+--	local lsp = require('lsp')
 --
 -- You can then set up some language server commands. For example:
 --
---     lsp.server_commands.cpp = 'clangd'
---     lsp.server_commands.go = 'gopls'
+--	lsp.server_commands.cpp = 'clangd'
+--	lsp.server_commands.go = 'gopls'
 --
 -- (For more example configurations, see the [wiki][].)
 --
@@ -47,18 +47,18 @@ local json = require('lsp.dkjson')
 -- Lua file. The server looks in the project root for a *.lua-lsp* configuration file. That
 -- file can have the following fields:
 --
---   - `ignore`: List of globs that match directories and files to ignore. Globs are relative
---     to the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
---     and node_modules. Setting this field overrides the default.
---   - `max_scan`: Maximum number of files to scan before giving up. This is not the number
---     of Lua files scanned, but the number of files encountered in non-ignored directories.
---     The primary purpose of this field is to avoid hammering the disk when accidentally
---     opening a large project or root. The default value is 10,000.
+-- - `ignore`: List of globs that match directories and files to ignore. Globs are relative to
+--	the project root. The default directories ignored are .bzr, .git, .hg, .svn, _FOSSIL_,
+--	and node_modules. Setting this field overrides the default.
+-- - `max_scan`: Maximum number of files to scan before giving up. This is not the number of
+--	Lua files scanned, but the number of files encountered in non-ignored directories.
+--	The primary purpose of this field is to avoid hammering the disk when accidentally
+--	opening a large project or root. The default value is 10,000.
 --
 -- For example:
 --
---   ignore = {'.git', 'build', 'test'}
---   max_scan = 20000
+--	ignore = {'.git', 'build', 'test'}
+--	max_scan = 20000
 --
 -- ### Key Bindings
 --
@@ -120,8 +120,8 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- Emitted by `lsp.start()`.
 -- Arguments:
 --
---   - *lang*: The lexer name of the LSP language.
---   - *server*: The LSP server.
+-- - *lang*: The lexer name of the LSP language.
+-- - *server*: The LSP server.
 -- @field _G.events.LSP_INITIALIZED
 
 --- Emitted when an LSP server emits an unhandled notification.
@@ -129,10 +129,10 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- An event handler should return `true`.
 -- Arguments:
 --
---   - *lang*: The lexer name of the LSP language.
---   - *server*: The LSP server.
---   - *method*: The string LSP notification method name.
---   - *params*: The table of LSP notification params. Contents may be server-specific.
+-- - *lang*: The lexer name of the LSP language.
+-- - *server*: The LSP server.
+-- - *method*: The string LSP notification method name.
+-- - *params*: The table of LSP notification params. Contents may be server-specific.
 -- @field _G.events.LSP_NOTIFICATION
 
 --- Emitted when an LSP server emits an unhandled request.
@@ -141,11 +141,11 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 -- An event handler should return `true`.
 -- Arguments:
 --
---   - *lang*: The lexer name of the LSP language.
---   - *server*: The LSP server.
---   - *id*: The integer LSP request ID.
---   - *method*: The string LSP request method name.
---   - *params*: The table of LSP request params.
+-- - *lang*: The lexer name of the LSP language.
+-- - *server*: The LSP server.
+-- - *id*: The integer LSP request ID.
+-- - *method*: The string LSP request method name.
+-- - *params*: The table of LSP request params.
 -- @field _G.events.LSP_REQUEST
 
 --- Log RPC correspondence to the LSP message buffer.
@@ -178,9 +178,9 @@ M.autocomplete_num_chars = nil
 -- return either a server command or a configuration.
 -- Commands are simple string shell commands. Configurations are tables with the following keys:
 --
---   - *command*: String shell command used to run the LSP language server.
---   - *init_options*: Table of initialization options to pass to the language server in the
---     "initialize" request.
+-- - *command*: String shell command used to run the LSP language server.
+-- - *init_options*: Table of initialization options to pass to the language server in the
+--	"initialize" request.
 M.server_commands = {}
 
 --- Map of lexer names to active LSP servers.
@@ -252,7 +252,7 @@ local Server = {}
 -- @param lang Lexer name of the language server.
 -- @param cmd String command to start the language server.
 -- @param init_options Optional table of options to be passed to the language server for
---   initialization.
+--	initialization.
 -- @local
 function Server.new(lang, cmd, init_options)
 	log('Starting language server: ', cmd)
@@ -312,20 +312,20 @@ function Server.new(lang, cmd, init_options)
 					-- contextSupport = true
 				},
 				-- declaration = {
-				--   dynamicRegistration = false, -- not supported
-				--   linkSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	linkSupport = true
 				-- }
 				-- definition = {
-				--   dynamicRegistration = false, -- not supported
-				--   linkSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	linkSupport = true
 				-- },
 				-- typeDefinition = {
-				--   dynamicRegistration = false, -- not supported
-				--   linkSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	linkSupport = true
 				-- },
 				-- implementation = {
-				--   dynamicRegistration = false, -- not supported
-				--   linkSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	linkSupport = true
 				-- },
 				-- references = {dynamicRegistration = false}, -- not supported
 				-- documentHighlight = {dynamicRegistration = false}, -- not supported
@@ -337,83 +337,83 @@ function Server.new(lang, cmd, init_options)
 					-- labelSupport = true
 				} --
 				-- codeAction = {
-				--   dynamicRegistration = false, -- not supported
-				--   codeActionLiteralSupport = {valueSet = {}},
-				--   isPreferredSupport = true,
-				--   disabledSupport = true,
-				--   dataSupport = true,
-				--   resolveSupport = {properties = {}},
-				--   honorsChangeAnnotations = true
+				--	dynamicRegistration = false, -- not supported
+				--	codeActionLiteralSupport = {valueSet = {}},
+				--	isPreferredSupport = true,
+				--	disabledSupport = true,
+				--	dataSupport = true,
+				--	resolveSupport = {properties = {}},
+				--	honorsChangeAnnotations = true
 				-- },
 				-- codeLens = {dynamicRegistration = false}, -- not supported
 				-- documentLink = {
-				--   dynamicRegistration = false, -- not supported
-				--   tooltipSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	tooltipSupport = true
 				-- },
 				-- colorProvider = {dynamicRegistration = false}, -- not supported
 				-- formatting = {dynamicRegistration = false}, -- not supported
 				-- rangeFormatting = {dynamicRegistration = false}, -- not supported
 				-- onTypeFormatting = {dynamicRegistration = false}, -- not supported
 				-- rename = {
-				--   dynamicRegistration = false, -- not supported
-				--   prepareSupport = false,
-				--   prepareSupportDefaultBehavior = 1,
-				--   honorsChangeAnnotations = true
+				--	dynamicRegistration = false, -- not supported
+				--	prepareSupport = false,
+				--	prepareSupportDefaultBehavior = 1,
+				--	honorsChangeAnnotations = true
 				-- },
 				-- publishDiagnostics = {
-				--   relatedInformation = true,
-				--   tagSupport = {valueSet = {}},
-				--   versionSupport = true,
-				--   codeDescriptionSupport = true,
-				--   dataSupport = true
+				--	relatedInformation = true,
+				--	tagSupport = {valueSet = {}},
+				--	versionSupport = true,
+				--	codeDescriptionSupport = true,
+				--	dataSupport = true
 				-- },
 				-- foldingRange = {
-				--   dynamicRegistration = false, -- not supported
-				--   rangeLimit = ?,
-				--   lineFoldingOnly = true,
-				--   foldingRangeKind = {valueSet = {'comment', 'imports', 'region'}},
-				--   foldingRange = {collapsedText = true}
+				--	dynamicRegistration = false, -- not supported
+				--	rangeLimit = ?,
+				--	lineFoldingOnly = true,
+				--	foldingRangeKind = {valueSet = {'comment', 'imports', 'region'}},
+				--	foldingRange = {collapsedText = true}
 				-- },
 				-- selectionRange = {dynamicRegistration = false}, -- not supported
 				-- linkedEditingRange = {dynamicRegistration = false}, -- not supported
 				-- callHierarchy = {dynamicRegistration = false}, -- not supported
 				-- semanticTokens = {
-				--   dynamicRegistration = false, -- not supported
-				--   requests = {},
-				--   tokenTypes = {},
-				--   tokenModifiers = {},
-				--   formats = {},
-				--   overlappingTokenSupport = true,
-				--   multilineTokenSupport = true,
-				--   serverCancelSupport = true,
-				--   augmentsSyntaxTokens = true
+				--	dynamicRegistration = false, -- not supported
+				--	requests = {},
+				--	tokenTypes = {},
+				--	tokenModifiers = {},
+				--	formats = {},
+				--	overlappingTokenSupport = true,
+				--	multilineTokenSupport = true,
+				--	serverCancelSupport = true,
+				--	augmentsSyntaxTokens = true
 				-- },
 				-- moniker = {dynamicRegistration = false}, -- not supported
 				-- typeHierarchy = {dynamicRegistration = false}, -- not supported
 				-- inlineValue = {dynamicRegistration = false}, -- not supported
 				-- inlayHint = {
-				--   dynamicRegistration = false, -- not supported
-				--   resolveSupport = {properties = {}}
+				--	dynamicRegistration = false, -- not supported
+				--	resolveSupport = {properties = {}}
 				-- },
 				-- diagnostic = {
-				--   dynamicRegistration = false, -- not supported
-				--   relatedDocumentSupport = true
+				--	dynamicRegistration = false, -- not supported
+				--	relatedDocumentSupport = true
 				-- }
 			} --
 			-- notebookDocument = nil, -- notebook documents are not supported at all
 			-- window = {
-			--   workDoneProgress = true,
-			--   showMessage = {messageActionItem = {additionalPropertiesSupport = true}},
-			--   showDocument = {support = true}
+			--	workDoneProgress = true,
+			--	showMessage = {messageActionItem = {additionalPropertiesSupport = true}},
+			--	showDocument = {support = true}
 			-- },
 			-- general = {
-			--   staleRequestSupport = {
-			--     cancel = true,
-			--     retryOnContentModified = {}
-			--   },
-			--   regularExpressions = {},
-			--   markdown = {},
-			--   positionEncodings = 'utf-8'
+			--	staleRequestSupport = {
+			--		cancel = true,
+			--		retryOnContentModified = {}
+			--	},
+			--	regularExpressions = {},
+			--	markdown = {},
+			--	positionEncodings = 'utf-8'
 			-- },
 			-- experimental = nil
 		}
@@ -777,7 +777,7 @@ end
 --- Jumps to a symbol selected from a list based on project symbols that match the given symbol,
 -- or based on buffer symbols.
 -- @param symbol Optional string symbol to query for in the current project. If `nil`, symbols
---   are presented from the current buffer.
+--	are presented from the current buffer.
 function M.goto_symbol(symbol)
 	local server = servers[buffer.lexer_language]
 	if not server or not buffer.filename then return end
@@ -841,7 +841,7 @@ function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 
 --- Shows a calltip with information about the identifier at the given or current position.
 -- @param position Optional buffer position of the identifier to show information for. If `nil`,
---   uses the current buffer position.
+--	uses the current buffer position.
 function M.hover(position)
 	local server = servers[buffer.lexer_language]
 	if not (server and (buffer.filename or
@@ -887,7 +887,7 @@ end
 --- Shows a calltip for the current function.
 -- If a call tip is already shown, cycles to the next one if it exists unless specified otherwise.
 -- @param no_cycle Flag that indicates to not cycle to the next call tip. This is used to update
---   the current highlighted parameter.
+--	the current highlighted parameter.
 function M.signature_help(no_cycle)
 	if view:call_tip_active() and signatures and #signatures > 1 and not no_cycle then
 		events.emit(events.CALL_TIP_CLICK, 1)
@@ -957,7 +957,7 @@ end, 1) -- needs to come before editing.lua's typeover character handler
 --- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface),
 -- returning whether or not a definition was found.
 -- @param kind String LSP method name part after 'textDocument/' (e.g. 'declaration', 'definition',
---   'typeDefinition', 'implementation').
+--	'typeDefinition', 'implementation').
 -- @return `true` if a declaration/definition was found; `false` otherwise
 local function goto_definition(kind)
 	local server = servers[buffer.lexer_language]
