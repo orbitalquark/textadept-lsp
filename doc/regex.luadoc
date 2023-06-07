@@ -1,0 +1,40 @@
+--- @module regex
+
+--- Searches string *s* for regex string *re* starting at position *init*, and returns the start
+-- and end positions of the match followed by any string values captured by *re*.
+-- Returns `nil` if no match was found.
+-- @param s String to search.
+-- @param re Regular expression to search with.
+-- @param[opt] init Optional initial position to start searching at. The default value is `1`.
+-- @function find
+
+--- Returns an iterator that can be used in a `for` loop to iterate over all occurrences of
+-- regex string *re* in string *s* starting at position *init*.
+-- If *re* has captures, the captured values are assigned to loop variables. Otherwise, the
+-- entire match is used.
+-- @param s String to search.
+-- @param re Regular expression to search with.
+-- @param[opt] init Optional initial position to start searching at. The default value is `1`.
+-- @function gmatch
+
+--- Returns a copy of string *s* where all (or the first *n*) instances of regex string *re*
+-- are replaced by string, table, or function *replacement*, and also returns the number of
+-- replacements made.
+-- @param s String to search.
+-- @param re Regular expression to search with.
+-- @param replacement String, table, or function to replace matches with. If a string, it may
+--   contain "$*d*" sequences, which represent the *d*-th value captured by *re*. If a table,
+--   and the match or first capture exists as a key, that key's value is the replacement text. If
+--   a function, that function is called with either the captured values or the entire match
+--   as arguments. If the function returns a string or number, that result is the replacement text.
+-- @param[opt] n Maximum number of replacements to make. The default value is `0`, which means
+--   there is no limit.
+-- @function gsub
+
+--- Searches string *s* for regex string *re* starting at position *init*, and returns either
+-- the values captured by *re* or the entire match itself.
+-- Returns `nil` if no match was found.
+-- @param s String to search.
+-- @param re Regular expression to search with.
+-- @param[opt] init Optional initial position to start searching at. The default value is `1`.
+-- @function match
