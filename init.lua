@@ -282,7 +282,7 @@ function Server.new(lang, cmd, init_options)
 				completion = {
 					-- dynamicRegistration = false, -- not supported
 					completionItem = {
-						-- snippetSupport = false, -- ${1:foo} format not supported
+						snippetSupport = true,
 						-- commitCharactersSupport = true,
 						documentationFormat = {'plaintext'},
 						-- deprecatedSupport = false, -- simple autocompletion list
@@ -794,7 +794,8 @@ function M.goto_symbol(symbol)
 	if symbols and #symbols > 0 then goto_selected_symbol(symbols) end
 end
 
--- Autocompleter function using a language server.
+local snippets
+
 local auto_c_incomplete = false
 --- Autocompleter function for a language server.
 -- @function _G.textadept.editing.autocompleters.lsp
@@ -811,10 +812,15 @@ textadept.editing.autocompleters.lsp = function()
 	if auto_c_incomplete then ui.statusbar_text = _L['Note: completion list incomplete'] end
 	if completions.items then completions = completions.items end
 	if #completions == 0 then return end
+	snippets = {}
 	-- Associate completion items with icons.
 	local symbols = {}
 	for _, symbol in ipairs(completions) do
-		local label = symbol.textEdit and symbol.textEdit.newText or symbol.insertText or symbol.label
+		local label = symbol.insertText or symbol.label
+		if symbol.insertTextFormat == 2 then -- snippet
+			label = symbol.filterText or symbol.label
+			snippets[label] = symbol.insertText
+		end
 		-- TODO: some labels can have spaces and need proper handling.
 		if symbol.kind and xpm_map[symbol.kind] > 0 then
 			symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
@@ -835,6 +841,18 @@ textadept.editing.autocompleters.lsp = function()
 	if server.auto_c_fill_ups ~= '' then buffer.auto_c_fill_ups = server.auto_c_fill_ups end
 	return len_entered, symbols
 end
+
+-- Insert autocompletions as snippets and not plain text, if applicable.
+events.connect(events.AUTO_C_SELECTION, function(text, position)
+	if not snippets then return end
+	local snippet = snippets[text]
+	if snippet then
+		buffer:auto_c_cancel()
+		textadept.snippets.insert(snippet:sub(buffer.current_pos - position + 1))
+	end
+	snippets = nil
+end)
+events.connect(events.AUTO_C_CANCELED, function() snippets = nil end)
 
 --- Requests autocompletion at the current position, returning `true` on success.
 function M.autocomplete() return textadept.editing.autocomplete('lsp') end
