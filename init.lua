@@ -22,9 +22,9 @@ local json = require('lsp.dkjson')
 -- (For more example configurations, see the [wiki][].)
 --
 -- When either C++ or Go files are opened, their associated language servers are automatically
--- started (one per language, though). Note that language servers typically require a root URI,
--- so this module uses `io.get_project_root()` for this. If the file being opened is not part
--- of a project recognized by Textadept, the language server will not be started.
+-- started (one per project). Note that language servers typically require a root URI, so this
+-- module uses `io.get_project_root()` for this. If the file being opened is not part of a
+-- project recognized by Textadept, the language server will not be started.
 --
 -- Language Server features are available from the Tools > Language Server menu. Note that not
 -- all language servers may support the menu options.
@@ -183,7 +183,7 @@ M.autocomplete_num_chars = nil
 --	"initialize" request.
 M.server_commands = {}
 
---- Map of lexer names to active LSP servers.
+--- Map of lexer names to maps of project roots and their active LSP servers.
 local servers = {}
 
 --- Map of LSP CompletionItemKinds to images used in autocompletion lists.
@@ -250,18 +250,19 @@ local Server = {}
 
 --- Starts, initializes, and returns a new language server.
 -- @param lang Lexer name of the language server.
+-- @param root Root directory of the project for this language server.
 -- @param cmd String command to start the language server.
 -- @param init_options Optional table of options to be passed to the language server for
 --	initialization.
 -- @local
-function Server.new(lang, cmd, init_options)
+function Server.new(lang, root, cmd, init_options)
 	log('Starting language server: ', cmd)
-	local server = setmetatable({lang = lang, request_id = 0, incoming_messages = {}},
+	local server = setmetatable({lang = lang, root = root, request_id = 0, incoming_messages = {}},
 		{__index = Server})
 	server.proc = assert(os.spawn(cmd, function(output) server:handle_stdout(output) end,
 		function(output) log(output) end, function(status)
 			log('Server exited with status ', status)
-			servers[lang] = nil
+			servers[lang][root] = nil
 		end))
 	local root = io.get_project_root()
 	local result = server:request('initialize', {
@@ -691,38 +692,53 @@ function Server:notify_opened()
 	self._opened[buffer.filename] = true
 end
 
---- Starts a language server based on the current language.
+--- Returns a running language server, if one exists, for the current language and project.
+-- Sub-projects use their parent project's language server.
+local function get_server()
+	local lang = buffer.lexer_language
+	if not servers[lang] then servers[lang] = {} end
+	local root = io.get_project_root()
+	if not root and lang == 'lua' then root = '' end -- special case
+	local lang_servers = servers[lang]
+	local server = lang_servers[root]
+	if server then return server end
+	for path, server in pairs(lang_servers) do if root:sub(1, #path) == path then return server end end
+end
+
+--- Starts a language server based on the current language and project.
 -- @param cmd Optional language server command to run. The default is read from `server_commands`.
 function M.start(cmd)
+	if get_server() then return end -- already running
 	local lang = buffer.lexer_language
-	if servers[lang] then return end -- already running
-	servers[lang] = true -- sentinel until initialization is complete
 	if not cmd then cmd = M.server_commands[lang] end
 	local init_options = nil
 	if type(cmd) == 'function' then cmd, init_options = cmd() end
 	if type(cmd) == 'table' then cmd, init_options = cmd.command, cmd.init_options end
-	if cmd then
-		local ok, server = xpcall(Server.new, function(errmsg)
-			local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
-			log(debug.traceback(message))
-			ui.statusbar_text = message
-		end, lang, cmd, init_options)
-		servers[lang] = ok and server or nil -- replace sentinel
-		if not ok then return end
-		server:notify_opened()
-		ui.statusbar_text = _L['LSP server started']
-	else
-		servers[lang] = nil -- replace sentinel
-	end
+	if not cmd then return end
+
+	local root = buffer.filename and io.get_project_root(buffer.filename)
+	if not root and lang == 'lua' and cmd:find('server%.lua') then root = '' end -- special case
+	if not root then return end
+
+	servers[lang][root] = true -- sentinel until initialization is complete
+	local ok, server = xpcall(Server.new, function(errmsg)
+		local message = _L['Unable to start LSP server'] .. ': ' .. errmsg
+		log(debug.traceback(message))
+		ui.statusbar_text = message
+	end, lang, root, cmd, init_options)
+	servers[lang][root] = ok and server or nil -- replace sentinel
+	if not ok then return end
+	server:notify_opened()
+	ui.statusbar_text = _L['LSP server started']
 end
 
 --- Stops a running language server based on the current language.
 function M.stop()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not server then return end
 	server:request('shutdown')
 	server:notify('exit')
-	servers[buffer.lexer_language] = nil
+	servers[server.lang][server.root] = nil
 end
 
 --- Returns a LSP TextDocumentPositionParams structure based on the given or current position
@@ -779,7 +795,7 @@ end
 -- @param symbol Optional string symbol to query for in the current project. If `nil`, symbols
 --	are presented from the current buffer.
 function M.goto_symbol(symbol)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not server or not buffer.filename then return end
 	server:sync_buffer()
 	local symbols
@@ -800,7 +816,7 @@ local auto_c_incomplete = false
 --- Autocompleter function for a language server.
 -- @function _G.textadept.editing.autocompleters.lsp
 textadept.editing.autocompleters.lsp = function()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and server.capabilities.completionProvider and (buffer.filename or
 		(server.capabilities.experimental and
 			server.capabilities.experimental.untitledDocumentCompletions))) then return end
@@ -861,7 +877,7 @@ function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 -- @param position Optional buffer position of the identifier to show information for. If `nil`,
 --	uses the current buffer position.
 function M.hover(position)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and (buffer.filename or
 		(server.capabilities.experimental and server.capabilities.experimental.untitledDocumentHover)) and
 		server.capabilities.hoverProvider) then return end
@@ -911,7 +927,7 @@ function M.signature_help(no_cycle)
 		events.emit(events.CALL_TIP_CLICK, 1)
 		return
 	end
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and server.capabilities.signatureHelpProvider and (buffer.filename or
 		(server.capabilities.experimental and
 			server.capabilities.experimental.untitledDocumentSignatureHelp))) then return end
@@ -947,7 +963,7 @@ end
 
 -- Cycle through signatures.
 events.connect(events.CALL_TIP_CLICK, function(position)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and server.capabilities.signatureHelpProvider and signatures and
 		signatures.activeSignature) then return end
 	signatures.activeSignature = signatures.activeSignature + (position == 1 and -1 or 1)
@@ -962,7 +978,7 @@ end)
 -- Close the call tip when a trigger's complement is typed (e.g. ')').
 events.connect(events.KEYPRESS, function(key)
 	if not view:call_tip_active() then return end
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not server or not server.call_tip_triggers then return end
 	for byte in pairs(server.call_tip_triggers) do
 		if textadept.editing.auto_pairs[string.char(byte)] == key then
@@ -978,7 +994,7 @@ end, 1) -- needs to come before editing.lua's typeover character handler
 --	'typeDefinition', 'implementation').
 -- @return `true` if a declaration/definition was found; `false` otherwise
 local function goto_definition(kind)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and buffer.filename and server.capabilities[kind .. 'Provider']) then return false end
 	server:sync_buffer()
 	local location = server:request('textDocument/' .. kind, get_buffer_position_params())
@@ -1025,7 +1041,7 @@ function M.goto_implementation() return goto_definition('implementation') end
 
 --- Searches for project references to the current symbol and prints them like "Find in Files".
 function M.find_references()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and buffer.filename and server.capabilities.referencesProvider) then return end
 	server:sync_buffer()
 	local params = get_buffer_position_params()
@@ -1069,7 +1085,7 @@ end
 
 --- Selects or expands the selection around the current position.
 function M.select()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and buffer.filename and server.capabilities.selectionRangeProvider) then return end
 	server:sync_buffer()
 	local position = buffer.selection_empty and buffer.current_pos or
@@ -1089,7 +1105,7 @@ end
 
 --- Selects all instances of the symbol at the current position as multiple selections.
 function M.select_all_symbol()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not (server and buffer.filename and server.capabilities.linkedEditingRangeProvider) then
 		return
 	end
@@ -1108,7 +1124,7 @@ end
 events.connect(events.INITIALIZED, function()
 	local function start() if M.server_commands[buffer.lexer_language] then M.start() end end
 	local function notify_opened()
-		local server = servers[buffer.lexer_language]
+		local server = get_server()
 		if type(server) == 'table' then server:notify_opened() end
 	end
 	events.connect(events.LEXER_LOADED, start)
@@ -1123,7 +1139,7 @@ end)
 --- Synchronizes the current buffer with its language server if it is modified.
 -- This allows for any unsaved changes to be reflected in another buffer.
 local function sync_if_modified()
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if server and buffer.filename and buffer.modify then server:sync_buffer() end
 end
 events.connect(events.BUFFER_BEFORE_SWITCH, sync_if_modified)
@@ -1131,7 +1147,7 @@ events.connect(events.VIEW_BEFORE_SWITCH, sync_if_modified)
 
 -- Notify the language server when a buffer is saved.
 events.connect(events.FILE_AFTER_SAVE, function(filename, saved_as)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not server then return end
 	if saved_as then
 		server:notify_opened()
@@ -1145,16 +1161,17 @@ end)
 -- Notify the language server when a file is closed.
 events.connect(events.BUFFER_DELETED, function(buffer)
 	if not buffer then return end -- older version of Textadept
-	local server = servers[buffer.lexer_language] -- still exists thanks to rawset()
+	local server = get_server() -- buffer.lexer_language still exists thanks to rawset()
 	if not server or not buffer.filename then return end
 	server:notify('textDocument/didClose', {
 		textDocument = {uri = touri(buffer.filename), languageId = buffer.lexer_language, version = 0}
 	})
+	server._opened[buffer.filename] = false -- TODO: server:notify_closed()?
 end)
 
 -- Show completions or signature help if a trigger character is typed.
 events.connect(events.CHAR_ADDED, function(code)
-	local server = servers[buffer.lexer_language]
+	local server = get_server()
 	if not server or code < 32 or code > 255 then return end
 	if buffer:auto_c_active() then
 		if M.show_completions and auto_c_incomplete then M.autocomplete() end -- re-trigger
@@ -1172,21 +1189,18 @@ end)
 
 -- Query the language server for hover information when mousing over identifiers.
 events.connect(events.DWELL_START, function(position)
-	local server = servers[buffer.lexer_language]
-	if server and M.show_hover then M.hover(position) end
+	if get_server() and M.show_hover then M.hover(position) end
 end)
-events.connect(events.DWELL_END, function()
-	if not buffer.get_lexer then return end
-	local server = servers[buffer.lexer_language]
-	if server then view:call_tip_cancel() end
-end)
+events.connect(events.DWELL_END, function() if get_server() then view:call_tip_cancel() end end)
 
 --- Gracefully shut down servers on reset or quit.
 function shutdown_servers()
-	for lang, server in pairs(servers) do
-		server:request('shutdown')
-		server:notify('exit')
-		servers[lang] = nil
+	for _, lang_servers in pairs(servers) do
+		for _, server in pairs(lang_servers) do
+			server:request('shutdown')
+			server:notify('exit')
+			servers[server.lang][server.root] = nil
+		end
 	end
 end
 events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as buffers are reloaded
@@ -1205,8 +1219,7 @@ for i = 1, #m_tools - 1 do
 			table.insert(m_tools, i, {
 				title = _L['Language Server'], {
 					_L['Start Server...'], function()
-						local server = servers[buffer.lexer_language]
-						if server then
+						if get_server() then
 							ui.dialogs.message{
 								title = _L['Start Server...']:gsub('[_&]', ''),
 								text = string.format('%s %s', buffer.lexer_language,
@@ -1223,8 +1236,7 @@ for i = 1, #m_tools - 1 do
 					end
 				}, {
 					_L['Stop Server'], function()
-						local server = servers[buffer.lexer_language]
-						if not server then return end
+						if not get_server() then return end
 						local button = ui.dialogs.message{
 							title = _L['Stop Server?'],
 							text = string.format('%s %s?', _L['Stop the language server for'],
@@ -1235,8 +1247,7 @@ for i = 1, #m_tools - 1 do
 				}, --
 				{''}, {
 					_L['Go To Workspace Symbol...'], function()
-						local server = servers[buffer.lexer_language]
-						if not server then return end
+						if not get_server() then return end
 						local query = ui.dialogs.input{title = _L['Symbol name or name part:']}
 						if query and query ~= '' then M.goto_symbol(query) end
 					end
