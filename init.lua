@@ -856,16 +856,27 @@ textadept.editing.autocompleters.lsp = function()
 	return len_entered, symbols
 end
 
+local snippet_to_insert
 -- Insert autocompletions as snippets and not plain text, if applicable.
-events.connect(events.AUTO_C_SELECTION, function(text, position)
+events.connect(events.AUTO_C_COMPLETED, function(text, position, code)
 	if not snippets then return end
 	local snippet = snippets[text]
-	if snippet then
-		buffer:auto_c_cancel()
-		textadept.snippets.insert(snippet:sub(buffer.current_pos - position + 1))
-	end
 	snippets = nil
+	if not snippet then return end
+	local pos = buffer.current_pos + (code ~= 0 and utf8.len(utf8.char(code)) or 0)
+	snippet = snippet:sub(pos - position + 1)
+	if code == 0 then
+		textadept.snippets.insert(snippet)
+	else
+		snippet_to_insert = snippet -- fill-up character will be inserted after this event
+	end
 end)
+events.connect(events.CHAR_ADDED, function(code)
+	if not snippet_to_insert then return end
+	textadept.snippets.insert(snippet_to_insert) -- insert after fill-up character
+	snippet_to_insert = nil
+	return true -- other events may interfere with snippet insertion
+end, 1)
 events.connect(events.AUTO_C_CANCELED, function() snippets = nil end)
 
 --- Requests autocompletion at the current position, returning `true` on success.
