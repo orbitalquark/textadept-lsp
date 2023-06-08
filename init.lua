@@ -2,8 +2,6 @@
 
 local json = require('lsp.dkjson')
 
--- TODO: LDoc links for Server:notify() do not work.
-
 --- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
 -- It implements version 3.17.0 of the protocol, but does not support all protocol features. The
@@ -1194,7 +1192,7 @@ end)
 events.connect(events.DWELL_END, function() if get_server() then view:call_tip_cancel() end end)
 
 --- Gracefully shut down servers on reset or quit.
-function shutdown_servers()
+local function shutdown_servers()
 	for _, lang_servers in pairs(servers) do
 		for _, server in pairs(lang_servers) do
 			server:request('shutdown')
