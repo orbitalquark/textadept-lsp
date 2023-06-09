@@ -152,6 +152,10 @@ M.log_rpc = false
 --- Whether or not to automatically show completions when a trigger character is typed (e.g. '.').
 -- The default value is `true`.
 M.show_completions = true
+--- Whether or not to allow completions to insert snippets instead of plain text, for language
+-- servers that support it.
+-- The default value is `true`.
+M.snippet_completions = true
 --- Whether or not to automatically show signature help when a trigger character is typed
 -- (e.g. '(').
 -- The default value is `true`.
@@ -281,7 +285,7 @@ function Server.new(lang, root, cmd, init_options)
 				completion = {
 					-- dynamicRegistration = false, -- not supported
 					completionItem = {
-						snippetSupport = true,
+						snippetSupport = M.snippet_completions,
 						-- commitCharactersSupport = true,
 						documentationFormat = {'plaintext'},
 						-- deprecatedSupport = false, -- simple autocompletion list
