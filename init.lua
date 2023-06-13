@@ -701,6 +701,7 @@ local function get_server()
 	if not servers[lang] then servers[lang] = {} end
 	local root = io.get_project_root()
 	if not root and lang == 'lua' then root = '' end -- special case
+	if not root then return nil end
 	local lang_servers = servers[lang]
 	local server = lang_servers[root]
 	if server then return server end
