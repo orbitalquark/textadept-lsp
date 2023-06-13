@@ -431,6 +431,7 @@ register('textDocument/signatureHelp', function(params)
 	end
 	local func = text:sub(1, s - 1):match('[%w_.:]+$')
 	if not func then return json.null end
+	if func:find(':') then active_param = active_param + 1 end
 
 	-- Get its signature(s).
 	for _, doc in ipairs(get_api(func, filename)) do
