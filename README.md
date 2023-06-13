@@ -166,6 +166,13 @@ Whether or not to automatically show signature help when a trigger character is 
 (e.g. '(').
 The default value is `true`.
 
+<a id="lsp.snippet_completions"></a>
+### `lsp.snippet_completions` 
+
+Whether or not to allow completions to insert snippets instead of plain text, for language
+servers that support it.
+The default value is `true`.
+
 
 ## Functions defined by `lsp`
 

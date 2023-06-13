@@ -868,8 +868,7 @@ events.connect(events.AUTO_C_COMPLETED, function(text, position, code)
 	local snippet = snippets[text]
 	snippets = nil
 	if not snippet then return end
-	local pos = buffer.current_pos + (code ~= 0 and utf8.len(utf8.char(code)) or 0)
-	snippet = snippet:sub(pos - position + 1)
+	snippet = snippet:sub(#text + 1 + (code ~= 0 and utf8.len(utf8.char(code)) or 0))
 	if code == 0 then
 		textadept.snippets.insert(snippet)
 	else
