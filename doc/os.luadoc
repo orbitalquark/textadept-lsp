@@ -56,7 +56,8 @@
 -- `EXIT_FAILURE`; if `code` is a number, the returned status is this number. The default
 -- value for `code` is `true`.
 --
--- If the optional second argument `close` is true, closes the Lua state before exiting.
+-- If the optional second argument `close` is true, the function closes the Lua state before
+-- exiting (see `lua_close`).
 -- @param[opt] code
 -- @param[optchain] close
 -- @function os.exit

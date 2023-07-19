@@ -173,7 +173,7 @@
 -- @param ...
 -- @function string.pack
 
---- Returns the size of a string resulting from `string.pack` with the given format. The format
+--- Returns the length of a string resulting from `string.pack` with the given format. The format
 -- string cannot have the variable-length options 's' or 'z' (see §6.4.2).
 --
 -- New in Lua 5.3.

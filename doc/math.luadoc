@@ -36,7 +36,7 @@
 -- @param[opt] x
 -- @function math.atan
 
---- Returns the arc tangent of `y/x` (in radians), but uses the signs of both parameters to find
+--- Returns the arc tangent of `y/x` (in radians), using the signs of both parameters to find
 -- the quadrant of the result. (It also handles correctly the case of `x` being zero.)
 --
 -- Deprecated in Lua 5.3.

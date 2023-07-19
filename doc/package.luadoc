@@ -60,7 +60,8 @@
 -- value stored there.
 --
 -- This variable is only a reference to the real table; assignments to this variable do not
--- change the table used by `require`.
+-- change the table used by `require`. The real table is stored in the C registry (see §4.3),
+-- indexed by the key `LUA_LOADED_TABLE`, a string.
 -- @table loaded
 
 --- See `package.searchers`.
@@ -79,7 +80,8 @@
 --- A table to store loaders for specific modules (see `require`).
 --
 -- This variable is only a reference to the real table; assignments to this variable do not
--- change the table used by `require`.
+-- change the table used by `require`. The real table is stored in the C registry (see §4.3),
+-- indexed by the key `LUA_LOADED_TABLE`, a string.
 -- @table preload
 
 --- A table used by `require` to control how to find modules.
@@ -142,7 +144,7 @@
 -- a path and an extension. `funcname` must be the exact name exported by the C library (which
 -- may depend on the C compiler and linker used).
 --
--- This function is not supported by Standard C. As such, it is only available on some platforms
+-- This functionality is not supported by ISO C. As such, it is only available on some platforms
 -- (Windows, Linux, Mac OS X, Solaris, BSD, plus other Unix systems that support the `dlfcn`
 -- standard).
 --

@@ -78,6 +78,15 @@
 -- @param string
 -- @function lpeg.S
 
+--- Returns a pattern that matches a valid UTF-8 byte sequence representing a code point in the
+-- range `[cp1, cp2]`.
+-- The range is limited by the natural Unicode limit of 0x10FFFF, but may include surrogates.
+--
+-- New in LPeg 1.1.0.
+-- @param cp1
+-- @param cp2
+-- @function lpeg.utfR
+
 --- This operation creates a non-terminal (a variable) for a grammar. The created non-terminal
 -- refers to the rule indexed by `v` in the enclosing grammar. (See Grammars for details.)
 -- @param v
@@ -146,18 +155,20 @@
 --   sum = lpeg.Cf(list, add)
 --   -- example of use
 --   print(sum:match("10,30,43"))   --> 83
+--
+-- Deprecated in LPeg 1.1.0.
 -- @param patt
 -- @param func
 -- @function lpeg.Cf
 
 --- Creates a group capture. It groups all values returned by `patt` into a single capture. The
--- group may be anonymous (if no name is given) or named with the given name.
+-- group may be anonymous (if no key is given) or named with the given key.
 --
 -- An anonymous group serves to join values from several captures into a single capture. A named
 -- group has a different behavior. In most situations, a named group returns no values at all. Its
 -- values are only relevant for a following back capture or when used inside a table capture.
 -- @param patt
--- @param[opt] name
+-- @param[opt] key
 -- @function lpeg.Cg
 
 --- Creates a position capture. It matches the empty string and captures the position in the
@@ -174,7 +185,7 @@
 --- Creates a table capture. This capture returns a table with all values from all anonymous
 -- captures made by `patt` inside this table in successive integer keys, starting at 1. Moreover,
 -- for each named capture group created by `patt`, the first value of the group is put into
--- the table with the group name as its key. The captured value is only the table.
+-- the table with the group key as its key. The captured value is only the table.
 -- @param patt
 -- @function lpeg.Ct
 
