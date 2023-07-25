@@ -1202,6 +1202,7 @@ end)
 
 -- Query the language server for hover information when mousing over identifiers.
 events.connect(events.DWELL_START, function(position)
+	if position == 0 then return end -- Qt on Windows repeatedly sends this for some reason.
 	if get_server() and M.show_hover then M.hover(position) end
 end)
 events.connect(events.DWELL_END, function() if get_server() then view:call_tip_cancel() end end)
