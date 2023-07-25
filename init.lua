@@ -905,7 +905,7 @@ function M.hover(position)
 		end
 		contents = contents.value or table.concat(contents, '\n')
 	end
-	if contents == '' then return end
+	if not contents or contents == '' then return end
 	view:call_tip_show(position or buffer.current_pos, contents)
 end
 
@@ -948,7 +948,7 @@ function M.signature_help(no_cycle)
 	local params = get_buffer_position_params()
 	if view:call_tip_active() then params.isRetrigger = true end
 	local signature_help = server:request('textDocument/signatureHelp', params)
-	if not signature_help or #signature_help.signatures == 0 then
+	if not signature_help or not signature_help.signatures or #signature_help.signatures == 0 then
 		signatures = {} -- reset
 		return
 	end
