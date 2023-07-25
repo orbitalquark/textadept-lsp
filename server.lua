@@ -19,7 +19,7 @@ io.open(logfile, 'w'):close() -- clear previous log
 local json = require('dkjson')
 local pl_dir = require('pl.dir')
 local log = require('logging.file') {filename = logfile, logPattern = '%level: %message\n'}
-if WIN32 then os.execute = require('lsp.winapi').execute end
+if WIN32 then os.execute = require('winapi').execute end
 
 log:setLevel(log.INFO)
 
