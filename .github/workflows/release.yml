@@ -25,7 +25,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: artifacts
-          path: *.dll
+          path: |
+            *.dll
   release:
     runs-on: ubuntu-latest
     needs: build-winapi
