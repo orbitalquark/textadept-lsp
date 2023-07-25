@@ -11,7 +11,6 @@ local dir = arg[0]:match('^(.+)[/\\]') or '.'
 lfs.chdir(dir) -- cd to this directory
 local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
 package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
-package.cpath = string.format('%s/?.dll;%s', dir, dir, package.cpath)
 local userhome = os.getenv(not WIN32 and 'HOME' or 'USERPROFILE') .. '/.textadept'
 local logfile = userhome .. '/lua_lsp_server.log'
 io.open(logfile, 'w'):close() -- clear previous log
@@ -19,7 +18,6 @@ io.open(logfile, 'w'):close() -- clear previous log
 local json = require('dkjson')
 local pl_dir = require('pl.dir')
 local log = require('logging.file') {filename = logfile, logPattern = '%level: %message\n'}
-if WIN32 then os.execute = require('winapi').execute end
 
 log:setLevel(log.INFO)
 

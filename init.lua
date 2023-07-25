@@ -1335,6 +1335,7 @@ keys['shift+f12'] = textadept.menu.menubar['Tools/Language Server/Go To Workspac
 if arg then
 	local ta = arg[0]:gsub('%.exe$', '')
 	if not ta:find('%-curses$') then ta = ta:gsub('%-gtk$', '') .. '-curses' end -- run as background app
+	if WIN32 then ta = ta .. '.exe' end
 	if not lfs.attributes(ta) then ta = arg[0] end -- fallback
 	M.server_commands.lua = string.format('"%s" -L "%s"', lfs.abspath(ta), package.searchpath('lsp',
 		package.path):gsub('init%.lua$', 'server.lua'))
