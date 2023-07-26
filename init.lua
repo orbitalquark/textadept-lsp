@@ -766,8 +766,8 @@ end
 local function goto_location(location)
 	textadept.history.record() -- store current position in jump history
 	ui.goto_file(tofilename(location.uri), false, view)
-	textadept.history.record() -- store new position in jump history
 	buffer:set_sel(tobufferrange(location.range))
+	textadept.history.record() -- store new position in jump history
 end
 
 --- Jumps to the symbol selected from a list of LSP SymbolInformation or structures.
