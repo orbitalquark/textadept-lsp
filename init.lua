@@ -632,6 +632,7 @@ function Server:handle_notification(method, params)
 				-- TODO: diagnostics should be persistent in projects.
 			end
 		end
+		if #params.diagnostics > 0 then buffer._lsp_diagnostic_time = os.time() end
 		-- Restore line scroll state.
 		local lines_from_top = view:visible_from_doc_line(current_line) - view.first_visible_line
 		view:line_scroll(0, lines_from_top - orig_lines_from_top)
@@ -1219,6 +1220,26 @@ local function shutdown_servers()
 end
 events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as buffers are reloaded
 events.connect(events.QUIT, shutdown_servers, 1)
+
+-- Log buffer modification times for more real-time diagnostics.
+local INSERT, DELETE = buffer.MOD_INSERTTEXT, buffer.MOD_DELETETEXT
+events.connect(events.MODIFIED, function(position, mod)
+	if mod & (INSERT | DELETE) > 0 then buffer._lsp_mod_time = os.time() end
+end)
+
+-- If the buffer has active diagnostics and has since been modified, ask the server for updated
+-- diagnostics.
+-- TODO: investigate using textDocument/diagnostic method and response. For now this is passive.
+timeout(1, function()
+	if not buffer._lsp_diagnostic_time or not buffer._lsp_mod_time then return true end
+	local server = get_server()
+	if not server then return true end
+	if buffer._lsp_mod_time > buffer._lsp_diagnostic_time then
+		server:sync_buffer()
+		buffer._lsp_mod_time, buffer._lsp_diagnostic_time = nil, nil
+	end
+	return true
+end)
 
 -- Add a menu.
 -- (Insert 'Language Server' menu in alphabetical order.)
