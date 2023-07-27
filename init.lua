@@ -1230,16 +1230,18 @@ end)
 -- If the buffer has active diagnostics and has since been modified, ask the server for updated
 -- diagnostics.
 -- TODO: investigate using textDocument/diagnostic method and response. For now this is passive.
-timeout(1, function()
-	if not buffer._lsp_diagnostic_time or not buffer._lsp_mod_time then return true end
-	local server = get_server()
-	if not server then return true end
-	if buffer._lsp_mod_time > buffer._lsp_diagnostic_time then
-		server:sync_buffer()
-		buffer._lsp_mod_time, buffer._lsp_diagnostic_time = nil, nil
-	end
-	return true
-end)
+if not CURSES then
+	timeout(1, function()
+		if not buffer._lsp_diagnostic_time or not buffer._lsp_mod_time then return true end
+		local server = get_server()
+		if not server then return true end
+		if buffer._lsp_mod_time > buffer._lsp_diagnostic_time then
+			server:sync_buffer()
+			buffer._lsp_mod_time, buffer._lsp_diagnostic_time = nil, nil
+		end
+		return true
+	end)
+end
 
 -- Add a menu.
 -- (Insert 'Language Server' menu in alphabetical order.)
