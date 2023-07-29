@@ -29,7 +29,13 @@ jobs:
           name: latest
           tag: latest
           allowUpdates: true
-          body: Latest automated build (ignore github-actions' release date)
+          body: |
+            Latest automated build (ignore github-actions' release date)
+
+            Note: this build may only be compatible with the latest release of Textadept
+            (which may be an unstable release or a nightly build). If you are looking for a
+            version of this module that is compatible with a specific version of Textadept,
+            please download the "modules.zip" archive released alongside your version of Textadept.
           artifacts: lsp.zip
           token: ${{ secrets.GITHUB_TOKEN }}
   cleanup:
