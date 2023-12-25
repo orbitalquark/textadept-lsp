@@ -1,4 +1,4 @@
--- Copyright 2018-2023 Mitchell. See LICENSE.
+-- Copyright 2018-2024 Mitchell. See LICENSE.
 
 local json = require('lsp.dkjson')
 

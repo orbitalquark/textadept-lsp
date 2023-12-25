@@ -1,5 +1,5 @@
 #!/bin/env lua
--- Copyright 2023 Mitchell. See LICENSE.
+-- Copyright 2023-2024 Mitchell. See LICENSE.
 
 --- Simple Lua language server for developing with Lua and Textadept.
 -- @module lsp.server

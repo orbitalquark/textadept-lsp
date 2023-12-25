@@ -1,4 +1,4 @@
--- Copyright 2007-2023 Mitchell. See LICENSE.
+-- Copyright 2007-2024 Mitchell. See LICENSE.
 
 --- Textadept autocompletions and API documentation filter/doclet for LDoc/LuaDoc.
 -- This module is used by LDoc/LuaDoc to create Lua autocompletion and API documentation files
