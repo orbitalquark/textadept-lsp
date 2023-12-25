@@ -3,8 +3,6 @@
 --- Textadept autocompletions and API documentation filter/doclet for LDoc/LuaDoc.
 -- This module is used by LDoc/LuaDoc to create Lua autocompletion and API documentation files
 -- that the Lua LSP server can read.
--- To preserve formatting, the included *luadoc.patch* file must be applied to your instance
--- of LuaDoc. It will not affect the look of HTML web pages, only the look of plain-text output.
 -- If the underlying LDoc/LuaDoc command contains a trailing `--root` option, symbol locations
 -- within the given path will be written to output files as relative to that path. A `--multiple`
 -- option writes one output file per Lua file scanned, as opposed to a single, large file.

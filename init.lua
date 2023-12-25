@@ -189,8 +189,11 @@ M.server_commands = {}
 local servers = {}
 
 --- Map of LSP CompletionItemKinds to images used in autocompletion lists.
-local xpm_map = {} -- empty declaration to avoid LDoc processing
-xpm_map = {
+-- @table xpm_map
+
+-- This separation is needed to prevent LDoc from parsing the following table.
+
+local xpm_map = {
 	0, -- text
 	textadept.editing.XPM_IMAGES.METHOD, -- method
 	textadept.editing.XPM_IMAGES.METHOD, -- function
