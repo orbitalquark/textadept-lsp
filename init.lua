@@ -341,7 +341,7 @@ function Server.new(lang, root, cmd, init_options)
 					-- hierarchicalDocumentSymbolSupport = true,
 					-- tagSupport = {valueSet = {}},
 					-- labelSupport = true
-				} --
+				}, --
 				-- codeAction = {
 				--	dynamicRegistration = false, -- not supported
 				--	codeActionLiteralSupport = {valueSet = {}},
@@ -366,13 +366,13 @@ function Server.new(lang, root, cmd, init_options)
 				--	prepareSupportDefaultBehavior = 1,
 				--	honorsChangeAnnotations = true
 				-- },
-				-- publishDiagnostics = {
-				--	relatedInformation = true,
-				--	tagSupport = {valueSet = {}},
-				--	versionSupport = true,
-				--	codeDescriptionSupport = true,
-				--	dataSupport = true
-				-- },
+				publishDiagnostics = {
+					--	relatedInformation = true,
+					--	tagSupport = {valueSet = {}},
+					--	versionSupport = true,
+					--	codeDescriptionSupport = true,
+					--	dataSupport = true
+				}
 				-- foldingRange = {
 				--	dynamicRegistration = false, -- not supported
 				--	rangeLimit = ?,
