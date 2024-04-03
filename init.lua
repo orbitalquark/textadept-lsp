@@ -844,7 +844,7 @@ textadept.editing.autocompleters.lsp = function()
 			label = symbol.filterText or symbol.label
 			snippets[label] = symbol.insertText
 		end
-		-- TODO: some labels can have spaces and need proper handling.
+		label = label:gsub(" ", "\u{00A0}") -- Replace spaces with non-breaking spaces, for them to not be separated.
 		if symbol.kind and xpm_map[symbol.kind] > 0 then
 			symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
 		else
