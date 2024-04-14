@@ -367,7 +367,7 @@ function Server.new(lang, root, cmd, init_options)
 				--	honorsChangeAnnotations = true
 				-- },
 				publishDiagnostics = {
-					--	relatedInformation = true,
+					relatedInformation = true,
 					--	tagSupport = {valueSet = {}},
 					--	versionSupport = true,
 					--	codeDescriptionSupport = true,
