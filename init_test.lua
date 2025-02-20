@@ -369,6 +369,7 @@ test('clicking on a diagnostic and selecting a code action (if any) should run i
 	test.wait(function() return buffer:get_text() == orig_text end)
 end)
 if not have_clangd then skip('clangd is not available') end
+if have_clangd and LINUX and os.getenv('CI') then skip('clangd diagnostics on CI do not work') end
 
 test('lua lsp should work for untitled buffers', function()
 	buffer:set_lexer('lua')
