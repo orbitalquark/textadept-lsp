@@ -1,7 +1,5 @@
 -- Copyright 2018-2025 Mitchell. See LICENSE.
 
-local json = require('lsp.dkjson')
-
 --- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
 -- It implements version 3.17.0 of the protocol, but does not support all protocol features. The
@@ -258,6 +256,8 @@ end
 
 --- Table of lexers to running language servers.
 local Server = {}
+
+local json = require('lsp.dkjson')
 
 --- Starts, initializes, and returns a new language server.
 -- @param lang Lexer name of the language server.
