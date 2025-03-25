@@ -412,7 +412,7 @@ local function get_api(symbol, filename)
 				full_match = doc:gsub('^local ', ''):find(full_patt)
 			end
 			log:debug(full_match and 'Confirmed' or 'Fuzzy match')
-			docs[#docs + 1] = doc:gsub('%f[\\]\\n', '\n'):gsub('\\\\', '\\')
+			docs[#docs + 1] = doc:gsub('%f[\\]\\n', '\n'):gsub('\\(%p)', '%1')
 			if full_match then return {docs[#docs]} end
 			::continue::
 		end
