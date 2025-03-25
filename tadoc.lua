@@ -95,12 +95,12 @@ local function write_apidoc(file, m, b)
 			end
 		end
 	end
-	-- Function usage (@usage).
-	if class:find('^l?function') and b.usage then
+	-- Usage (@usage).
+	if b.usage then
 		if type(b.usage) == 'string' then
 			doc[#doc + 1] = '@usage ' .. b.usage
 		elseif type(b.usage[1]) == 'string' then
-			for _, u in ipairs(b.usage) do doc[#doc + 1] = '@usage ' .. u end
+			for _, u in ipairs(b.usage) do doc[#doc + 1] = '@usage ' .. u:gsub('\n$', '') end
 		end
 	end
 	-- Function returns (@return).
