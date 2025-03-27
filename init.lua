@@ -8,12 +8,16 @@
 -- Install this module by copying it into your *~/.textadept/modules/* directory or Textadept's
 -- *modules/* directory, and then putting the following in your *~/.textadept/init.lua*:
 --
---	local lsp = require('lsp')
+-- ```lua
+-- local lsp = require('lsp')
+-- ```
 --
 -- You can then set up some language server commands. For example:
 --
---	lsp.server_commands.cpp = 'clangd'
---	lsp.server_commands.go = 'gopls'
+-- ```lua
+-- lsp.server_commands.cpp = 'clangd'
+-- lsp.server_commands.go = 'gopls'
+-- ```
 --
 -- (For more example configurations, see the [wiki][].)
 --
@@ -37,7 +41,7 @@
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
 --
--- ### Lua Language Server
+-- ## Lua Language Server
 --
 -- This module comes with a simple Lua language server that starts up when Textadept opens a
 -- Lua file, or whenever you request documentation for a symbol in the Lua command entry. The
@@ -54,10 +58,12 @@
 --
 -- For example:
 --
---	ignore = {'.git', 'build', 'test'}
---	max_scan = 20000
+-- ```lua
+-- ignore = {'.git', 'build', 'test'}
+-- max_scan = 20000
+-- ```
 --
--- ### Key Bindings
+-- ## Key Bindings
 --
 -- Windows and Linux | macOS | Terminal | Command
 -- -|-|-|-
@@ -116,18 +122,19 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 --- Emitted when an LSP connection has been initialized.
 -- This is useful for sending server-specific notifications to the server upon init via
 -- `Server:notify()`.
--- Emitted by `lsp.start()`.
--- Arguments:
 --
+-- Arguments:
 -- - *lang*: The lexer name of the LSP language.
 -- - *server*: The LSP server.
+-- @see lsp.start
 -- @field _G.events.LSP_INITIALIZED
 
 --- Emitted when an LSP server emits an unhandled notification.
 -- This is useful for handling server-specific notifications.
--- An event handler should return `true`.
--- Arguments:
 --
+-- An event handler should return `true`.
+--
+-- Arguments:
 -- - *lang*: The lexer name of the LSP language.
 -- - *server*: The LSP server.
 -- - *method*: The string LSP notification method name.
@@ -137,9 +144,10 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 --- Emitted when an LSP server emits an unhandled request.
 -- This is useful for handling server-specific requests. Responses are sent using
 -- `Server:respond()`.
--- An event handler should return `true`.
--- Arguments:
 --
+-- An event handler should return `true`.
+--
+-- Arguments:
 -- - *lang*: The lexer name of the LSP language.
 -- - *server*: The LSP server.
 -- - *id*: The integer LSP request ID.
@@ -150,24 +158,23 @@ for _, v in ipairs(lsp_events) do events[v:upper()] = v end
 --- Log RPC correspondence to the LSP message buffer.
 -- The default value is `false`.
 M.log_rpc = false
---- Whether or not to automatically show completions when a trigger character is typed (e.g. '.').
+--- Automatically show completions when a trigger character is typed (e.g. '.').
 -- The default value is `true`.
 M.show_completions = true
---- Whether or not to allow completions to insert snippets instead of plain text, for language
--- servers that support it.
+--- Allow completions to insert snippets instead of plain text, for language servers that
+-- support it.
 -- The default value is `true`.
 M.snippet_completions = true
---- Whether or not to automatically show signature help when a trigger character is typed
--- (e.g. '(').
+--- Automatically show signature help when a trigger character is typed (e.g. '(').
 -- The default value is `true`.
 M.show_signature_help = true
---- Whether or not to automatically show symbol information via mouse hovering.
+--- Automatically show symbol information via mouse hovering.
 -- The default value is `true`.
 M.show_hover = true
---- Whether or not to show diagnostics.
+--- Show diagnostics.
 -- The default value is `true`, and shows them as annotations.
 M.show_diagnostics = true
---- Whether or not to show all diagnostics if `show_diagnostics` is `true`.
+--- Show all diagnostics if `show_diagnostics` is `true`.
 -- The default value is `false`, and assumes any diagnostics on the current line or next line
 -- are due to an incomplete statement during something like an autocompletion, signature help,
 -- etc. request.
@@ -182,7 +189,6 @@ M.CODE_ACTION_ID = view.new_user_list_type()
 --- Map of lexer names to LSP language server commands or configurations, or functions that
 -- return either a server command or a configuration.
 -- Commands are simple string shell commands. Configurations are tables with the following keys:
---
 -- - *command*: String shell command used to run the LSP language server.
 -- - *init_options*: Table of initialization options to pass to the language server in the
 --	"initialize" request.
@@ -254,16 +260,16 @@ local function log(...)
 	ui.print_silent_to('[LSP]', log_lines[#log_lines])
 end
 
---- Table of lexers to running language servers.
+--- Map of lexers to their running language servers.
 local Server = {}
 
 local json = require('lsp.dkjson')
 
 --- Starts, initializes, and returns a new language server.
--- @param lang Lexer name of the language server.
--- @param root Root directory of the project for this language server.
+-- @param lang String lexer name of the language server.
+-- @param root String root directory of the project for this language server.
 -- @param cmd String command to start the language server.
--- @param init_options Optional table of options to be passed to the language server for
+-- @param[opt] init_options Table of options to be passed to the language server for
 --	initialization.
 -- @local
 function Server.new(lang, root, cmd, init_options)
@@ -504,8 +510,7 @@ function Server.new(lang, root, cmd, init_options)
 	return server
 end
 
---- Reads and returns an incoming JSON message from this language server.
--- @return table of data from JSON
+--- Returns an incoming JSON message from this language server.
 -- @local
 function Server:read()
 	if self.wait then
@@ -526,14 +531,15 @@ function Server:read()
 	return json.decode(data)
 end
 
---- Sends a request to this language server and returns the result of the request.
+--- Sends a request to this language server.
 -- Any intermediate notifications from the server are processed, but any intermediate requests
 -- from the server are ignored.
+--
 -- Note: at this time, requests are synchronous, so the id number for a response will be the
 -- same as the id number for a request.
 -- @param method String method name of the request.
 -- @param params Table of parameters for the request.
--- @return table result of the request, or nil if the result was `json.null`.
+-- @return table result of the request, or `nil` if the result was `json.null`.
 -- @local
 function Server:request(method, params)
 	-- Prepare and send the JSON message.
@@ -626,8 +632,8 @@ function Server:handle_stdout(output)
 	end
 end
 
---- Converts the given LSP DocumentUri into a valid filename and returns it.
--- @param uri LSP DocumentUri to convert into a filename.
+--- Returns an LSP DocumentUri converted into a valid filename.
+-- @param uri String LSP DocumentUri to convert into a filename.
 local function tofilename(uri)
 	local filename = uri:gsub(not WIN32 and '^file://' or '^file:///', '')
 	filename = filename:gsub('%%(%x%x)', function(hex) return string.char(tonumber(hex, 16)) end)
@@ -635,15 +641,15 @@ local function tofilename(uri)
 	return filename
 end
 
---- Converts the given filename into a valid LSP DocumentUri and returns it.
+--- Returns a filename converted into a valid LSP DocumentUri.
 -- @param filename String filename to convert into an LSP DocumentUri.
 local function touri(filename)
 	if filename:find('^%a%a+:') then return filename end -- different scheme like "untitled:"
 	return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
 end
 
---- Returns the start and end buffer positions for the given LSP Range.
--- @param range LSP Range.
+--- Returns the start and end buffer positions for an LSP Range.
+-- @param range Table LSP Range.
 local function tobufferrange(range)
 	local s = buffer:position_from_line(range.start.line + 1) + range.start.character
 	local e = buffer:position_from_line(range['end'].line + 1) + range['end'].character
@@ -706,15 +712,15 @@ function Server:handle_notification(method, params)
 	end
 end
 
---- Returns the buffer the given URI belongs to.
--- @param uri URI to lookup.
+--- Returns the buffer a URI belongs to.
+-- @param uri String URI to lookup.
 local function buffer_from_uri(uri)
 	for _, buffer in ipairs(_BUFFERS) do if buffer.filename == tofilename(uri) then return buffer end end
 	return nil
 end
 
---- Applies the given workspace edit.
--- @param edit Workspace edit.
+--- Applies a workspace edit.
+-- @param edit Table workspace edit to apply.
 local function apply_edit(edit)
 	local changes = edit.changes
 	if not changes then
@@ -830,7 +836,8 @@ local function get_server()
 end
 
 --- Starts a language server based on the current language and project.
--- @param cmd Optional language server command to run. The default is read from `server_commands`.
+-- @param[opt] cmd String language server command to run. The default value is read from
+--	`server_commands`.
 function M.start(cmd)
 	if get_server() then return end -- already running
 	local lang = buffer.lexer_language
@@ -865,10 +872,8 @@ function M.stop()
 	servers[server.lang][server.root] = nil
 end
 
---- Returns a LSP TextDocumentPositionParams structure based on the given or current position
--- in the current buffer.
--- @param position Optional buffer position to use. If `nil`, uses the current buffer position.
--- @return table LSP TextDocumentPositionParams
+--- Returns a LSP TextDocumentPositionParams structure based on a position in the current buffer.
+-- @param[opt=buffer.current_pos] position Buffer position to use.
 local function get_buffer_position_params(position)
 	local line = buffer:line_from_position(position or buffer.current_pos)
 	return {
@@ -882,8 +887,8 @@ local function get_buffer_position_params(position)
 	}
 end
 
---- Jumps to the given LSP Location structure.
--- @param location LSP Location to jump to.
+--- Jumps to the position specified in an LSP Location structure.
+-- @param location Table LSP Location to jump to.
 local function goto_location(location)
 	textadept.history.record() -- store current position in jump history
 	ui.goto_file(tofilename(location.uri), false, view)
@@ -892,7 +897,7 @@ local function goto_location(location)
 end
 
 --- Jumps to the symbol selected from a list of LSP SymbolInformation or structures.
--- @param symbols List of LSP SymbolInformation or DocumentSymbol structures.
+-- @param symbols Table of LSP SymbolInformation or DocumentSymbol structures to list.
 local function goto_selected_symbol(symbols)
 	-- Prepare items for display in a list dialog.
 	local items = {}
@@ -914,10 +919,9 @@ local function goto_selected_symbol(symbols)
 	if i then goto_location(symbols[i].location) end
 end
 
---- Jumps to a symbol selected from a list based on project symbols that match the given symbol,
--- or based on buffer symbols.
--- @param symbol Optional string symbol to query for in the current project. If `nil`, symbols
---	are presented from the current buffer.
+--- Jumps to a symbol selected from a list based on project symbols that match a symbol.
+-- @param[opt] symbol String symbol to query for in the current project. If `nil`, symbols are
+--	presented from the current buffer.
 function M.goto_symbol(symbol)
 	local server = get_server()
 	if not server or not buffer.filename then return end
@@ -1004,12 +1008,12 @@ events.connect(events.CHAR_ADDED, function(code)
 end, 1)
 events.connect(events.AUTO_C_CANCELED, function() snippets = nil end)
 
---- Requests autocompletion at the current position, returning `true` on success.
+--- Requests autocompletion at the current position.
+-- @return `true` if autocompletions were shown; `nil` otherwise
 function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 
---- Shows a calltip with information about the identifier at the given or current position.
--- @param position Optional buffer position of the identifier to show information for. If `nil`,
---	uses the current buffer position.
+--- Shows a calltip with information about the identifier at a buffer position.
+-- @param[opt=buffer.current_pos] position Position of the identifier to show information for.
 function M.hover(position)
 	local server = get_server()
 	if not (server and (buffer.filename or
@@ -1053,9 +1057,9 @@ local function show_signature()
 end
 
 --- Shows a calltip for the current function.
--- If a call tip is already shown, cycles to the next one if it exists unless specified otherwise.
--- @param no_cycle Flag that indicates to not cycle to the next call tip. This is used to update
---	the current highlighted parameter.
+-- If a call tip is already shown, this will cycle to the next one if it exists.
+-- @param[opt=false] no_cycle Do not cycle to the next call tip. Setting this to `true` is
+--	useful when updating the current highlighted parameter.
 function M.signature_help(no_cycle)
 	if view:call_tip_active() and signatures and #signatures > 1 and not no_cycle then
 		events.emit(events.CALL_TIP_CLICK, 1)
@@ -1122,11 +1126,10 @@ events.connect(events.KEYPRESS, function(key)
 	end
 end, 1) -- needs to come before editing.lua's typeover character handler
 
---- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface),
--- returning whether or not a definition was found.
+--- Jumps to the declaration or definition of the current kind (e.g. symbol, type, interface).
 -- @param kind String LSP method name part after 'textDocument/' (e.g. 'declaration', 'definition',
 --	'typeDefinition', 'implementation').
--- @return `true` if a declaration/definition was found; `false` otherwise
+-- @return whether or not a declaration/definition was found
 local function goto_definition(kind)
 	local server = get_server()
 	if not (server and buffer.filename and server.capabilities[kind .. 'Provider']) then return false end
@@ -1158,22 +1161,20 @@ local function goto_definition(kind)
 	return true
 end
 
---- Jumps to the declaration of the current symbol, returning whether or not a declaration
--- was found.
--- @return `true` if a declaration was found; `false` otherwise.
+--- Jumps to the declaration of the current symbol.
+-- @return whether or not a declaration was found
 function M.goto_declaration() return goto_definition('declaration') end
---- Jumps to the definition of the current symbol, returning whether or not a definition was found.
--- @return `true` if a definition was found; `false` otherwise.
+--- Jumps to the definition of the current symbol.
+-- @return whether or not a definition was found
 function M.goto_definition() return goto_definition('definition') end
---- Jumps to the definition of the current type, returning whether or not a definition was found.
--- @return `true` if a definition was found; `false` otherwise.
+--- Jumps to the definition of the current type.
+-- @return whether or not a definition was found
 function M.goto_type_definition() return goto_definition('typeDefinition') end
---- Jumps to the implementation of the current symbol, returning whether or not an implementation
--- was found.
--- @return `true` if an implementation was found; `false` otherwise.
+--- Jumps to the implementation of the current symbol.
+-- @return whether or not an implementation was found
 function M.goto_implementation() return goto_definition('implementation') end
 
---- Searches for project references to the current symbol and prints them like "Find in Files".
+--- Searches for project references to the current symbol and prints them like "Find in Files" does.
 function M.find_references()
 	local server = get_server()
 	if not (server and buffer.filename and server.capabilities.referencesProvider) then return end
@@ -1253,11 +1254,11 @@ end
 --- Active code actions.
 local actions = {}
 
---- Requests a list of code actions for the given range (or the current selection/line) and
--- prompts the user with a user list to select from.
--- @param s Optional start position of the code action range. If omitted, the start of the
---	current selection is used, or the start of the line if no text is selected.
--- @param e Optional end position of the code action range. If omitted, the end of the current
+--- Requests a list of code actions for the a range and prompts the user with a user list to
+-- select from.
+-- @param[opt] s Start position of the code action range. If omitted, the start of the current
+--	selection is used, or the start of the line if no text is selected.
+-- @param[optchain] e End position of the code action range. If omitted, the end of the current
 --	selection is used, or the end of the line if no text is selected.
 function M.code_action(s, e)
 	local server = get_server()

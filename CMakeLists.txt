@@ -47,9 +47,8 @@ endif()
 get_filename_component(ta_dir ${src}/../../ ABSOLUTE)
 add_custom_target(docs DEPENDS README.md)
 add_custom_command(OUTPUT ${src}/README.md
-	COMMAND ldoc --filter markdowndoc.ldoc ${src}/init.lua > ${src}/README.md
-	COMMAND sed -i -e "1,+4d" -e "6c# Language Server Protocol" -e "7d" -e "s/^##/#/;"
-		${src}/README.md
+	COMMAND ldoc --filter markdowndoc.ldoc ${src}/init.lua -- --title="Language Server Protocol"
+		--single > ${src}/README.md
 	DEPENDS init.lua
 	WORKING_DIRECTORY ${ta_dir}/scripts
 	VERBATIM)
