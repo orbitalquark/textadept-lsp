@@ -1012,6 +1012,16 @@ events.connect(events.AUTO_C_CANCELED, function() snippets = nil end)
 -- @return `true` if autocompletions were shown; `nil` otherwise
 function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 
+--- Returns the given text wrapped in a rudimentary way.
+local function wrap(text)
+	local lines, edge_column = {}, view.edge_column
+	if edge_column == 0 then edge_column = not CURSES and 100 or 80 end
+	for line in text:gmatch('[^\n]+') do
+		for j = 1, #line, edge_column do lines[#lines + 1] = line:sub(j, j + edge_column - 1) end
+	end
+	return table.concat(lines, '\n')
+end
+
 --- Shows a calltip with information about the identifier at a buffer position.
 -- @param[opt=buffer.current_pos] position Position of the identifier to show information for.
 function M.hover(position)
@@ -1031,7 +1041,7 @@ function M.hover(position)
 		contents = contents.value or table.concat(contents, '\n')
 	end
 	if not contents or contents == '' then return end
-	view:call_tip_show(position or buffer.current_pos, contents)
+	view:call_tip_show(position or buffer.current_pos, wrap(contents))
 end
 
 --- Active call tip signatures.
@@ -1084,14 +1094,7 @@ function M.signature_help(no_cycle)
 		local doc = signature.documentation or ''
 		-- Construct calltip text.
 		if type(doc) == 'table' then doc = doc.value end -- LSP MarkupContent
-		doc = string.format('%s\n%s', signature.label, doc)
-		-- Wrap long lines in a rudimentary way.
-		local lines, edge_column = {}, view.edge_column
-		if edge_column == 0 then edge_column = not CURSES and 100 or 80 end
-		for line in doc:gmatch('[^\n]+') do
-			for j = 1, #line, edge_column do lines[#lines + 1] = line:sub(j, j + edge_column - 1) end
-		end
-		doc = table.concat(lines, '\n')
+		doc = wrap(string.format('%s\n%s', signature.label, doc))
 		-- Add arrow indicators for multiple signatures.
 		if #signatures > 1 then doc = '\001' .. doc:gsub('\n', '\n\002', 1) end
 		signature.text = doc
