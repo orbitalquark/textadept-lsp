@@ -29,14 +29,16 @@
 -- Language Server features are available from the Tools > Language Server menu. Note that not
 -- all language servers may support the menu options.
 --
--- **Note:** If you want to inspect the LSP messages sent back and forth, you can use the Lua
--- command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
--- already active -- from this point forward all messages will be logged. View the log via the
--- "Tools > Language Server > View Log" menu item.
+-- > [!NOTE]
+-- > If you want to inspect the LSP messages sent back and forth, you can use the Lua command
+-- > entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are already
+-- > active -- from this point forward all messages will be logged. View the log via the "Tools >
+-- > Language Server > View Log" menu item.
 --
--- **Warning:** Buggy language servers that do not respect the protocol may cause this module
--- and Textadept to hang, waiting for a response. There is no recourse other than to force-quit
--- Textadept and restart.
+-- > [!WARNING]
+-- > Buggy language servers that do not respect the protocol may cause this module and Textadept
+-- > to hang, waiting for a response. There is no recourse other than to force-quit Textadept
+-- > and restart.
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
@@ -116,8 +118,7 @@ if not rawget(_L, 'Language Server') then
 end
 
 -- Events.
-local lsp_events = {'lsp_initialized', 'lsp_notification', 'lsp_request'}
-for _, v in ipairs(lsp_events) do events[v:upper()] = v end
+for _, v in ipairs{'lsp_initialized', 'lsp_notification', 'lsp_request'} do events[v:upper()] = v end
 
 --- Emitted when an LSP connection has been initialized.
 -- This is useful for sending server-specific notifications to the server upon init via
