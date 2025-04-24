@@ -1057,7 +1057,7 @@ local last_pos
 --- Shows the currently active signature and highlights its current parameter if possible.
 local function show_signature()
 	local signature = signatures[(signatures.activeSignature or 0) + 1]
-	if not view:call_tip_active() then last_pos = buffer.current_pos end
+	if not view:call_tip_active() or not last_pos then last_pos = buffer.current_pos end
 	view:call_tip_show(last_pos, signature.text)
 	local params = signature.parameters
 	if not params then return end
