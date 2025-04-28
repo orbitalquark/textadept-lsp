@@ -960,8 +960,7 @@ textadept.editing.autocompleters.lsp = function()
 	if #completions == 0 then return end
 	snippets = {}
 	-- Associate completion items with icons.
-	local symbols = {}
-	for _, symbol in ipairs(completions) do
+	local symbols = table.map(completions, function(symbol)
 		local label = symbol.insertText or symbol.label
 		if symbol.insertTextFormat == 2 then -- snippet
 			label = symbol.filterText or symbol.label
@@ -969,12 +968,11 @@ textadept.editing.autocompleters.lsp = function()
 		end
 		if label:find(' ') then buffer.auto_c_separator = string.byte('\n') end
 		if symbol.kind and xpm_map[symbol.kind] > 0 then
-			symbols[#symbols + 1] = string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
-		else
-			symbols[#symbols + 1] = label
+			return string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
 		end
 		-- TODO: if symbol.preselect then symbols.selected = label end?
-	end
+		return label
+	end)
 	-- Return the autocompletion list.
 	local len_entered
 	if symbols[1].textEdit then
@@ -1294,8 +1292,7 @@ function M.code_action(s, e)
 		context = {diagnostics = diagnostics_in_range, triggerKind = 1}
 	})
 	if #actions == 0 then return end
-	local list = {}
-	for _, action in ipairs(actions) do
+	local list = table.map(actions, function(action)
 		local xpm = 0
 		if action.kind:find('^quickfix') then
 			xpm = textadept.editing.XPM_IMAGES.VARIABLE
@@ -1304,8 +1301,8 @@ function M.code_action(s, e)
 		elseif action.kind:find('^source') then
 			xpm = textadept.editing.XPM_IMAGES.NAMESPACE
 		end
-		list[#list + 1] = string.format('%s?%d', action.title, xpm) -- TODO: auto_c_type_separator
-	end
+		return string.format('%s?%d', action.title, xpm) -- TODO: auto_c_type_separator
+	end)
 	buffer.auto_c_separator = string.byte('\n')
 	buffer:user_list_show(M.CODE_ACTION_ID, table.concat(list, '\n'))
 end
