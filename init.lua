@@ -1090,6 +1090,20 @@ function M.signature_help(no_cycle)
 	signatures = signature_help.signatures
 	signatures.activeSignature = signature_help.activeSignature
 	signatures.activeParameter = signature_help.activeParameter
+	if server.info and server.info.name == 'clangd' and signatures[1].label:find('^luaL?_[a-z]+%(') then
+		-- Inject Lua C API documentation into signature help.
+		local name = signatures[1].label:match('^[%w_]+')
+		local lua_api = _HOME .. '/modules/lsp/doc/c_api'
+		if not lfs.attributes(lua_api) then lua_api = _USERHOME .. '/modules/lsp/doc/c_api' end
+		if not lfs.attributes(lua_api) then goto skip end
+		for line in io.lines(lua_api) do
+			if line:match('^%S+') == name then
+				signatures[1].documentation = line:match('\\n(.+)\\n$'):gsub('\\n', '\n')
+				break
+			end
+		end
+		::skip::
+	end
 	for _, signature in ipairs(signatures) do
 		local doc = signature.documentation or ''
 		-- Construct calltip text.
