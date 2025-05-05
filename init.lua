@@ -266,6 +266,7 @@ end
 local Server = {}
 
 local json = require('lsp.dkjson')
+local empty_object = json.decode('{}')
 
 --- Starts, initializes, and returns a new language server.
 -- @param lang String lexer name of the language server.
@@ -283,7 +284,7 @@ function Server.new(lang, root, cmd, init_options)
 			log('Server exited with status ', status)
 			servers[lang][root] = nil
 		end))
-	local root = io.get_project_root()
+	root = io.get_project_root()
 	local result = server:request('initialize', {
 		processId = json.null, --
 		clientInfo = {name = 'textadept', version = _RELEASE},
@@ -566,7 +567,6 @@ function Server:request(method, params)
 	return message.result ~= json.null and message.result or nil
 end
 
-local empty_object = json.decode('{}')
 --- Sends a notification to this language server.
 -- @param method String method name of the notification.
 -- @param params Table of parameters for the notification.
@@ -736,7 +736,7 @@ local function apply_edit(edit)
 			changes[change.textDocument.uri] = change.edits
 		end
 	end
-	for doc, changes in pairs(changes) do
+	for doc, edits in pairs(changes) do
 		local buffer = buffer_from_uri(doc)
 		local line, column, first_visible_line
 		if buffer == _G.buffer then
@@ -745,12 +745,12 @@ local function apply_edit(edit)
 			first_visible_line = view.first_visible_line
 		end
 		buffer:begin_undo_action()
-		for i, change in ipairs(changes) do
-			buffer[i == 1 and 'set_selection' or 'add_selection'](tobufferrange(change.range))
+		for i, text_edit in ipairs(edits) do
+			buffer[i == 1 and 'set_selection' or 'add_selection'](tobufferrange(text_edit.range))
 		end
 		for i = 1, buffer.selections do
 			buffer:set_target_range(buffer.selection_n_start[i], buffer.selection_n_end[i])
-			buffer:replace_target(changes[i].newText)
+			buffer:replace_target(edits[i].newText)
 		end
 		buffer:end_undo_action()
 		if buffer == _G.buffer then
@@ -832,8 +832,7 @@ local function get_server()
 	if not root and lang == 'lua' then root = '' end -- special case
 	if not root then return nil end
 	local lang_servers = servers[lang]
-	local server = lang_servers[root]
-	if server then return server end
+	if lang_servers[root] then return lang_servers[root] end
 	for path, server in pairs(lang_servers) do if root:sub(1, #path) == path then return server end end
 end
 
@@ -988,7 +987,7 @@ end
 
 local snippet_to_insert
 -- Insert autocompletions as snippets and not plain text, if applicable.
-events.connect(events.AUTO_C_COMPLETED, function(text, position, code)
+events.connect(events.AUTO_C_COMPLETED, function(text, _, code)
 	if not snippets then return end
 	local snippet = snippets[text]
 	snippets = nil
@@ -1000,7 +999,7 @@ events.connect(events.AUTO_C_COMPLETED, function(text, position, code)
 		snippet_to_insert = snippet -- fill-up character will be inserted after this event
 	end
 end)
-events.connect(events.CHAR_ADDED, function(code)
+events.connect(events.CHAR_ADDED, function()
 	if not snippet_to_insert then return end
 	textadept.snippets.insert(snippet_to_insert) -- insert after fill-up character
 	snippet_to_insert = nil
@@ -1221,7 +1220,7 @@ function M.find_references()
 		local line_num = location.range.start.line + 1
 		line = buffer:get_line(line_num):match('^[^\r\n]*')
 		print(string.format('%s:%d:%s', filename, line_num, line))
-		local pos = ff_buffer.line_end_position[ff_buffer.line_count - 1] - #line +
+		pos = ff_buffer.line_end_position[ff_buffer.line_count - 1] - #line +
 			location.range.start.character
 		ff_buffer.indicator_current = ui.find.INDIC_FIND
 		ff_buffer:indicator_fill_range(pos,
@@ -1439,7 +1438,7 @@ events.connect(events.QUIT, shutdown_servers, 1)
 
 -- Log buffer modification times for more real-time diagnostics.
 local INSERT, DELETE = buffer.MOD_INSERTTEXT, buffer.MOD_DELETETEXT
-events.connect(events.MODIFIED, function(position, mod)
+events.connect(events.MODIFIED, function(_, mod)
 	if mod & (INSERT | DELETE) > 0 then buffer._lsp_mod_time = os.time() end
 end)
 

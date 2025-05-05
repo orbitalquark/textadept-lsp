@@ -8,10 +8,10 @@
 local WIN32 = package.path:find('\\')
 
 local lfs = require('lfs')
-local dir = arg[0]:match('^(.+)[/\\]') or '.'
-lfs.chdir(dir) -- cd to this directory
-local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], dir) or 'ldoc'
-package.path = string.format('%s/?.lua;%s/?/init.lua;%s', dir, dir, package.path)
+local cwd = arg[0]:match('^(.+)[/\\]') or '.'
+lfs.chdir(cwd) -- cd to this directory
+local ldoc = arg[-2] and string.format('"%s" -L "%s/ldoc.lua"', arg[-2], cwd) or 'ldoc'
+package.path = string.format('%s/?.lua;%s/?/init.lua;%s', cwd, cwd, package.path)
 local userhome = arg[1]
 local logfile = userhome .. '/lua_lsp_server.log'
 io.open(logfile, 'w'):close() -- clear previous log
@@ -47,7 +47,7 @@ local function respond(id, result)
 end
 
 local root, options, client_capabilities, cache, tags, api
-local files = {} -- map of open file URIs to their content lines
+local open_files = {} -- map of open file URIs to their content lines
 local handlers = {} -- LSP method and notification handlers
 
 --- Registers function *f* as the handler for the LSP method named *method*.
@@ -83,8 +83,9 @@ register('initialize', function(params)
 	lfs.mkdir(cache)
 	pl_dir.copyfile('tadoc.lua', cache .. '/tadoc.lua')
 	log:info('Initialize (root=%s, cache=%s)', root or 'nil', cache)
-	options = params.initializationOptions
-	client_capabilities = params.capabilities
+	options = params.initializationOptions -- TODO: unused
+	client_capabilities = params.capabilities -- TODO: check for capabilities before sending responses
+	if options or client_capabilities then end -- luacheck: ignore 542
 	return {
 		capabilities = {
 			positionEncoding = 'utf-8', --
@@ -227,7 +228,7 @@ local scanned_textadept = false
 register('textDocument/didOpen', function(params)
 	local lines = {}
 	for line in params.textDocument.text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
-	files[params.textDocument.uri] = lines
+	open_files[params.textDocument.uri] = lines
 	log:debug('Cached the lines of %s', params.textDocument.uri)
 
 	-- Lazy-load Textadept API.
@@ -254,7 +255,7 @@ register('textDocument/didChange', function(params)
 
 	local lines = {}
 	for line in params.contentChanges[1].text:gmatch('[^\n]*\n?') do lines[#lines + 1] = line end
-	files[params.textDocument.uri] = lines
+	open_files[params.textDocument.uri] = lines
 	log:debug('Cached the contents of %s', params.textDocument.uri)
 	-- Scan it, but with a path relative to a temporary root directory.
 	-- This allows "Go to Definition" to function correctly for files with unsaved changes.
@@ -280,7 +281,7 @@ end)
 -- @param params LSP params for the completion/signatureHelp/etc. request.
 -- @return substituted or original symbol
 local function substitute_M(symbol, params)
-	local lines = files[params.textDocument.uri]
+	local lines = open_files[params.textDocument.uri]
 	if not lines then return symbol end
 	for _, line in ipairs(lines) do
 		local module = line:match('^%s*%-%-%-?%s*@module%s([%w_.]+)')
@@ -310,7 +311,7 @@ register('textDocument/completion', function(params)
 	-- Retrieve the symbol behind the caret.
 	local filename = tofilename(params.textDocument.uri)
 	local line_num, col_num = params.position.line + 1, params.position.character + 1
-	local lines = files[params.textDocument.uri]
+	local lines = open_files[params.textDocument.uri]
 	local symbol, op, part = lines[line_num]:sub(1, col_num - 1):match('([%w_%.]-)([%.:]?)([%w_]*)$')
 	log:debug('Get completions at %s:%d:%d: symbol=%s op=%s part=%s', filename, line_num, col_num,
 		symbol, op, part)
@@ -368,7 +369,7 @@ end)
 -- @return symbol or nil
 local function get_symbol(params)
 	local line_num, col_num = params.position.line + 1, params.position.character + 1
-	local line = files[params.textDocument.uri][line_num]
+	local line = open_files[params.textDocument.uri][line_num]
 	local symbol_part_right = line:match('^[%w_]*', col_num)
 	local symbol_part_left = line:sub(1, col_num - 1):match('[%w_.:]*$')
 	local symbol = symbol_part_left .. symbol_part_right
@@ -438,7 +439,7 @@ register('textDocument/signatureHelp', function(params)
 	-- Retrieve the function behind the caret.
 	local filename = tofilename(params.textDocument.uri)
 	local line_num, col_num = params.position.line + 1, params.position.character + 1
-	local lines, prev_lines = files[params.textDocument.uri], {}
+	local lines, prev_lines = open_files[params.textDocument.uri], {}
 	for i = 1, line_num - 1 do prev_lines[#prev_lines + 1] = lines[i] end
 	local text, pos = table.concat(lines), #table.concat(prev_lines) + col_num - 1
 	log:debug('Get signature at %s:%d:%d (pos=%d)', filename, line_num, col_num, pos)
@@ -466,8 +467,8 @@ register('textDocument/signatureHelp', function(params)
 		pos = doc:find('%b()')
 		if pos then
 			pos = pos - 1
-			for s, e in doc:match('%b()'):gmatch('()[^(),]+()') do
-				parameters[#parameters + 1] = {label = {pos + s - 1, pos + e - 1}}
+			for s2, e2 in doc:match('%b()'):gmatch('()[^(),]+()') do
+				parameters[#parameters + 1] = {label = {pos + s2 - 1, pos + e2 - 1}}
 			end
 		end
 		local doc_func = doc:match('([%w_.:]+)%b()') or ''
@@ -493,15 +494,15 @@ register('textDocument/definition', function(params)
 	for _, filename in ipairs(tags) do
 		if not filename or not lfs.attributes(filename) then goto continue end
 		for tag_line in io.lines(filename) do
-			local name, file, ex_cmd, ext_fields = tag_line:match(patt)
+			local name, file, ex_cmd, _ = tag_line:match(patt)
 			if not name then goto continue end
 			if root then file = file:gsub('^_ROOT', root) end
 			log:debug('Found candidate: %s (file=%s)', ex_cmd, filename)
 			local uri = touri(file)
 			ex_cmd = ex_cmd:match('/^?(.-)$?/$')
-			if files[uri] then
+			if open_files[uri] then
 				-- Find definition in cached file.
-				for i, line in ipairs(files[uri]) do
+				for i, line in ipairs(open_files[uri]) do
 					local s, e = line:find(ex_cmd, 1, true)
 					if not s and not e then goto continue end
 					log:debug('Confirmed in cached file, line %d', i - 1)
@@ -542,12 +543,12 @@ register('textDocument/definition', function(params)
 end)
 
 -- LSP workspace/symbol request.
-register('workspace/symbol', function(params)
+register('workspace/symbol', function()
 	return json.null -- TODO:
 end)
 
 -- LSP shutdown request.
-register('shutdown', function(params)
+register('shutdown', function()
 	log:info('Shutting down')
 	pl_dir.rmtree(cache)
 	log:debug('Cleaned up')
@@ -558,7 +559,7 @@ end)
 log:info('Starting up')
 local message = read()
 while message.method ~= 'exit' do
-	local ok, result = xpcall(handlers[message.method], function(errmsg)
+	local _, result = xpcall(handlers[message.method], function(errmsg)
 		errmsg = debug.traceback(errmsg)
 		log:error(string.format('%s\n%s', json.encode(message), errmsg))
 		return {code = 1, message = errmsg}

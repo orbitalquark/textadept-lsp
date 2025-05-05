@@ -127,13 +127,13 @@ end
 --- Writes out the tags and api files.
 -- @param tags Table of string tag lines.
 -- @param apidoc Table of API documentation lines.
--- @param output_dir Directory to output tags and api files into.
+-- @param out_dir Directory to output tags and api files into.
 -- @param filename Optional string filename prefix to tags and api files.
 -- @param module_name Optional string module name prefix to tags and api files.
-local function write_files(tags, apidoc, output_dir, filename, module_name)
+local function write_files(tags, apidoc, out_dir, filename, module_name)
 	table.sort(tags)
 	table.sort(apidoc)
-	local prefix = output_dir .. '/'
+	local prefix = out_dir .. '/'
 	if filename then prefix = prefix .. filename .. '_' end
 	if module_name then prefix = prefix .. module_name .. '_' end
 	local f = io.open(prefix .. 'tags', 'wb')
