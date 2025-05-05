@@ -1,17 +1,16 @@
 -- Copyright 2007-2025 Mitchell. See LICENSE.
 
---- Textadept autocompletions and API documentation filter/doclet for LDoc/LuaDoc.
--- This module is used by LDoc/LuaDoc to create Lua autocompletion and API documentation files
--- that the Lua LSP server can read.
--- If the underlying LDoc/LuaDoc command contains a trailing `--root` option, symbol locations
--- within the given path will be written to output files as relative to that path. A `--multiple`
+--- Textadept autocompletions and API documentation filter for LDoc.
+-- This module is used by LDoc to create Lua autocompletion and API documentation files that
+-- the Lua LSP server can read.
+-- If the underlying LDoc command contains a trailing `--root` option, symbol locations within
+-- the given path will be written to output files as relative to that path. A `--multiple`
 -- option writes one output file per Lua file scanned, as opposed to a single, large file.
 -- @usage ldoc -d [output_path] --filter tadoc.ldoc [ldoc opts] [-- [--root="/path"] [--multiple]]
--- @usage luadoc -d [output_path] -doclet path/to/tadoc [file(s)] [--root="/path"] [--multiple]
 -- @module tadoc
 local M = {}
 
--- Parse command line options for defining non-LDoc/LuaDoc behavior.
+-- Parse command line options for defining non-LDoc behavior.
 local ROOT, multiple, output_dir
 for i = 1, #arg do
 	local root = arg[i]:match('^%-%-root="?([^"]-)"?$')
@@ -48,8 +47,8 @@ end
 
 --- Writes a function or field apidoc.
 -- @param file The file to write to.
--- @param m The LDoc/LuaDoc module object, or nil if the block object is local.
--- @param b The LDoc/LuaDoc block object.
+-- @param m The LDoc module object, or nil if the block object is local.
+-- @param b The LDoc block object.
 local function write_apidoc(file, m, b)
 	-- Function or field name.
 	local name = b.name
@@ -72,7 +71,7 @@ local function write_apidoc(file, m, b)
 	end
 	doc[#doc + 1] = header
 	-- Function or field description.
-	local description = b.lineno and b.summary .. (b.description or '') or b.description -- ldoc has lineno
+	local description = b.lineno and b.summary .. (b.description or '') or b.description
 	-- Strip consistent leading whitespace.
 	local indent = (b.description or ''):match('^[\r\n]*(%s*)')
 	if indent ~= '' then description = description:gsub('\n' .. indent, '\n') end
@@ -252,148 +251,6 @@ function M.ldoc(doc)
 	end
 
 	if not multiple then write_files(tags, apidoc, output_dir) end
-end
-
---- Returns the absolute path of the given relative path.
--- @param path String relative path.
--- @return absolute path
-local function abspath(path)
-	if path:find('^/') then return path end
-	path = string.format('%s/%s', require('lfs').currentdir(), path)
-	path = path:gsub('%f[^/]%./', '') -- clean up './'
-	while path:find('[^/]+/%.%./') do
-		path = path:gsub('[^/]+/%.%./', '', 1) -- clean up '../'
-	end
-	return path
-end
-
---- Called by LuaDoc to process a doc object.
--- @param doc The LuaDoc doc object.
-function M.start(doc)
-	local modules, files = doc.modules, doc.files
-
-	-- Map doc objects to file names so a module can be mapped to its filename.
-	for _, filename in ipairs(files) do
-		local doc = files[filename].doc
-		files[doc] = abspath(filename)
-	end
-
-	-- Add a module's fields to its LuaDoc.
-	for _, filename in ipairs(files) do
-		local module_doc = files[filename].doc[1]
-		if module_doc and module_doc.class == 'module' and modules[module_doc.name] then
-			modules[module_doc.name].fields = module_doc.field
-		elseif module_doc then
-			print(string.format('[WARN] %s has no module declaration', filename))
-		end
-	end
-
-	-- Convert module functions in the Lua luadoc into LuaDoc modules.
-	local lua_luadoc
-	for _, filename in ipairs(files) do
-		if filename:find('lua%.luadoc$') then
-			lua_luadoc = files[filename]
-			break
-		end
-	end
-	if lua_luadoc and (#files == 1 or multiple) then
-		for _, function_name in ipairs(lua_luadoc.functions) do
-			local func = lua_luadoc.functions[function_name]
-			local module_name = func.name:match('^([^.:]+)[.:]') or '_G'
-			if not modules[module_name] then
-				modules[#modules + 1] = module_name
-				modules[module_name] = {name = module_name, functions = {}, doc = {{code = func.code}}}
-				files[modules[module_name].doc] = abspath(files[1])
-				-- For functions like file:read(), 'file' is not a module; fake it.
-				if func.name:find(':') then modules[module_name].fake = true end
-			end
-			local module = modules[module_name]
-			module.description = string.format('Lua %s module.', module.name)
-			module.functions[#module.functions + 1] = func.name
-			module.functions[func.name] = func
-		end
-		for _, table_name in ipairs(lua_luadoc.tables) do
-			local table = lua_luadoc.tables[table_name]
-			local module = modules[table.name or '_G']
-			if not module.fields then module.fields = {} end
-			local fields = module.fields
-			for k, v in pairs(table.field) do
-				if not tonumber(k) then fields[#fields + 1], fields[k] = k, v end
-			end
-		end
-	end
-
-	-- Process LuaDoc and write the tags and api files.
-	local tags, apidoc = {}, {}
-	for _, module_name in ipairs(modules) do
-		local m = modules[module_name]
-		local filename = files[m.doc]
-		if not m.fake then
-			-- Tag and document the module.
-			write_tag(tags, m.name, filename, m.doc[1].code[1], 'm', '')
-			if m.name:find('%.') then
-				-- Tag the last part of the module as a table of the first part.
-				local parent, child = m.name:match('^(.-)%.([^.]+)$')
-				write_tag(tags, child, filename, m.doc[1].code[1], 'm', 'class:' .. parent)
-			end
-			m.class = 'module'
-			write_apidoc(apidoc, {name = '_G'}, m)
-		end
-		-- Tag and document the functions.
-		for _, function_name in ipairs(m.functions) do
-			local module_name, name = function_name:match('^(.-)[.:]?([^.:]+)$')
-			if module_name == '' then module_name = m.name end
-			local func = m.functions[function_name]
-			write_tag(tags, name, filename, func.code[1], 'f', 'class:' .. module_name)
-			write_apidoc(apidoc, m, func)
-		end
-		if m.tables then
-			-- Document the tables.
-			for _, table_name in ipairs(m.tables) do
-				local table = m.tables[table_name]
-				local module_name = m.name
-				if table_name:find('^_G%.') then
-					module_name, table_name = table_name:match('^_G%.(.-)%.?([^.]+)$')
-					if not module_name then
-						print('[ERROR] Cannot determine module name for ' .. table.name)
-					elseif module_name == '' then
-						module_name = '_G' -- _G.keys or _G.snippets
-					end
-				end
-				write_tag(tags, table_name, filename, table.code[1], 't', 'class:' .. module_name)
-				write_apidoc(apidoc, m, table)
-				if table.field then
-					-- Tag and document the table's fields.
-					table_name = string.format('%s.%s', module_name, table_name)
-					for _, field_name in ipairs(table.field) do
-						write_tag(tags, field_name, filename, table.code[1], 'F', 'class:' .. table_name)
-						write_apidoc(apidoc, {name = table_name}, {
-							name = field_name, description = table.field[field_name], class = 'table'
-						})
-					end
-				end
-			end
-		end
-		if m.fields then
-			-- Tag and document the fields.
-			for _, field_name in ipairs(m.fields) do
-				local field = m.fields[field_name]
-				local module_name = m.name
-				if field_name:find('^_G%.') then
-					module_name, field_name = field_name:match('^_G%.(.-)%.?([^.]+)$')
-					if not module_name then
-						print('[ERROR] Cannot determine module name for ' .. field.name)
-					end
-				end
-				write_tag(tags, field_name, filename, m.doc[1].code[1], 'F', 'class:' .. module_name)
-				write_apidoc(apidoc, {name = field_name}, {
-					name = string.format('%s.%s', module_name, field_name), description = field,
-					class = 'field'
-				})
-			end
-		end
-	end
-	write_files(tags, apidoc, M.options.output_dir)
 end
 
 return M
