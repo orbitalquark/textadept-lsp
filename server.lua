@@ -300,7 +300,7 @@ end
 local expr_types = {['^[\'"]'] = 'string', ['^io%.p?open%s*%b()%s*$'] = 'file'}
 
 --- Map of tags kinds to LSP CompletionItemKinds.
-local kinds = {m = 7, f = 3, F = 5, t = 8, l = 3, L = 6}
+local kinds = {m = 9, f = 3, F = 5, t = 7, l = 3, L = 6}
 
 -- LSP textDocument/completion request.
 -- Uses the text previously sent via textDocument/didChange to determine the symbol at the

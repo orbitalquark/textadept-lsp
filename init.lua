@@ -29,16 +29,14 @@
 -- Language Server features are available from the Tools > Language Server menu. Note that not
 -- all language servers may support the menu options.
 --
--- > [!NOTE]
--- > If you want to inspect the LSP messages sent back and forth, you can use the Lua command
--- > entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are already
--- > active -- from this point forward all messages will be logged. View the log via the "Tools >
--- > Language Server > View Log" menu item.
+-- **Note:** if you want to inspect the LSP messages sent back and forth, you can use the Lua
+-- command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
+-- already active -- from this point forward all messages will be logged. View the log via the
+-- "Tools > Language Server > View Log" menu item.
 --
--- > [!WARNING]
--- > Buggy language servers that do not respect the protocol may cause this module and Textadept
--- > to hang, waiting for a response. There is no recourse other than to force-quit Textadept
--- > and restart.
+-- **Warning:** buggy language servers that do not respect the protocol may cause this module
+-- and Textadept to hang, waiting for a response. There is no recourse other than to force-quit
+-- Textadept and restart.
 --
 -- [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 -- [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
@@ -76,6 +74,33 @@
 -- Shift+F12 | ⇧F12 | Shift+F12 | Go to Symbol...
 --
 -- ‡: Windows terminal version only.
+--
+-- ## Icon Reference
+--
+-- Icon | Terminal Symbol | Meaning
+-- -|-|-
+-- ![method](icons/method.svg) | `*` | Method, Function
+-- ![constructor](icons/constructor.svg) | `+` | Constructor
+-- ![field](icons/field.svg) | `-` | Field
+-- ![variable](icons/variable.svg) | | Variable
+-- ![class](icons/class.svg) | `#` | Class
+-- ![interface](icons/interface.svg) | `:` | Interface
+-- ![module](icons/module.svg) | `@` | Module
+-- ![property](icons/property.svg) | | Property
+-- ![unit](icons/unit.svg) | | Unit
+-- ![value](icons/value.svg) | | Value
+-- ![struct](icons/struct.svg) | `#` | Struct, Enum
+-- ![keyword](icons/keyword.svg) | | Keyword
+-- ![snippet](icons/snippet.svg) | | Snippet
+-- ![color](icons/color.svg) | | Color
+-- ![file](icons/file.svg) | | File
+-- ![reference](icons/reference.svg) | | Reference
+-- ![folder](icons/folder.svg) | `/` | Folder
+-- ![constant](icons/constant.svg) | `&` | Constant, Enum member
+-- ![event](icons/event.svg) | `!` | Event
+-- ![operator](icons/operator.svg) | | Operator
+-- ![param](icons/type_parameter.svg) | | Type parameter
+--
 -- @module lsp
 local M = {}
 
@@ -199,38 +224,36 @@ M.server_commands = {}
 --- Map of lexer names to maps of project roots and their active LSP servers.
 local servers = {}
 
---- Map of LSP CompletionItemKinds to images used in autocompletion lists.
+--- Map of LSP CompletionItemKinds to names of images used in autocompletion lists, and map of
+-- those names to their Scintilla image types.
 -- @table xpm_map
 -- @local
-
--- This separation is needed to prevent LDoc from parsing the following table.
-
 local xpm_map = {
-	0, -- text
-	textadept.editing.XPM_IMAGES.METHOD, -- method
-	textadept.editing.XPM_IMAGES.METHOD, -- function
-	textadept.editing.XPM_IMAGES.SLOT, -- constructor
-	textadept.editing.XPM_IMAGES.VARIABLE, -- field
-	textadept.editing.XPM_IMAGES.VARIABLE, -- variable
-	textadept.editing.XPM_IMAGES.CLASS, -- class
-	textadept.editing.XPM_IMAGES.TYPEDEF, -- interface
-	textadept.editing.XPM_IMAGES.NAMESPACE, -- module
-	textadept.editing.XPM_IMAGES.VARIABLE, -- property
-	0, -- unit
-	0, -- value
-	textadept.editing.XPM_IMAGES.TYPEDEF, -- enum
-	0, -- keyword
-	0, -- snippet
-	0, -- color
-	0, -- file
-	0, -- reference
-	0, -- folder
-	textadept.editing.XPM_IMAGES.VARIABLE, -- enum member
-	textadept.editing.XPM_IMAGES.VARIABLE, -- constant
-	textadept.editing.XPM_IMAGES.STRUCT, -- struct
-	textadept.editing.XPM_IMAGES.SIGNAL, -- event
-	0, -- operator
-	0 -- type parameter
+	'text', -- text
+	'method', -- method
+	'method', -- function
+	'constructor', -- constructor
+	'field', -- field
+	'variable', -- variable
+	'class', -- class
+	'interface', -- interface
+	'module', -- module
+	'property', -- property
+	'unit', -- unit
+	'value', -- value
+	'struct', -- enum
+	'keyword', -- keyword
+	'snippet', -- snippet
+	'color', -- color
+	'file', -- file
+	'reference', -- reference
+	'folder', -- folder
+	'constant', -- enum member
+	'constant', -- constant
+	'struct', -- struct
+	'event', -- event
+	'operator', -- operator
+	'type_parameter' -- type parameter
 }
 local completion_item_kind_set = {} -- for LSP capabilities
 for i = 1, #xpm_map do completion_item_kind_set[i] = i end
@@ -966,8 +989,9 @@ textadept.editing.autocompleters.lsp = function()
 			snippets[label] = symbol.insertText
 		end
 		if label:find(' ') then buffer.auto_c_separator = string.byte('\n') end
-		if symbol.kind and xpm_map[symbol.kind] > 0 then
-			return string.format('%s?%d', label, xpm_map[symbol.kind]) -- TODO: auto_c_type_separator
+		if symbol.kind and xpm_map[symbol.kind] and view._lsp_xpms[xpm_map[symbol.kind]] then
+			local sep = string.char(buffer.auto_c_type_separator) -- TODO: is default '?' okay?
+			return string.format('%s%s%d', label, sep, view._lsp_xpms[xpm_map[symbol.kind]])
 		end
 		-- TODO: if symbol.preselect then symbols.selected = label end?
 		return label
@@ -1308,17 +1332,49 @@ function M.code_action(s, e)
 	local list = table.map(actions, function(action)
 		local xpm = 0
 		if action.kind:find('^quickfix') then
-			xpm = textadept.editing.XPM_IMAGES.VARIABLE
+			xpm = view._lsp_xpms.fix
 		elseif action.kind:find('^refactor') then
-			xpm = textadept.editing.XPM_IMAGES.STRUCT
+			xpm = view._lsp_xpms.refactor
 		elseif action.kind:find('^source') then
-			xpm = textadept.editing.XPM_IMAGES.NAMESPACE
+			xpm = view._lsp_xpms.keyword
 		end
 		return string.format('%s?%d', action.title, xpm) -- TODO: auto_c_type_separator
 	end)
 	buffer.auto_c_separator = string.byte('\n')
 	buffer:user_list_show(M.CODE_ACTION_ID, table.concat(list, '\n'))
 end
+
+-- LuaFormatter off
+local curses_xpm = {class='#',color=' ',constant='&',constructor='+',event='!',field='-',file=' ',fix='!',folder='/',interface=':',keyword=' ',method='*',module='@',operator=' ',property=' ',refactor=' ',reference=' ',snippet=' ',struct='#',type_parameter=' ',unit=' ',value=' ',variable=' '}
+-- LuaFormatter on
+
+-- Load and register XPM images.
+events.connect(events.VIEW_NEW, function()
+	view._lsp_xpms = {}
+	local dir = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
+	dir = dir .. '/modules/lsp/icons/' .. (not is_hidpi() and '16' or '16@2x')
+	for name in lfs.dir(dir) do
+		if not name:find('%.xpm$') then goto continue end
+		local f<close> = assert(io.open(dir .. '/' .. name, 'rb'))
+		name = name:match('^[^.]+')
+		local xpm = not CURSES and f:read('a') or curses_xpm[name]
+		local type = xpm_map[name] or view.new_image_type()
+		view:register_image(type, xpm)
+		view._lsp_xpms[name] = type
+		if not xpm_map[name] then xpm_map[name] = type end
+		::continue::
+	end
+
+	-- Fill in textadept.editing.XPM_IMAGES for compatibility.
+	if not textadept.editing.XPM_IMAGES then textadept.editing.XPM_IMAGES = {} end
+	local compat_xpms = textadept.editing.XPM_IMAGES
+	if next(compat_xpms) then return end
+	local map = {
+		CLASS = 'class', NAMESPACE = 'module', METHOD = 'method', SIGNAL = 'operator', SLOT = 'event',
+		VARIABLE = 'variable', TYPEDEF = 'interface'
+	}
+	for k, v in ipairs(map) do compat_xpms[k] = xpm_map[name] end
+end)
 
 -- Setup events to automatically start language servers and notify them as files are opened.
 -- Connect to `events.FILE_OPENED` after initialization in order to not overwhelm LSP

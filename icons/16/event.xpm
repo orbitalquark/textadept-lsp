@@ -1,0 +1,25 @@
+/* XPM */
+static char *event[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 3 1 ",
+"  c None",
+". c #AB8349",
+"X c #FFC36D",
+/* pixels */
+"                ",
+"                ",
+"                ",
+"                ",
+"  ............. ",
+"  .XXXXXXXXXXX. ",
+"  .XXXXXXXXXXX. ",
+"  .XXXXXXXXXXX. ",
+"  .XXXXXXXXXXX. ",
+"  .XXXXXXXXXXX. ",
+"  ............. ",
+"                ",
+"                ",
+"                ",
+"                ",
+"                "
+};

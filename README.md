@@ -30,16 +30,14 @@ project recognized by Textadept, the language server will not be started.
 Language Server features are available from the Tools > Language Server menu. Note that not
 all language servers may support the menu options.
 
-> [!NOTE]
-> If you want to inspect the LSP messages sent back and forth, you can use the Lua command
-> entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are already
-> active -- from this point forward all messages will be logged. View the log via the "Tools >
-> Language Server > View Log" menu item.
+**Note:** if you want to inspect the LSP messages sent back and forth, you can use the Lua
+command entry to set `require('lsp').log_rpc = true`. It doesn't matter if any LSPs are
+already active -- from this point forward all messages will be logged. View the log via the
+"Tools > Language Server > View Log" menu item.
 
-> [!WARNING]
-> Buggy language servers that do not respect the protocol may cause this module and Textadept
-> to hang, waiting for a response. There is no recourse other than to force-quit Textadept
-> and restart.
+**Warning:** buggy language servers that do not respect the protocol may cause this module
+and Textadept to hang, waiting for a response. There is no recourse other than to force-quit
+Textadept and restart.
 
 [Language Server Protocol]: https://microsoft.github.io/language-server-protocol/specification
 [wiki]: https://github.com/orbitalquark/textadept/wiki/LSP-Configurations
@@ -77,6 +75,33 @@ F12 | F12 | F12 | Go To Definition
 Shift+F12 | ⇧F12 | Shift+F12 | Go to Symbol...
 
 ‡: Windows terminal version only.
+
+## Icon Reference
+
+Icon | Terminal Symbol | Meaning
+-|-|-
+![method](icons/method.svg) | `*` | Method, Function
+![constructor](icons/constructor.svg) | `+` | Constructor
+![field](icons/field.svg) | `-` | Field
+![variable](icons/variable.svg) | | Variable
+![class](icons/class.svg) | `#` | Class
+![interface](icons/interface.svg) | `:` | Interface
+![module](icons/module.svg) | `@` | Module
+![property](icons/property.svg) | | Property
+![unit](icons/unit.svg) | | Unit
+![value](icons/value.svg) | | Value
+![struct](icons/struct.svg) | `#` | Struct, Enum
+![keyword](icons/keyword.svg) | | Keyword
+![snippet](icons/snippet.svg) | | Snippet
+![color](icons/color.svg) | | Color
+![file](icons/file.svg) | | File
+![reference](icons/reference.svg) | | Reference
+![folder](icons/folder.svg) | `/` | Folder
+![constant](icons/constant.svg) | `&` | Constant, Enum member
+![event](icons/event.svg) | `!` | Event
+![operator](icons/operator.svg) | | Operator
+![param](icons/type_parameter.svg) | | Type parameter
+
 
 <a id="lsp.CODE_ACTION_ID"></a>
 ## `lsp.CODE_ACTION_ID`

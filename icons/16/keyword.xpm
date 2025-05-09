@@ -1,0 +1,33 @@
+/* XPM */
+static char *keyword[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 11 1 ",
+"  c None",
+". c #AB8349",
+"X c #FFC36D",
+"o c #848484",
+"O c #888888",
+"+ c gray54",
+"@ c #8D8D8D",
+"# c gray62",
+"$ c gray71",
+"% c #B7B7B7",
+"& c #ECECEC",
+/* pixels */
+" ooooooooo@     ",
+" o&&&&&&&@%@    ",
+" o&&&&&&&@&%@   ",
+" o&####&&@&&%@  ",
+" o&&&&&&&@@@@o  ",
+" o&......&&&&o  ",
+" o&.XXXX.###&o  ",
+" o&......&&&&o  ",
+" o&&&&&&&&&&&o  ",
+" o&#########&o  ",
+" o&&&&&&&&&&&o  ",
+" o&&&&......&o  ",
+" o&###.XXXX.&o  ",
+" o&&&&......&o  ",
+" ooooooooooooo  ",
+"                "
+};

@@ -1,0 +1,22 @@
+Convert SVG into png.
+
+	for i in *.svg; do inkscape -o 16/${i%.svg}.png --export-type=png -w 16 -h 16 $i; done
+	for i in *.svg; do inkscape -o 16@2x/${i%.svg}.png --export-type=png -w 32 -h 32 -d 192 $i; done
+
+Convert png into xpm.
+
+	cd 16
+	for i in *.png; do magick $i ${i%.png}.xpm; done
+	cd 16@2x
+	for i in *.png; do magick $i ${i%.png}.xpm; done
+
+Scintilla only supports 1 character per pixel.
+
+	grep '16 16' 16/*.xpm
+	grep '32 32' 16@2x/*.xpm
+
+For any XPM that has 2 or more characters per pixel:
+1. Load into Krita
+2. Filter > Map > Palettize...
+3. Pick a palette
+4. Save

@@ -1,0 +1,25 @@
+/* XPM */
+static char *field[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 3 1 ",
+"  c None",
+". c #70899D",
+"X c #A7CDEA",
+/* pixels */
+"                ",
+"                ",
+"                ",
+"                ",
+"     ...........",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     .XXXXXXXXX.",
+"     ...........",
+"                "
+};

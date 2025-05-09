@@ -1,6 +1,7 @@
 -- Copyright 2020-2025 Mitchell. See LICENSE.
 
 local lsp = require('lsp')
+events.emit(events.VIEW_NEW) -- register XPMs
 lsp.log_rpc = true
 
 teardown(function()

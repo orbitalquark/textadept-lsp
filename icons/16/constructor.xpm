@@ -1,0 +1,32 @@
+/* XPM */
+static char *constructor[] = {
+/* columns rows colors chars-per-pixel */
+"16 16 10 1 ",
+"  c None",
+". c #A3854E",
+"X c #A3864E",
+"o c #A5864E",
+"O c #A4864F",
+"+ c #A78851",
+"@ c #BB985A",
+"# c #CEA763",
+"$ c #D1AA64",
+"% c #F0C373",
+/* pixels */
+"                ",
+"                ",
+"                ",
+"                ",
+"          +     ",
+"         X@X    ",
+"        X#%$X   ",
+"       X#%%%$X  ",
+"      X#%%%%%$X ",
+"     +@%%%%%%%@+",
+"      X#%%%%%$X ",
+"       X#%%%$X  ",
+"        X#%$X   ",
+"         X@X    ",
+"          +     ",
+"                "
+};
