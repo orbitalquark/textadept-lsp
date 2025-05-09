@@ -1373,7 +1373,7 @@ events.connect(events.VIEW_NEW, function()
 		CLASS = 'class', NAMESPACE = 'module', METHOD = 'method', SIGNAL = 'operator', SLOT = 'event',
 		VARIABLE = 'variable', TYPEDEF = 'interface'
 	}
-	for k, v in ipairs(map) do compat_xpms[k] = xpm_map[name] end
+	for k, v in ipairs(map) do compat_xpms[k] = xpm_map[v] end
 end)
 
 -- Setup events to automatically start language servers and notify them as files are opened.
