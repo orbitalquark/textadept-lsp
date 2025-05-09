@@ -1345,7 +1345,7 @@ function M.code_action(s, e)
 end
 
 -- LuaFormatter off
-local curses_xpm = {class='#',color=' ',constant='&',constructor='+',event='!',field='-',file=' ',fix='!',folder='/',interface=':',keyword=' ',method='*',module='@',operator=' ',property=' ',refactor=' ',reference=' ',snippet=' ',struct='#',type_parameter=' ',unit=' ',value=' ',variable=' '}
+local curses_xpm = {class='#',color=' ',constant='&',constructor='+',event='!',field='-',file=' ',fix='!',folder='/',interface=':',keyword=' ',method='*',module='@',operator=' ',property=' ',refactor=' ',reference=' ',snippet=' ',struct='#',text=' ',type_parameter=' ',unit=' ',value=' ',variable=' '}
 -- LuaFormatter on
 
 -- Load and register XPM images.
