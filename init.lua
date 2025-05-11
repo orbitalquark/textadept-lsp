@@ -223,6 +223,7 @@ M.server_commands = {}
 
 --- Map of lexer names to maps of project roots and their active LSP servers.
 local servers = {}
+for _, name in ipairs(lexer.names()) do servers[name] = {} end
 
 --- Map of LSP CompletionItemKinds to names of images used in autocompletion lists, and map of
 -- those names to their Scintilla image types.
@@ -850,7 +851,6 @@ end
 -- Sub-projects use their parent project's language server.
 local function get_server()
 	local lang = buffer.lexer_language
-	if not servers[lang] then servers[lang] = {} end
 	local root = io.get_project_root()
 	if not root and lang == 'lua' then root = '' end -- special case
 	if not root then return nil end
