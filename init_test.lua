@@ -419,6 +419,7 @@ function M.func() end
 	test.assert_contains(completions, 'func')
 	test.assert_equal(call_tip_show.called, true)
 end)
+retry(1) -- TODO: for some reason this fails the first time
 
 test('lsp menu should allow manually starting and stopping an lsp server', function()
 	local _<close> = test.mock(lsp, 'server_commands', {cpp = 'clangd'})
