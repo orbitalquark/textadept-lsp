@@ -306,7 +306,7 @@ function Server.new(lang, root, cmd, init_options)
 	server.proc = assert(os.spawn(cmd, function(output) server:handle_stdout(output) end,
 		function(output) log(output) end, function(status)
 			log('Server exited with status ', status)
-			servers[lang][root] = nil
+			if root then servers[lang][root] = nil end
 		end))
 	root = io.get_project_root()
 	local result = server:request('initialize', {

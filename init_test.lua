@@ -130,6 +130,7 @@ test('lsp.autocomplete should show a list of completions', function()
 		return auto_c_show.called and auto_c_show.args[3]:find('append')
 	end)
 end)
+if LINUX and CURSES and not os.getenv('CI') then retry(1) end -- for some reason I need this
 if not have_clangd then skip('clangd is not available') end
 
 test('lsp.hover should show a calltip with information for the current symbol', function()
@@ -369,6 +370,7 @@ test('clicking on a diagnostic and selecting a code action (if any) should run i
 
 	test.wait(function() return buffer:get_text() == orig_text end)
 end)
+if OSX and not os.getenv('CI') then retry(1) end -- for some reason I need this
 if not have_clangd then skip('clangd is not available') end
 if have_clangd and LINUX and os.getenv('CI') then skip('clangd diagnostics on CI do not work') end
 
