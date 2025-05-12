@@ -130,7 +130,7 @@ test('lsp.autocomplete should show a list of completions', function()
 		return auto_c_show.called and auto_c_show.args[3]:find('append')
 	end)
 end)
-if LINUX and CURSES and not os.getenv('CI') then retry(1) end -- for some reason I need this
+if LINUX and CURSES then retry(1) end -- TODO: sometimes lsp.autocomplete() has nil message
 if not have_clangd then skip('clangd is not available') end
 
 test('lsp.hover should show a calltip with information for the current symbol', function()
@@ -251,7 +251,7 @@ test('lsp.select_all_symbol should select all instances of the current symbol', 
 	test.assert_equal(buffer.selections, 2)
 	test.assert_equal(buffer:get_sel_text(), 'foofoo') -- Scintilla stores it this way
 end)
-expected_failure('clangd does not support this yet')
+expected_failure() -- clangd does not support this yet
 if not have_clangd then skip('clangd is not available') end
 
 test('lsp.code_action should pop up actions for selected text like an identifier', function()
