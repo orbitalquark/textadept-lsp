@@ -864,6 +864,7 @@ end
 -- Sub-projects use their parent project's language server.
 local function get_server()
 	local lang = buffer.lexer_language
+	if lang == '' then return end -- can happen in rare circumstances
 	local root = io.get_project_root()
 	if not root and lang == 'lua' then root = '' end -- special case
 	if not root then return nil end
