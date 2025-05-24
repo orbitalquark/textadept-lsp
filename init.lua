@@ -268,6 +268,13 @@ local symbol_kinds = {
 local symbol_kind_set = {} -- for LSP capabilities
 for i = 1, #symbol_kinds do symbol_kind_set[i] = i end
 
+local INDIC_UNNECESSARY = view.new_indic_number()
+local INDIC_DEPRECATED = view.new_indic_number()
+local diagnostic_tags = {INDIC_UNNECESSARY, INDIC_DEPRECATED}
+local diagnostic_indics = {
+	textadept.run.INDIC_ERROR, textadept.run.INDIC_WARNING, INDIC_UNNECESSARY, INDIC_DEPRECATED
+}
+
 local log_lines, log_buffer = {}, nil
 --- Logs the given arguments to the log buffer.
 local function log(...)
@@ -707,7 +714,7 @@ function Server:handle_notification(method, params)
 		local current_line = buffer:line_from_position(buffer.current_pos)
 		local orig_lines_from_top = view:visible_from_doc_line(current_line) - view.first_visible_line
 		-- Clear any existing diagnostics.
-		for _, indic in ipairs{textadept.run.INDIC_WARNING, textadept.run.INDIC_ERROR} do
+		for _, indic in ipairs(diagnostic_indics) do
 			buffer.indicator_current = indic
 			buffer:indicator_clear_range(1, buffer.length)
 		end
@@ -715,15 +722,21 @@ function Server:handle_notification(method, params)
 		-- Add diagnostics.
 		diagnostics = params.diagnostics
 		for _, diagnostic in ipairs(diagnostics) do
-			buffer.indicator_current = (not diagnostic.severity or diagnostic.severity == 1) and
-				textadept.run.INDIC_ERROR or textadept.run.INDIC_WARNING -- TODO: diagnostic.tags
+			local indic = textadept.run.INDIC_ERROR
+			if diagnostic.tags then
+				for _, tag in ipairs(diagnostic.tags) do indic = diagnostic_tags[tag] end
+			elseif diagnostic.severity and diagnostic.severity ~= 1 then
+				indic = textadept.run.INDIC_WARNING
+			end
+			buffer.indicator_current = indic
 			local s, e = tobufferrange(diagnostic.range)
 			local line = buffer:line_from_position(e)
 			if M.show_all_diagnostics or (current_line ~= line and current_line + 1 ~= line) then
 				buffer:indicator_fill_range(s, e - s)
 				buffer.annotation_text[line] = diagnostic.message
-				buffer.annotation_style[line] = buffer:style_of_name(lexer.ERROR)
-				-- TODO: diagnostics should be persistent in projects.
+				if indic == textadept.run.INDIC_ERROR then
+					buffer.annotation_style[line] = buffer:style_of_name(lexer.ERROR)
+				end
 			end
 		end
 		if #diagnostics > 0 then buffer._lsp_diagnostic_time = os.time() end
@@ -1348,8 +1361,12 @@ end
 local curses_xpm = {class='#',color=' ',constant='&',constructor='+',event='!',field='-',file=' ',fix='!',folder='/',interface=':',keyword=' ',method='*',module='@',operator=' ',property=' ',refactor=' ',reference=' ',snippet=' ',struct='#',text=' ',type_parameter=' ',unit=' ',value=' ',variable=' '}
 -- LuaFormatter on
 
--- Load and register XPM images.
+-- Load and register indicators and XPM images.
 events.connect(events.VIEW_NEW, function()
+	view.indic_style[INDIC_UNNECESSARY] = view.INDIC_TEXTFORE
+	view.indic_fore[INDIC_UNNECESSARY] = view.colors.grey
+	view.indic_style[INDIC_DEPRECATED] = view.INDIC_STRIKE
+
 	view._lsp_xpms = {}
 	local dir = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
 	dir = dir .. '/modules/lsp/icons/' .. (not is_hidpi() and '16' or '16@2x')
@@ -1455,7 +1472,7 @@ events.connect(events.DWELL_END, function() if get_server() then view:call_tip_c
 
 -- Shows a code action list (if any) for the clicked diagnostic message.
 events.connect(events.INDICATOR_CLICK, function(pos)
-	for _, indic in ipairs{textadept.run.INDIC_ERROR, textadept.run.INDIC_WARNING} do
+	for _, indic in ipairs(diagnostic_indics) do
 		if buffer:indicator_all_on_for(pos) & 1 << indic - 1 == 0 then goto continue end
 		buffer:goto_pos(pos)
 		M.code_action(buffer:indicator_start(indic, pos), buffer:indicator_end(indic, pos))
