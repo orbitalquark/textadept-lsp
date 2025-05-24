@@ -995,6 +995,8 @@ textadept.editing.autocompleters.lsp = function()
 	if #completions == 0 then return end
 	snippets = {}
 	-- Associate completion items with icons.
+	buffer.auto_c_type_separator = string.byte('|') -- default '?' is not okay for e.g. Ruby LSP
+	local preselect
 	local symbols = table.map(completions, function(symbol)
 		local label = symbol.insertText or symbol.label
 		if symbol.insertTextFormat == 2 then -- snippet
@@ -1003,10 +1005,10 @@ textadept.editing.autocompleters.lsp = function()
 		end
 		if label:find(' ') then buffer.auto_c_separator = string.byte('\n') end
 		if symbol.kind and xpm_map[symbol.kind] and view._lsp_xpms[xpm_map[symbol.kind]] then
-			local sep = string.char(buffer.auto_c_type_separator) -- TODO: is default '?' okay?
-			return string.format('%s%s%d', label, sep, view._lsp_xpms[xpm_map[symbol.kind]])
+			return string.format('%s%s%d', label, string.char(buffer.auto_c_type_separator),
+				view._lsp_xpms[xpm_map[symbol.kind]])
 		end
-		-- TODO: if symbol.preselect then symbols.selected = label end?
+		if symbol.preselect then preselect = label end
 		return label
 	end)
 	-- Return the autocompletion list.
@@ -1019,7 +1021,7 @@ textadept.editing.autocompleters.lsp = function()
 		len_entered = buffer.current_pos - s
 	end
 	if server.auto_c_fill_ups ~= '' then buffer.auto_c_fill_ups = server.auto_c_fill_ups end
-	return len_entered, symbols
+	return len_entered, symbols, preselect
 end
 
 local snippet_to_insert
@@ -1351,7 +1353,7 @@ function M.code_action(s, e)
 		elseif action.kind:find('^source') then
 			xpm = view._lsp_xpms.keyword
 		end
-		return string.format('%s?%d', action.title, xpm) -- TODO: auto_c_type_separator
+		return string.format('%s%s%d', action.title, string.char(buffer.auto_c_type_separator), xpm)
 	end)
 	buffer.auto_c_separator = string.byte('\n')
 	buffer:user_list_show(M.CODE_ACTION_ID, table.concat(list, '\n'))
