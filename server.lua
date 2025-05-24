@@ -46,7 +46,7 @@ local function respond(id, result)
 	io.write(string.format('Content-Length: %d\r\n\r\n%s\r\n', #content + 2, content)):flush()
 end
 
-local root, options, client_capabilities, cache, tags, api
+local root, --[[options, client_capabilities, ]] cache, tags, api
 local open_files = {} -- map of open file URIs to their content lines
 local handlers = {} -- LSP method and notification handlers
 
@@ -83,9 +83,8 @@ register('initialize', function(params)
 	lfs.mkdir(cache)
 	pl_dir.copyfile('tadoc.lua', cache .. '/tadoc.lua')
 	log:info('Initialize (root=%s, cache=%s)', root or 'nil', cache)
-	options = params.initializationOptions -- TODO: unused
-	client_capabilities = params.capabilities -- TODO: check for capabilities before sending responses
-	if options or client_capabilities then end -- luacheck: ignore 542
+	-- options = params.initializationOptions
+	-- client_capabilities = params.capabilities -- TODO: check for capabilities before sending responses
 	return {
 		capabilities = {
 			positionEncoding = 'utf-8', --
@@ -108,7 +107,7 @@ register('initialize', function(params)
 			-- referencesProvider = true,
 			-- documentHighlightProvider = true,
 			-- documentSymbolProvider = true,
-			-- codeActionProvider = {codeActionKinds = {},resolveProvider = true},
+			-- codeActionProvider = {codeActionKinds = {}, resolveProvider = true},
 			-- codeLensProvider = {resolveProvider = true},
 			-- documentLinkProvider = {resolveProvider = true},
 			-- colorProvider = true,
@@ -543,9 +542,7 @@ register('textDocument/definition', function(params)
 end)
 
 -- LSP workspace/symbol request.
-register('workspace/symbol', function()
-	return json.null -- TODO:
-end)
+register('workspace/symbol', function() return json.null end)
 
 -- LSP shutdown request.
 register('shutdown', function()

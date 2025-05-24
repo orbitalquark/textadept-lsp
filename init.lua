@@ -319,7 +319,7 @@ function Server.new(lang, root, cmd, init_options)
 	local result = server:request('initialize', {
 		processId = json.null, --
 		clientInfo = {name = 'textadept', version = _RELEASE},
-		-- TODO: locale
+		-- locale = (os.getenv('LANG') or ''):match('^[^_.@]+'), -- should not be OS lang though
 		rootUri = root and (not WIN32 and 'file://' .. root or 'file:///' .. root:gsub('\\', '/')) or
 			nil, --
 		initializationOptions = init_options, --
@@ -585,8 +585,9 @@ function Server:request(method, params)
 	-- Read incoming JSON messages until the proper response is found.
 	repeat
 		message = self:read()
-		-- TODO: error handling for message
-		if not message.id then
+		if message.error then
+			log('Server returned an error: ', message.error.message)
+		elseif not message.id then
 			self:handle_notification(message.method, message.params)
 		elseif message.method and not message.result then -- params may be nil
 			self:handle_request(message.id, message.method, message.params)
@@ -594,7 +595,6 @@ function Server:request(method, params)
 		end
 	until message.id
 	-- Return the response's result.
-	if message.error then log('Server returned an error: ', message.error.message) end
 	return message.result ~= json.null and message.result or nil
 end
 
@@ -1239,12 +1239,11 @@ function M.find_references()
 	local locations = server:request('textDocument/references', params)
 	if not locations or #locations == 0 then return end
 
-	local line, pos = buffer:get_cur_line()
-	local before, after = line:sub(1, pos - 1), line:sub(pos)
-	local symbol = before:match('[%w_]*$') .. after:match('^[%w_]*') -- TODO: lang-specific chars
-	local root = io.get_project_root()
-
 	local function print(message) ui.print_to(_L['[Files Found Buffer]'], message) end
+
+	local symbol = buffer:text_range(buffer:word_start_position(buffer.selection_start),
+		buffer:word_end_position(buffer.selection_end))
+	local root = io.get_project_root()
 	print(string.format('%s: %s\n%s %s', _L['Find References']:gsub('[_&]', ''), symbol,
 		_L['Directory:'], root))
 
@@ -1257,9 +1256,9 @@ function M.find_references()
 		buffer:replace_target(f:read('a'))
 		if filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
 		local line_num = location.range.start.line + 1
-		line = buffer:get_line(line_num):match('^[^\r\n]*')
+		local line = buffer:get_line(line_num):match('^[^\r\n]*')
 		print(string.format('%s:%d:%s', filename, line_num, line))
-		pos = ff_buffer.line_end_position[ff_buffer.line_count - 1] - #line +
+		local pos = ff_buffer.line_end_position[ff_buffer.line_count - 1] - #line +
 			location.range.start.character
 		ff_buffer.indicator_current = ui.find.INDIC_FIND
 		ff_buffer:indicator_fill_range(pos,
@@ -1444,7 +1443,7 @@ events.connect(events.BUFFER_DELETED, function(buffer)
 	server:notify('textDocument/didClose', {
 		textDocument = {uri = touri(buffer.filename), languageId = buffer.lexer_language, version = 0}
 	})
-	server._opened[buffer.filename] = false -- TODO: server:notify_closed()?
+	server._opened[buffer.filename] = false
 end)
 
 -- Show completions or signature help if a trigger character is typed.
