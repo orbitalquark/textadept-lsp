@@ -1366,7 +1366,7 @@ local curses_xpm = {class='#',color=' ',constant='&',constructor='+',event='!',f
 -- Load and register indicators and XPM images.
 events.connect(events.VIEW_NEW, function()
 	view.indic_style[INDIC_UNNECESSARY] = view.INDIC_TEXTFORE
-	view.indic_fore[INDIC_UNNECESSARY] = view.colors.grey
+	if view.colors.grey then view.indic_fore[INDIC_UNNECESSARY] = view.colors.grey end
 	view.indic_style[INDIC_DEPRECATED] = view.INDIC_STRIKE
 
 	view._lsp_xpms = {}
