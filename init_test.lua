@@ -372,7 +372,7 @@ test('clicking on a diagnostic and selecting a code action (if any) should run i
 end)
 if OSX and not os.getenv('CI') then retry(1) end -- for some reason I need this
 if not have_clangd then skip('clangd is not available') end
-if have_clangd and LINUX and os.getenv('CI') then skip('clangd diagnostics on CI do not work') end
+if have_clangd and LINUX and os.getenv('CI') == 'true' then skip('clangd diagnostics do not work') end
 
 test('lua lsp should work for untitled buffers', function()
 	buffer:set_lexer('lua')
