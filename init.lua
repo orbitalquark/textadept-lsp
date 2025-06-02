@@ -104,45 +104,6 @@
 -- @module lsp
 local M = {}
 
--- Localizations.
-local _L = _L
-if not rawget(_L, 'Language Server') then
-	-- Dialogs.
-	_L['language server is already running'] = 'language server is already running'
-	_L['language server shell command:'] = 'language server shell command:'
-	_L['Stop Server?'] = 'Stop Server?'
-	_L['Stop the language server for'] = 'Stop the language server for'
-	_L['Symbol name or name part:'] = 'Symbol name or name part:'
-	-- Status.
-	_L['LSP server started'] = 'LSP server started'
-	_L['Unable to start LSP server'] = 'Unable to start LSP server'
-	_L['Note: completion list incomplete'] = 'Note: completion list incomplete'
-	_L['Loading Textadept documentation...'] = 'Loading Textadept documentation...'
-	_L['Showing diagnostics'] = 'Showing diagnostics'
-	_L['Hiding diagnostics'] = 'Hiding diagnostics'
-	-- Menu.
-	_L['Language Server'] = 'Lan_guage Server'
-	_L['Start Server...'] = '_Start Server...'
-	_L['Stop Server'] = 'Sto_p Server'
-	_L['Go To Workspace Symbol...'] = 'Go To _Workspace Symbol...'
-	_L['Go To Document Symbol...'] = 'Go To Document S_ymbol...'
-	_L['Autocomplete'] = '_Autocomplete'
-	_L['Show Documentation'] = 'Show _Documentation'
-	_L['Show Hover Information'] = 'Show _Hover Information'
-	_L['Show Signature Help'] = 'Show Si_gnature Help'
-	_L['Go To Declaration'] = 'Go To De_claration'
-	_L['Go To Definition'] = 'Go To De_finition'
-	_L['Go To Type Definition'] = 'Go To _Type Definition'
-	_L['Go To Implementation'] = 'Go To _Implementation'
-	_L['Find References'] = 'Find _References'
-	_L['Select Around'] = 'Select Aro_und'
-	_L['Select All Symbol'] = 'Select Al_l Symbol'
-	_L['Code Action'] = 'Code Action'
-	_L['Toggle Show Diagnostics'] = 'Toggle Show Diag_nostics'
-	_L['Show Log'] = 'Show L_og'
-	_L['Clear Log'] = 'Cl_ear Log'
-end
-
 -- Events.
 for _, v in ipairs{'lsp_initialized', 'lsp_notification', 'lsp_request'} do events[v:upper()] = v end
 
@@ -1533,6 +1494,26 @@ end)
 
 -- Add a menu.
 -- (Insert 'Language Server' menu in alphabetical order.)
+_L['Language Server'] = 'Lan_guage Server'
+_L['Start Server...'] = '_Start Server...'
+_L['Stop Server'] = 'Sto_p Server'
+_L['Go To Workspace Symbol...'] = 'Go To _Workspace Symbol...'
+_L['Go To Document Symbol...'] = 'Go To Document S_ymbol...'
+_L['Autocomplete'] = '_Autocomplete'
+_L['Show Documentation'] = 'Show _Documentation'
+_L['Show Hover Information'] = 'Show _Hover Information'
+_L['Show Signature Help'] = 'Show Si_gnature Help'
+_L['Go To Declaration'] = 'Go To De_claration'
+_L['Go To Definition'] = 'Go To De_finition'
+_L['Go To Type Definition'] = 'Go To _Type Definition'
+_L['Go To Implementation'] = 'Go To _Implementation'
+_L['Find References'] = 'Find _References'
+_L['Select Around'] = 'Select Aro_und'
+_L['Select All Symbol'] = 'Select Al_l Symbol'
+_L['Code Action'] = 'Code Action'
+_L['Toggle Show Diagnostics'] = 'Toggle Show Diag_nostics'
+_L['Show Log'] = 'Show L_og'
+_L['Clear Log'] = 'Cl_ear Log'
 local m_tools = textadept.menu.menubar['Tools']
 local found_area
 for i = 1, #m_tools - 1 do
