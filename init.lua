@@ -1470,7 +1470,7 @@ local function shutdown_servers()
 	end
 end
 events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as buffers are reloaded
-events.connect(events.QUIT, shutdown_servers, 1)
+events.connect(events.QUIT, shutdown_servers)
 
 -- Log buffer modification times for more real-time diagnostics.
 local INSERT, DELETE = buffer.MOD_INSERTTEXT, buffer.MOD_DELETETEXT
