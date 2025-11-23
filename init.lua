@@ -1333,10 +1333,10 @@ events.connect(events.VIEW_NEW, function()
 	view._lsp_xpms = {}
 	local dir = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
 	dir = dir .. '/modules/lsp/icons/' .. (not is_hidpi() and '16' or '16@2x')
-	for name in lfs.dir(dir) do
-		if not name:find('%.xpm$') then goto continue end
-		local f<close> = assert(io.open(dir .. '/' .. name, 'rb'))
-		name = name:match('^[^.]+')
+	for filename in lfs.dir(dir) do
+		if not filename:find('%.xpm$') then goto continue end
+		local f<close> = assert(io.open(dir .. '/' .. filename, 'rb'))
+		local name = filename:match('^[^.]+')
 		local xpm = not CURSES and f:read('a') or curses_xpm[name]
 		local type = xpm_map[name] or view.new_image_type()
 		view:register_image(type, xpm)
