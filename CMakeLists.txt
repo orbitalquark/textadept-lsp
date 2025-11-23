@@ -26,7 +26,8 @@ FetchContent_Declare(ldoc
 FetchContent_MakeAvailable(ldoc)
 set(logging_zip v1.8.1.zip)
 FetchContent_Declare(logging
-	URL https://github.com/lunarmodules/lualogging/archive/refs/tags/${logging_zip})
+	URL https://github.com/lunarmodules/lualogging/archive/refs/tags/${logging_zip}
+	PATCH_COMMAND patch -N -p1 < ${CMAKE_SOURCE_DIR}/logging.patch)
 FetchContent_MakeAvailable(logging)
 
 # Install.

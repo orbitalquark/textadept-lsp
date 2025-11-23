@@ -1,0 +1,11 @@
+--- a/src/logging.lua	2025-11-23 14:08:37
++++ b/src/logging.lua	2025-11-23 14:08:45
+@@ -249,7 +249,7 @@
+ 
+ do
+   local gettime = os.time
+-  local ok, socket = pcall(require, "socket") -- load luasocket if available
++  local ok, socket = false -- pcall(require, "socket") -- load luasocket if available
+   if ok then
+     gettime = socket.gettime
+   end
