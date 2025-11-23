@@ -1,0 +1,42 @@
+--- a/lua/pl/tablex.lua	2025-11-23 14:14:55
++++ b/lua/pl/tablex.lua	2025-11-23 14:15:01
+@@ -103,8 +103,8 @@
+     cache[t] = res
+     local mt = getmetatable(t)
+     for k,v in pairs(t) do
+-        k = cycle_aware_copy(k, cache)
+-        v = cycle_aware_copy(v, cache)
++        local k = cycle_aware_copy(k, cache)
++        local v = cycle_aware_copy(v, cache)
+         res[k] = v
+     end
+     setmetatable(res,mt)
+--- a/lua/pl/app.lua	2025-11-23 14:15:40
++++ b/lua/pl/app.lua	2025-11-23 14:16:40
+@@ -193,6 +193,7 @@
+ 
+     local with_values = {}
+     for k,v in pairs(flags_with_values or {}) do
++        local k = k
+         if type(k) == "number" then
+             k = v
+         end
+@@ -207,6 +208,7 @@
+     else
+         valid = {}
+         for k,aliasses in pairs(flags_valid) do
++            local k = k
+             if type(k) == "number" then         -- array/list entry
+                 k = aliasses
+             end
+--- a/lua/pl/lapp.lua	2025-11-23 14:17:16
++++ b/lua/pl/lapp.lua	2025-11-23 14:17:29
+@@ -218,7 +218,7 @@
+     for line in lines(str) do
+         local res = {}
+         local optparm,defval,vtype,constraint,rest
+-        line = lstrip(line)
++        local line = lstrip(line)
+         local function check(str)
+             return match(str,line,res)
+         end

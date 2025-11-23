@@ -17,7 +17,8 @@ FetchContent_Declare(dkjson URL ${dkjson_url})
 FetchContent_MakeAvailable(dkjson)
 set(penlight_zip 1.13.1.zip)
 FetchContent_Declare(penlight
-	URL https://github.com/lunarmodules/Penlight/archive/refs/tags/${penlight_zip})
+	URL https://github.com/lunarmodules/Penlight/archive/refs/tags/${penlight_zip}
+	PATCH_COMMAND patch -N -p1 < ${CMAKE_SOURCE_DIR}/penlight.patch)
 FetchContent_MakeAvailable(penlight)
 set(ldoc_zip 1.4.6.zip)
 FetchContent_Declare(ldoc
