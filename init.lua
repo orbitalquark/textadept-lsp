@@ -238,8 +238,8 @@ local diagnostic_indics = {
 
 local log_lines, log_buffer = {}, nil
 --- Logs the given arguments to the log buffer.
-local function log(...)
-	log_lines[#log_lines + 1] = table.concat(table.pack(...))
+local function log(...args)
+	log_lines[#log_lines + 1] = table.concat(args)
 	if not log_buffer then return end
 	if not _BUFFERS[log_buffer] then
 		log_buffer = nil
