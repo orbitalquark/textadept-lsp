@@ -30,7 +30,7 @@
 -- @param[opt] strip
 -- @function string.dump
 
---- Looks for the first match of `pattern` (see §6.4.1) in the string `s`. If it finds a match,
+--- Looks for the first match of `pattern` (see §6.5.1) in the string `s`. If it finds a match,
 -- then `find` returns the indices of `s` where this occurrence starts and ends; otherwise,
 -- it returns nil. A third, optional numerical argument `init` specifies where to start the
 -- search; its default value is 1 and can be negative. A value of true as a fourth, optional
@@ -47,9 +47,10 @@
 
 --- Returns a formatted version of its variable number of arguments following the description
 -- given in its first argument, which must be a string. The format string follows the same rules
--- as the ISO C function `sprintf`. The only differences are that the conversion specifiers and
--- modifiers `*`, `h`, `L`, `l`, and `n` are not supported and that there is an extra specifier,
--- `q`.
+-- as the ISO C function `sprintf`. The accepted conversion specifiers are 'A', 'a', 'c', 'd',
+-- 'E', 'e', 'f', 'G', 'g', 'i', 'o', 'p', 's', 'u', 'X', 'x', and '%', plus a non-C specifier
+-- q. The accepted flags are '-', '+', '#', '0', and ' ' (space). Both width and precision,
+-- when present, are limited to two digits.
 --
 -- The specifier `q` formats booleans, nil, numbers, and strings in a way that the result is a
 -- valid constant in Lua source code. Booleans and nil are written in the obvious way (`true`,
@@ -82,7 +83,7 @@
 -- @function string.format
 
 --- Returns an iterator function that, each time it is called, returns the next captures from
--- `pattern` (see §6.4.1) over the string `s`. If `pattern` specifies no captures, then the
+-- `pattern` (see §6.5.1) over the string `s`. If `pattern` specifies no captures, then the
 -- whole match is produced in each call. A third, optional argument `init` specifies where to
 -- start the search; its default value is 1 and can be negative.
 --
@@ -105,7 +106,7 @@
 -- @function string.gmatch
 
 --- Returns a copy of `s` in which all (or the first `n`, if given) occurrences of the `pattern`
--- (see §6.4.1) have been replaced by a replacement string specified by `repl`, which can be
+-- (see §6.5.1) have been replaced by a replacement string specified by `repl`, which can be
 -- a string, a table, or a function. `gsub` also returns, as its second value, the total number
 -- of matches that occurred. The name `gsub` comes from "Global SUBstitution".
 --
@@ -129,14 +130,21 @@
 --
 -- Here are some examples:
 --
---   x = string.gsub("hello world", "(%w+)", "%1 %1") --> x="hello hello world world" x =
---   string.gsub("hello world", "%w+", "%0 %0", 1) --> x="hello hello world" x = string.gsub("hello
---   world from Lua", "(%w+)%s*(%w+)", "%2 %1") --> x="world hello Lua from" x = string.gsub("home
---   = $HOME, user = $USER", "%$(%w+)", os.getenv) --> x="home = /home/roberto, user = roberto"
+--   x = string.gsub("hello world", "(%w+)", "%1 %1")
+--   -- x="hello hello world world"
+--   x = string.gsub("hello world", "%w+", "%0 %0", 1)
+--   -- x="hello hello world"
+--   x = string.gsub("hello world from Lua", "(%w+)%s*(%w+)", "%2 %1")
+--   -- x="world hello Lua from"
+--   x = string.gsub("home = $HOME, user = $USER", "%$(%w+)", os.getenv)
+--   -- x="home = /home/roberto, user = roberto"
 --   x = string.gsub("4+5 = $return 4+5$", "%$(.-)%$", function (s)
---         return load(s)() end)
---   --> x="4+5 = 9" local t = {name="lua", version="5.4"} x = string.gsub("$name-$version.tar.gz",
---   "%$(%w+)", t) --> x="lua-5.4.tar.gz"
+--         return load(s)()
+--       end)
+--   -- x="4+5 = 9"
+--   local t = {name="lua", version="5.5"}
+--   x = string.gsub("$name-$version.tar.gz", "%$(%w+)", t)
+--   -- x="lua-5.5.tar.gz"
 -- @param s
 -- @param pattern
 -- @param repl
@@ -154,7 +162,7 @@
 -- @param s
 -- @function string.lower
 
---- Looks for the first *match* of the `pattern` (see §6.4.1) in the string `s`. If it finds one,
+--- Looks for the first *match* of the `pattern` (see §6.5.1) in the string `s`. If it finds one,
 -- then `match` returns the captures from the pattern; otherwise it returns nil. If `pattern`
 -- specifies no captures, then the whole match is returned. A third, optional numerical argument
 -- `init` specifies where to start the search; its default value is 1 and can be negative.
@@ -164,7 +172,7 @@
 -- @function string.match
 
 --- Returns a binary string containing the values `v1`, `v2`, etc. serialized in binary form
--- (packed) according to the format string `fmt` (see §6.4.2).
+-- (packed) according to the format string `fmt` (see §6.5.2).
 --
 -- New in Lua 5.3.
 -- @param fmt
@@ -174,7 +182,7 @@
 -- @function string.pack
 
 --- Returns the length of a string resulting from `string.pack` with the given format. The format
--- string cannot have the variable-length options 's' or 'z' (see §6.4.2).
+-- string cannot have the variable-length options 's' or 'z' (see §6.5.2).
 --
 -- New in Lua 5.3.
 -- @param fmt
@@ -209,7 +217,7 @@
 -- @function string.sub
 
 --- Returns the values packed in string `s` (see `string.pack`) according to the format string
--- `fmt` (see §6.4.2). An optional `pos` marks where to start reading in `s` (default is
+-- `fmt` (see §6.5.2). An optional `pos` marks where to start reading in `s` (default is
 -- 1). After the read values, this function also returns the index of the first unread byte in `s`.
 --
 -- New in Lua 5.3.

@@ -1,6 +1,6 @@
 --- @module utf8
 
---- The pattern (a string, not a function) "[\0-\x7F\xC2-\xFD][\x80-\xBF]*" (see §6.4.1), which
+--- The pattern (a string, not a function) "[\0-\x7F\xC2-\xFD][\x80-\xBF]*" (see §6.5.1), which
 -- matches exactly one UTF-8 byte sequence, assuming that the subject is a valid UTF-8 string.
 --
 -- New in Lua 5.3.
@@ -62,14 +62,21 @@
 -- @param[optchain] lax
 -- @function utf8.len
 
---- Returns the position (in bytes) where the encoding of the `n`-th character of `s` (counting
--- from position `i`) starts. A negative `n` gets characters before position `i`. The default
--- for `i` is 1 when `n` is non-negative and `#s + 1` otherwise, so that `utf8.offset(s, -n)`
--- gets the offset of the `n`-th character from the end of the string. If the specified character
--- is neither in the subject nor right after its end, the function returns nil.
+---  Returns the position of the `n`-th character of `s` (counting from byte position i) as
+--  two integers: The index (in bytes) where its encoding starts and the index (in bytes)
+--  where it ends.
 --
--- As a special case, when `n` is 0 the function returns the start of the encoding of the
--- character that contains the `i`-th byte of `s`.
+-- If the specified character is right after the end of `s`, the function behaves as if there
+-- was a '\0' there. If the specified character is neither in the subject nor right after its
+-- end, the function returns fail.
+--
+-- A negative `n` gets characters before position `i`. The default for `i` is 1 when `n` is
+-- non-negative and `#s + 1` otherwise, so that `utf8.offset(s, -n)` gets the offset of the
+-- `n`-th character from the end of the string. If the specified character is neither in the
+-- subject nor right after its end, the function returns nil.
+--
+-- As a special case, when `n` is 0 the function returns the start and end of the encoding of
+-- the character that contains the `i`-th byte of `s`.
 --
 -- This function assumes that `s` is a valid UTF-8 string.
 --

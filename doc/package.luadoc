@@ -51,7 +51,7 @@
 --- A string with the path used by `require` to search for a C loader.
 --
 -- Lua initializes the C path `package.cpath` in the same way it initializes the Lua path
--- `package.path`, using the environment variable `LUA_CPATH_5_4` or the environment variable
+-- `package.path`, using the environment variable `LUA_CPATH_5_5` or the environment variable
 -- `LUA_CPATH` or a default path defined in `luaconf.h`.
 -- @field cpath
 
@@ -72,7 +72,7 @@
 --- A string with the path used by `require` to search for a Lua loader.
 --
 -- At start-up, Lua initializes this variable with the value of the environment variable
--- `LUA_PATH_5_4` or the environment variable `LUA_PATH` or with a default path defined in
+-- `LUA_PATH_5_5` or the environment variable `LUA_PATH` or with a default path defined in
 -- `luaconf.h`, if those environment variables are not defined. A "`;;`" in the value of the
 -- environment variable is replaced by the default path.
 -- @field path
@@ -144,9 +144,9 @@
 -- a path and an extension. `funcname` must be the exact name exported by the C library (which
 -- may depend on the C compiler and linker used).
 --
--- This functionality is not supported by ISO C. As such, it is only available on some platforms
--- (Windows, Linux, Mac OS X, Solaris, BSD, plus other Unix systems that support the `dlfcn`
--- standard).
+-- This functionality is not supported by ISO C. As such, `loadlib` is only available on some
+-- platforms: Windows, Linux, Mac OS X, Solaris, BSD, plus other Unix systems that support the
+-- `dlfcn` standard.
 --
 -- This function is inherently insecure, as it allows Lua to call any function in any readable
 -- dynamic library in the system. (Lua calls any function assuming the function has a proper

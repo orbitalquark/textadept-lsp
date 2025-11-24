@@ -5,7 +5,7 @@
 -- @table _G
 
 --- A global variable (not a function) that holds a string containing the running Lua version. The
--- current value of this variable is "`Lua 5.4`".
+-- current value of this variable is "`Lua 5.5`".
 -- @field _VERSION
 
 --- Raises an error if the value of its argument `v` is false (i.e., nil or false); otherwise,
@@ -17,32 +17,50 @@
 
 --- This function is a generic interface to the garbage collector. It performs different functions
 -- according to its first argument, `opt`:
---   "collect": performs a full garbage-collection cycle. This is the default option.
---   "stop": stops automatic execution of the garbage collector.
---   "restart": restarts automatic execution of the garbage collector.
---   "count": returns the total memory in use by Lua in Kbytes. The value has a fractional part,
+-- - "collect": performs a full garbage-collection cycle. This is the default option.
+-- - "stop": stops automatic execution of the garbage collector.
+-- - "restart": restarts automatic execution of the garbage collector.
+-- - "count": returns the total memory in use by Lua in Kbytes. The value has a fractional part,
 --     so that it multiplied by 1024 gives the exact number of bytes in use by Lua.
---   "step": performs a garbage-collection step. The step "size" is controlled by `arg`. With a
---     zero value, the collector will perform one basic (indivisible) step. For non-zero values,
---     the collector will perform as if that amount of memory (in Kbytes) had been allocated
---     by Lua. Returns true if the step finished a collection cycle.
---   "isrunning": returns a boolean that tells whether the collector is running (i.e., not
+-- - "step": performs a garbage-collection step. This option may be followed by an extra
+--     argument, an integer with the step size.
+--     If the size is a positive n, the collector acts as if n new bytes have been allocated. If
+--     the size is zero, the collector performs a basic step. In incremental mode, a basic step
+--     corresponds to the current step size. In generational mode, a basic step performs a full
+--     minor collection or an incremental step, if the collector has scheduled one.
+--     In incremental mode, the function returns true if the step finished a collection cycle. In
+--     generational mode, the function returns true if the step finished a major collection.
+-- - "isrunning": returns a boolean that tells whether the collector is running (i.e., not
 --     stopped).
---   "incremental": change the collector mode to incremental. This option can be followed
+-- - "incremental": change the collector mode to incremental. This option can be followed
 --     by three numbers: the garbage-collector pause, the step multiplier, and the step size
 --     (see §2.5.1). A zero means to not change that value.
---   "generational": change the collector mode to generational. This option can be followed
+-- - "generational": change the collector mode to generational. This option can be followed
 --     by two numbers: the garbage-collector minor multiplier and the major multiplier (see
 --     §2.5.2). A zero means to not change that value.
+-- - "param": Changes and/or retrieves the values of a parameter of the collector. This option
+--     must be followed by one or two extra arguments: The name of the parameter being changed
+--     or retrieved (a string) and an optional new value for that parameter, an integer in the
+--     range [0,100000]. The first argument must have one of the following values:
+--     - "minormul": The minor multiplier.
+--     - "majorminor": The major-minor multiplier.
+--     - "minormajor": The minor-major multiplier.
+--     - "pause": The garbage-collector pause.
+--     - "stepmul": The step multiplier.
+--     - "stepsize": The step size.
+--     The call always returns the previous value of the parameter. If the call does not give
+--     a new value, the value is left unchanged.
+--     Lua stores these values in a compressed format, so, the value returned as the previous
+--     value may not be exactly the last value set.
 --
 -- See §2.5 for more details about garbage collection and some of these options.
 -- @param[opt] opt
 -- @param[optchain] arg
 -- @function collectgarbage
 
---- Opens the named file and executes its content as a Lua chunk. When called without arguments,
--- `dofile` executes the content of the standard input (`stdin`). Returns all values returned
--- by the chunk. In case of errors, `dofile` propagates the error to its caller. (That is,
+--- Opens the named file and executes its content as a Lua chunk, returning all values returned
+-- by the chunk. When called without arguments, `dofile` executes the content of the standard
+-- input (`stdin`). In case of errors, `dofile` propagates the error to its caller. (That is,
 -- `dofile` does not run in protected mode.)
 -- @param[opt] filename
 -- @function dofile
@@ -73,7 +91,7 @@
 -- @param object
 -- @function getmetatable
 
---- Returns three values (an iterator function, the table `t`, and 0) so that the construction
+--- Returns three values (an iterator function, the value `t`, and 0) so that the construction
 --
 --   for i,v in ipairs(t) do *body* end
 --
@@ -111,9 +129,8 @@
 -- chunk). It may be the string "`b`" (only binary chunks), "`t`" (only text chunks), or "`bt`"
 -- (both binary and text). The default is "`bt`".
 --
--- It is safe to load malformed binary chunks; `load` signals an appropriate error. However,
--- Lua does not check the consistency of the code inside binary chunks; running maliciously
--- crafted bytecode can crash the interpreter.
+-- Lua does not check the consistency of binary chunks. Maliciously crafted binary chunks can
+-- crash the interpreter. You can use the `mode` parameter to prevent loading binary chunks.
 -- @param chunk
 -- @param[opt] chunkname
 -- @param[optchain] mode
@@ -170,10 +187,10 @@
 -- @param[opt] index
 -- @function next
 
---- If `t` has a metamethod `__pairs`, calls it with `t` as argument and returns the first three
+--- If `t` has a metamethod `__pairs`, calls it with `t` as argument and returns the first four
 -- results from the call.
 --
--- Otherwise, returns three values: the `next` function, the table `t`, and nil, so that the
+-- Otherwise, returns the `next` function, the table `t`, plus two nil values, so that the
 -- construction
 --
 --   for k,v in pairs(t) do *body* end
@@ -256,7 +273,7 @@
 -- This function returns `table`.
 --
 -- To change the metatable of other types from Lua code, you must use the debug library
--- (see §6.10).
+-- (see §6.11).
 -- @param table
 -- @param metatable
 -- @function setmetatable

@@ -95,8 +95,8 @@
 -- @param[opt] category
 -- @function os.setlocale
 
---- Returns the current time when called without arguments, or a time representing the date and
--- time specified by the given table. This table must have fields `year`, `month`, and `day`,
+--- Returns the current local time when called without arguments, or a time representing the date
+-- and time specified by the given table. This table must have fields `year`, `month`, and `day`,
 -- and may have fields `hour` (default is 12), `min` (default is 0), `sec` (default is 0), and
 -- `isdst` (default is nil). For a description of these fields, see the `os.date` function.
 --

@@ -10,6 +10,17 @@
 -- @param[optchain] j
 -- @function table.concat
 
+--- Creates a new empty table, preallocating memory. This preallocation may help performance
+-- and save memory when you know in advance how many elements the table will have.
+--
+-- Parameter `nseq` is a hint for how many elements the table will have as a sequence. Optional
+-- parameter `nrec` is a hint for how many other elements the table will have; its default is zero.
+--
+-- New in Lua 5.5.
+-- @param nseq
+-- @param[opt] nreq
+-- @function table.create
+
 --- Inserts element `value` at position `pos` in `list`, shifting up the elements `list[pos],
 -- list[pos+1], ···, list[#list]`. The default value for `pos` is `#list+1`, so that a call
 -- `table.insert(t,x)` inserts `x` at the end of the list `t`.
@@ -29,6 +40,7 @@
 --- Moves elements from the table `a1` to the table `a2`, performing the equivalent to the
 -- following multiple assignment: `a2[t], ··· = a1[f], ···, a1[e]`. The default for `a2`
 -- is `a1`. The destination range can overlap with the source range. Index `f` must be positive.
+-- If `f` is larger than `e`, nothing is moved.
 --
 -- Returns the destination table `a2`.
 --
