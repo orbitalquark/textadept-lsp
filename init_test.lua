@@ -1,4 +1,4 @@
--- Copyright 2020-2025 Mitchell. See LICENSE.
+-- Copyright 2020-2026 Mitchell. See LICENSE.
 
 local lsp = require('lsp')
 events.emit(events.VIEW_NEW) -- register XPMs

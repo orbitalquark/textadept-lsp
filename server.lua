@@ -1,5 +1,5 @@
 #!/bin/env lua
--- Copyright 2023-2025 Mitchell. See LICENSE.
+-- Copyright 2023-2026 Mitchell. See LICENSE.
 
 --- Simple Lua language server for developing with Lua and Textadept.
 -- @usage /path/to/textadept -L /path/to/server.lua /path/to/userhome

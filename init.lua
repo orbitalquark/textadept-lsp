@@ -1,4 +1,4 @@
--- Copyright 2018-2025 Mitchell. See LICENSE.
+-- Copyright 2018-2026 Mitchell. See LICENSE.
 
 --- A client for Textadept that communicates over the [Language Server Protocol][] (LSP) with
 -- language servers in order to provide autocompletion, calltips, go to definition, and more.
