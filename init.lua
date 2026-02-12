@@ -68,8 +68,8 @@
 -- Windows and Linux | macOS | Terminal | Command
 -- -|-|-|-
 -- **Tools**| | |
--- Ctrl+Space | ⌘Space<br/> ^Space | ^Space | Complete symbol
--- Ctrl+? | ⌘?<br/>^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
+-- Ctrl+Space | ^Space | ^Space | Complete symbol
+-- Ctrl+? | ^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
 -- F12 | F12 | F12 | Go To Definition
 -- Shift+F12 | ⇧F12 | Shift+F12 | Go to Symbol...
 --
@@ -1639,12 +1639,12 @@ local show_documentation = textadept.menu.menubar['Tools/Language Server/Show Do
 local goto_symbol = textadept.menu.menubar['Tools/Language Server/Go To Workspace Symbol...'][2]
 keys.assign_platform_bindings{
 	[M.autocomplete] = {'ctrl+ ', {'cmd+ ', 'ctrl+ '}, 'ctrl+ '},
-	[show_documentation] = {'ctrl+?', {'cmd+?', 'ctrl+?'}, {'meta+?', 'ctrl+?'}},
+	[show_documentation] = {'ctrl+?', 'ctrl+?', {'meta+?', 'ctrl+?'}},
 	[M.goto_definition] = {'f12', 'f12', 'f12'},
 	[goto_symbol] = {'shift+f12', 'shift+f12', 'shift+f12'}
 }
 keys.assign_platform_bindings(ui.command_entry.editing_keys.__index, {
-	[show_documentation] = {'ctrl+?', {'cmd+?', 'ctrl+?'}, {'meta+?', 'ctrl+?'}}
+	[show_documentation] = {'ctrl+?', 'ctrl+?', {'meta+?', 'ctrl+?'}}
 })
 
 -- Set up Lua LSP server to be Textadept running as a Lua interpreter with this module's server.

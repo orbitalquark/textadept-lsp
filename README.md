@@ -69,8 +69,8 @@ max_scan = 20000
 Windows and Linux | macOS | Terminal | Command
 -|-|-|-
 **Tools**| | |
-Ctrl+Space | ⌘Space<br/> ^Space | ^Space | Complete symbol
-Ctrl+? | ⌘?<br/>^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
+Ctrl+Space | ^Space | ^Space | Complete symbol
+Ctrl+? | ^? | M-?<br/>Ctrl+?<sup>‡</sup> | Show documentation
 F12 | F12 | F12 | Go To Definition
 Shift+F12 | ⇧F12 | Shift+F12 | Go to Symbol...
 
