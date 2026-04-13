@@ -42,7 +42,8 @@ local function sanitize_markdown(s)
 	:gsub('%[([^%]\r\n]+)%]%b()', '%1') -- [foo](bar)
 	:gsub('\r?\n\r?\n%[([^%]\r\n]+)%]:[^\r\n]+', '') -- [foo]: bar
 	:gsub('\r?\n%[([^%]\r\n]+)%]:[^\r\n]+', '') -- [foo]: bar
-	:gsub('&([%a]+);', {quot = '"', apos = "'"})
+	:gsub('&(%a+);', {quot = '"', apos = "'"}) --
+	:gsub('&#(%d+);', utf8.char)
 end
 
 --- Writes a function or field apidoc.
