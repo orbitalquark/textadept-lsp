@@ -11,7 +11,7 @@ teardown(function()
 	textadept.menu.menubar['Tools/Language Server/Clear Log'][2]()
 end)
 
-local have_clangd = LINUX or OSX and not os.getenv('CI')
+local have_clangd = OS == 'linux' or OS == 'macos' and not os.getenv('CI')
 
 local clangd_project = {
 	['.hg'] = {}, --
@@ -130,7 +130,7 @@ test('lsp.autocomplete should show a list of completions', function()
 		return auto_c_show.called and auto_c_show.args[3]:find('append')
 	end)
 end)
-if LINUX and CURSES then retry(1) end -- TODO: sometimes lsp.autocomplete() has nil message
+if OS == 'linux' and UI == 'terminal' then retry(1) end -- TODO: sometimes lsp.autocomplete() has nil message
 if not have_clangd then skip('clangd is not available') end
 
 test('lsp.hover should show a calltip with information for the current symbol', function()
@@ -190,7 +190,7 @@ test('lsp.signature_help should cycle through calltips', function()
 	test.assert(call_tip_show.args[3] ~= calltip, 'did not cycle calltip')
 end)
 if not have_clangd then skip('clangd is not available') end
-if OSX then skip('calltip click is not implemented in Qt on macOS') end
+if OS == 'macos' then skip('calltip click is not implemented in Qt on macOS') end
 
 test('lsp.goto_definition should jump to the definition of the current symbol', function()
 	local _<close> = test.mock(lsp, 'server_commands', {cpp = 'clangd'})
@@ -370,9 +370,11 @@ test('clicking on a diagnostic and selecting a code action (if any) should run i
 
 	test.wait(function() return buffer:get_text() == orig_text end)
 end)
-if OSX and not os.getenv('CI') then retry(1) end -- for some reason I need this
+if OS == 'macos' and not os.getenv('CI') then retry(1) end -- for some reason I need this
 if not have_clangd then skip('clangd is not available') end
-if have_clangd and LINUX and os.getenv('CI') == 'true' then skip('clangd diagnostics do not work') end
+if have_clangd and OS == 'linux' and os.getenv('CI') == 'true' then
+	skip('clangd diagnostics do not work')
+end
 
 test('lua lsp should work for untitled buffers', function()
 	buffer:set_lexer('lua')

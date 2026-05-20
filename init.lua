@@ -281,7 +281,7 @@ function Server.new(lang, root, cmd, init_options)
 		processId = json.null, --
 		clientInfo = {name = 'textadept', version = _RELEASE},
 		-- locale = (os.getenv('LANG') or ''):match('^[^_.@]+'), -- should not be OS lang though
-		rootUri = root and (not WIN32 and 'file://' .. root or 'file:///' .. root:gsub('\\', '/')) or
+		rootUri = root and (OS ~= 'windows' and 'file://' .. root or 'file:///' .. root:gsub('\\', '/')) or
 			nil, --
 		initializationOptions = init_options, --
 		capabilities = {
@@ -629,9 +629,9 @@ end
 --- Returns an LSP DocumentUri converted into a valid filename.
 -- @param uri String LSP DocumentUri to convert into a filename.
 local function tofilename(uri)
-	local filename = uri:gsub(not WIN32 and '^file://' or '^file:///', '')
+	local filename = uri:gsub(OS ~= 'windows' and '^file://' or '^file:///', '')
 	filename = filename:gsub('%%(%x%x)', function(hex) return string.char(tonumber(hex, 16)) end)
-	if WIN32 then filename = filename:gsub('/', '\\') end
+	if OS == 'windows' then filename = filename:gsub('/', '\\') end
 	return filename
 end
 
@@ -639,7 +639,7 @@ end
 -- @param filename String filename to convert into an LSP DocumentUri.
 local function touri(filename)
 	if filename:find('^%a%a+:') then return filename end -- different scheme like "untitled:"
-	return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
+	return OS ~= 'windows' and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
 end
 
 --- Returns the start and end buffer positions for an LSP Range.
@@ -782,7 +782,7 @@ function Server:handle_request(id, method, params)
 		if not params.external then
 			io.open_file(tofilename(params.uri))
 		else
-			local cmd = (WIN32 and 'start ""') or (OSX and 'open') or 'xdg-open'
+			local cmd = OS == 'windows' and 'start ""' or OS == 'macos' and 'open' or 'xdg-open'
 			os.spawn(string.format('%s "%s"', cmd, params.uri))
 		end
 	elseif not events.emit(events.LSP_REQUEST, self.lang, self, id, method, params) then
@@ -803,7 +803,7 @@ function Server:sync_buffer()
 		}, --
 		contentChanges = {{text = buffer:get_text()}}
 	})
-	if WIN32 then self.wait = true end -- prefer async response reading
+	if OS == 'windows' then self.wait = true end -- prefer async response reading
 end
 
 --- Notifies this language server that the current buffer was opened, provided the language
@@ -906,7 +906,8 @@ local function goto_selected_symbol(symbols)
 		if not symbol.location then
 			-- LSP DocumentSymbol has `range` instead of `location`.
 			symbol.location = {
-				uri = not WIN32 and buffer.filename or buffer.filename:gsub('\\', '/'), range = symbol.range
+				uri = OS ~= 'windows' and buffer.filename or buffer.filename:gsub('\\', '/'),
+				range = symbol.range
 			}
 		end
 		items[#items + 1] = tofilename(symbol.location.uri)
@@ -1015,7 +1016,7 @@ function M.autocomplete() return textadept.editing.autocomplete('lsp') end
 --- Returns the given text wrapped in a rudimentary way.
 local function wrap(text)
 	local lines, edge_column = {}, view.edge_column
-	if edge_column == 0 then edge_column = not CURSES and 100 or 80 end
+	if edge_column == 0 then edge_column = UI ~= 'terminal' and 100 or 80 end
 	for line in text:gmatch('[^\n]+') do
 		for j = 1, #line, edge_column do lines[#lines + 1] = line:sub(j, j + edge_column - 1) end
 	end
@@ -1337,7 +1338,7 @@ events.connect(events.VIEW_NEW, function()
 		if not filename:find('%.xpm$') then goto continue end
 		local f<close> = assert(io.open(dir .. '/' .. filename, 'rb'))
 		local name = filename:match('^[^.]+')
-		local xpm = not CURSES and f:read('a') or curses_xpm[name]
+		local xpm = UI ~= 'terminal' and f:read('a') or curses_xpm[name]
 		local type = xpm_map[name] or view.new_image_type()
 		view:register_image(type, xpm)
 		view._lsp_xpms[name] = type
@@ -1651,7 +1652,7 @@ keys.assign_platform_bindings(ui.command_entry.editing_keys.__index, {
 if arg then
 	local ta = arg[0]:gsub('%.exe$', '')
 	if not ta:find('%-curses$') then ta = ta:gsub('%-gtk$', '') .. '-curses' end -- run as background app
-	if WIN32 then ta = ta .. '.exe' end
+	if OS == 'windows' then ta = ta .. '.exe' end
 	if not lfs.attributes(ta) then ta = arg[0] end -- fallback
 	M.server_commands.lua = string.format('"%s" -L "%s" "%s"', lfs.abspath(ta), package.searchpath(
 		'lsp', package.path):gsub('init%.lua$', 'server.lua'), _USERHOME)

@@ -5,7 +5,7 @@
 -- @usage /path/to/textadept -L /path/to/server.lua /path/to/userhome
 -- @module lsp.server
 
-local WIN32 = package.path:find('\\')
+local OS = package.path:find('\\') and 'windows' or nil
 
 local lfs = require('lfs')
 local cwd = arg[0]:match('^(.+)[/\\]') or '.'
@@ -60,9 +60,9 @@ local function register(method, f) handlers[method] = f end
 --- Converts the given LSP DocumentUri into a valid filename and returns it.
 -- @param uri LSP DocumentUri to convert into a filename.
 local function tofilename(uri)
-	local filename = uri:gsub(not WIN32 and '^file://' or '^file:///', '')
+	local filename = uri:gsub(OS ~= 'windows' and '^file://' or '^file:///', '')
 	filename = filename:gsub('%%(%x%x)', function(hex) return string.char(tonumber(hex, 16)) end)
-	if WIN32 then filename = filename:gsub('/', '\\') end
+	if OS == 'windows' then filename = filename:gsub('/', '\\') end
 	if filename == 'untitled:' then filename = 'untitled' end
 	return filename
 end
@@ -70,7 +70,7 @@ end
 --- Converts the given filename into a valid LSP DocumentUri and returns it.
 -- @param filename String filename to convert into an LSP DocumentUri.
 local function touri(filename)
-	return not WIN32 and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
+	return OS ~= 'windows' and 'file://' .. filename or 'file:///' .. filename:gsub('\\', '/')
 end
 
 -- LSP initialize request.
@@ -208,7 +208,9 @@ local function scan(target)
 	local command = string.format(
 		'%s -d "%s" -c "%s" . --filter tadoc.ldoc --all -- --root="%s" --multiple', ldoc, cache, config,
 		target)
-	if WIN32 then command = '"' .. command .. '"' end -- quote for os.execute()'s "cmd /C [command]"
+	if OS == 'windows' then
+		command = '"' .. command .. '"' -- quote for os.execute()'s "cmd /C [command]"
+	end
 	log:debug('Running scan command: %s', command)
 	os.execute(command)
 
@@ -262,7 +264,7 @@ register('textDocument/didChange', function(params)
 	os.remove(tmpdir) -- Linux creates this file
 	local filename = tofilename(params.textDocument.uri)
 	if root and filename:sub(1, #root) == root then filename = filename:sub(#root + 2) end
-	if WIN32 then filename = filename:gsub('^%a:', '') end
+	if OS == 'windows' then filename = filename:gsub('^%a:', '') end
 	log:debug('Preparing to scan: %s (relative path=%s)', tofilename(params.textDocument.uri),
 		filename)
 	local path = tmpdir .. '/' .. filename
