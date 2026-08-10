@@ -39,6 +39,7 @@ end
 -- @return string
 local function sanitize_markdown(s)
 	return s:gsub('%[([^%]\r\n]+)%]%b[]', '%1') -- [foo][]
+	:gsub('!%[([^%]\r\n]+)%]%b()', '') -- ![foo](bar)
 	:gsub('%[([^%]\r\n]+)%]%b()', '%1') -- [foo](bar)
 	:gsub('\r?\n\r?\n%[([^%]\r\n]+)%]:[^\r\n]+', '') -- [foo]: bar
 	:gsub('\r?\n%[([^%]\r\n]+)%]:[^\r\n]+', '') -- [foo]: bar
