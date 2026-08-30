@@ -1345,16 +1345,6 @@ events.connect(events.VIEW_NEW, function()
 		if not xpm_map[name] then xpm_map[name] = type end
 		::continue::
 	end
-
-	-- Fill in textadept.editing.XPM_IMAGES for compatibility.
-	if not textadept.editing.XPM_IMAGES then textadept.editing.XPM_IMAGES = {} end
-	local compat_xpms = textadept.editing.XPM_IMAGES
-	if next(compat_xpms) then return end
-	local map = {
-		CLASS = 'class', NAMESPACE = 'module', METHOD = 'method', SIGNAL = 'operator', SLOT = 'event',
-		VARIABLE = 'variable', TYPEDEF = 'interface'
-	}
-	for k, v in ipairs(map) do compat_xpms[k] = xpm_map[v] end
 end)
 
 -- Setup events to automatically start language servers and notify them as files are opened.
