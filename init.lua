@@ -1474,9 +1474,8 @@ events.connect(events.RESET_BEFORE, shutdown_servers) -- will be restarted as bu
 events.connect(events.QUIT, shutdown_servers)
 
 -- Log buffer modification times for more real-time diagnostics.
-local INSERT, DELETE = buffer.MOD_INSERTTEXT, buffer.MOD_DELETETEXT
-events.connect(events.MODIFIED, function(_, mod)
-	if mod & (INSERT | DELETE) > 0 then buffer._lsp_mod_time = os.time() end
+events.connect(events.UPDATE_UI, function(updated)
+	if updated & buffer.UPDATE_TEXT > 0 then buffer._lsp_mod_time = os.time() end
 end)
 
 -- If the buffer has active diagnostics and has since been modified, ask the server for updated
