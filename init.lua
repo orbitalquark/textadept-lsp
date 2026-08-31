@@ -1333,7 +1333,7 @@ events.connect(events.VIEW_NEW, function()
 
 	view._lsp_xpms = {}
 	local dir = lfs.attributes(_USERHOME .. '/modules/lsp') and _USERHOME or _HOME
-	dir = dir .. '/modules/lsp/icons/' .. (not is_hidpi() and '16' or '16@2x')
+	dir = dir .. '/modules/lsp/icons/' .. (ui.scale == 1 and '16' or '16@2x')
 	for filename in lfs.dir(dir) do
 		if not filename:find('%.xpm$') then goto continue end
 		local f<close> = assert(io.open(dir .. '/' .. filename, 'rb'))
