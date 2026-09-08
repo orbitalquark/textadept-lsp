@@ -788,7 +788,7 @@ function Server:handle_request(id, method, params)
 	elseif not events.emit(events.LSP_REQUEST, self.lang, self, id, method, params) then
 		-- Unknown notification.
 		log('Responding with null to server request: ', method)
-		self:respond(id, nil)
+		self:respond(id, json.null)
 	end
 end
 
